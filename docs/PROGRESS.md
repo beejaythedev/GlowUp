@@ -6,11 +6,13 @@ and writes a handoff note before every session ends.
 ## Latest handoff note
 
 > **Date:** 2026-10-22
-> **Done this session:** M0-1 — scaffolded the Next.js app (TypeScript strict, App Router,
-> Tailwind, ESLint, Prettier) at the project root; `npm run dev` serves the placeholder
-> home page (HTTP 200) and `npm run lint` / `npm run build` pass clean.
+> **Done this session:** M0-1 and M0-2 — scaffolded the Next.js app (TypeScript strict,
+> App Router, Tailwind, ESLint, Prettier); added every colour/font/radius token from
+> `docs/DESIGN.md` to Tailwind v4 via a `@theme` block in `globals.css`, switched the
+> font to Plus Jakarta Sans, and built `/dev/tokens` showing every token. Confirmed no
+> raw hex values in any `src/*.ts(x)` file.
 > **Half-done:** none.
-> **Next task:** M0-2 — add design tokens from `docs/DESIGN.md` to Tailwind.
+> **Next task:** M0-3 — set up PostgreSQL and Prisma with `.env.example`.
 > **Blockers or questions:** none.
 
 ## Milestones
@@ -36,4 +38,5 @@ Newest first. One line per finished task.
 
 | Date | Task | What changed | Tests |
 |---|---|---|---|
+| 2026-10-22 | M0-2 | Tailwind design tokens (`@theme` in globals.css), Plus Jakarta Sans, `/dev/tokens` page | `npm run lint`, `npm run build`, manual check of `/dev/tokens` |
 | 2026-10-22 | M0-1 | Scaffolded Next.js (TS strict, App Router, Tailwind, ESLint, Prettier) | `npm run lint`, `npm run build` pass |
