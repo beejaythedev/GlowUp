@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Services and prep time</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#2456D6}a:hover{color:#173E9E}
+td,th{padding:12px 14px;text-align:left;border-bottom:1px solid #EEF1F6;white-space:nowrap}
+th{font-size:12px;font-weight:600;color:#5B6678}
+select{font:inherit;font-size:14px;height:40px;padding:0 10px;border-radius:12px;border:1px solid #CDD6E3;background:#FFFFFF;color:#0F1A2B}
+</style>
+</helmet>
+<div style="min-height: 860px; box-sizing: border-box; background: #F6F8FC; font-family: 'Plus Jakarta Sans', system-ui, sans-serif; color: #0F1A2B">
+<nav style="background: #0B1F3A; color: #FFFFFF; padding: 12px 24px; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px">
+<div style="display: flex; align-items: center; gap: 14px; flex-wrap: wrap">
+<span style="font-size: 20px; font-weight: 800; letter-spacing: -0.03em">GlowUp</span>
+<span style="font-size: 12px; font-weight: 700; padding: 4px 10px; border-radius: 12px; background: #FF8A5B; color: #0B1F3A">Owner</span>
+<a href="OwnerOverview.dc.html" style="font-size: 14px; color: #C7D4EA; text-decoration: none; padding: 6px 0">Overview</a>
+<a href="OwnerStaff.dc.html" style="font-size: 14px; color: #C7D4EA; text-decoration: none; padding: 6px 0">Staff and access</a>
+<a href="OwnerSettings.dc.html" style="font-size: 14px; color: #FFFFFF; font-weight: 700; text-decoration: none; border-bottom: 2px solid #FF8A5B; padding: 6px 0">Settings</a>
+</div>
+<div style="display: flex; align-items: center; gap: 12px">
+<span style="font-size: 14px">Tolu</span>
+<span style="width: 32px; height: 32px; border-radius: 16px; background: #FF8A5B; color: #0B1F3A; display: inline-flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 800">T</span>
+</div>
+</nav>
+<div style="max-width: 1360px; margin: 0 auto; padding: 24px; display: flex; flex-direction: column; gap: 20px">
+<div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-end; gap: 16px">
+<div style="display: flex; flex-direction: column; gap: 6px">
+<h1 style="margin: 0; font-size: 28px; font-weight: 800; letter-spacing: -0.03em">Services and booking rules</h1>
+<div style="font-size: 14px; color: #5B6678">Applies to all four branches. Customers never see prep time.</div>
+</div>
+<a href="#" style="display: inline-flex; align-items: center; min-height: 48px; padding: 0 26px; border-radius: 24px; background: #2456D6; color: #FFFFFF; font-size: 15px; font-weight: 700; text-decoration: none">Save changes</a>
+</div>
+<div style="display: flex; flex-wrap: wrap; gap: 20px; align-items: flex-start">
+<section style="flex: 999 1 560px; min-width: 0; background: #FFFFFF; border: 1px solid #E1E7F0; border-radius: 20px; padding: 8px 6px 6px">
+<div style="padding: 10px 14px"><h2 style="margin: 0; font-size: 17px; font-weight: 800">Services</h2></div>
+<div style="overflow-x: auto">
+<table style="width: 100%; min-width: 720px; border-collapse: collapse; font-size: 14px">
+<thead><tr><th>Service</th><th>Duration</th><th>Price</th><th>Deposit (20%)</th><th>Prep time after</th><th>Offered at</th></tr></thead>
+<tbody>
+<tr><td style="font-weight: 700">Knotless braids</td><td>4–5 hrs</td><td>₦25,000</td><td>₦5,000</td><td><label><span style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">Prep time after knotless braids</span><select><option>None</option><option>5 min</option><option>10 min</option><option selected>15 min</option><option>20 min</option></select></label></td><td>All branches</td></tr>
+<tr><td style="font-weight: 700">Makeup</td><td>1.5 hrs</td><td>₦20,000</td><td>₦4,000</td><td><label><span style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">Prep time after makeup</span><select><option>None</option><option>5 min</option><option selected>10 min</option><option>15 min</option><option>20 min</option></select></label></td><td>All branches</td></tr>
+<tr><td style="font-weight: 700">Wig installation</td><td>2 hrs</td><td>₦15,000</td><td>₦3,000</td><td><label><span style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">Prep time after wig installation</span><select><option>None</option><option>5 min</option><option>10 min</option><option selected>15 min</option><option>20 min</option></select></label></td><td>All branches</td></tr>
+<tr><td style="font-weight: 700">Relaxer and styling</td><td>1.5 hrs</td><td>₦12,000</td><td>₦2,400</td><td><label><span style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">Prep time after relaxer and styling</span><select><option>None</option><option>5 min</option><option selected>10 min</option><option>15 min</option><option>20 min</option></select></label></td><td>All branches</td></tr>
+<tr><td style="font-weight: 700">Wash and set</td><td>1 hr</td><td>₦8,000</td><td>₦1,600</td><td><label><span style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">Prep time after wash and set</span><select><option>None</option><option>5 min</option><option selected>10 min</option><option>15 min</option><option>20 min</option></select></label></td><td>All branches</td></tr>
+<tr><td style="font-weight: 700">Pedicure</td><td>1 hr</td><td>₦8,000</td><td>₦1,600</td><td><label><span style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">Prep time after pedicure</span><select><option>None</option><option selected>5 min</option><option>10 min</option><option>15 min</option><option>20 min</option></select></label></td><td>2 branches</td></tr>
+<tr><td style="font-weight: 700; border-bottom: 0">Manicure</td><td style="border-bottom: 0">45 min</td><td style="border-bottom: 0">₦6,000</td><td style="border-bottom: 0">₦1,200</td><td style="border-bottom: 0"><label><span style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">Prep time after manicure</span><select><option>None</option><option selected>5 min</option><option>10 min</option><option>15 min</option><option>20 min</option></select></label></td><td style="border-bottom: 0">2 branches</td></tr>
+</tbody>
+</table>
+</div>
+<div style="margin: 8px 14px 12px; padding: 12px 14px; border-radius: 14px; background: #E8EFFD; color: #173E9E; font-size: 13px; line-height: 1.5">With 10 minutes' prep, a stylist fits 8 one-hour services between 9am and 7pm, instead of 10 back to back.</div>
+</section>
+<aside style="flex: 1 1 300px; min-width: 0; background: #FFFFFF; border: 1px solid #E1E7F0; border-radius: 20px; padding: 20px; display: flex; flex-direction: column; gap: 18px">
+<h2 style="margin: 0; font-size: 17px; font-weight: 800">Booking rules</h2>
+<label style="display: flex; flex-direction: column; gap: 6px"><span style="font-size: 13px; font-weight: 600; color: #5B6678">Deposit</span><select><option>10% of price</option><option selected>20% of price</option><option>30% of price</option></select></label>
+<label style="display: flex; flex-direction: column; gap: 6px"><span style="font-size: 13px; font-weight: 600; color: #5B6678">Free cancellation up to</span><select><option>12 hours before</option><option selected>24 hours before</option><option>48 hours before</option></select></label>
+<label style="display: flex; flex-direction: column; gap: 6px"><span style="font-size: 13px; font-weight: 600; color: #5B6678">Ask customers to arrive</span><select><option>On time</option><option>5 min early</option><option selected>10 min early</option><option>15 min early</option></select></label>
+<label style="display: flex; flex-direction: column; gap: 6px"><span style="font-size: 13px; font-weight: 600; color: #5B6678">Ask reception if not checked in after</span><select><option>10 min</option><option selected>15 min</option><option>20 min</option></select></label>
+</aside>
+</div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":860}}'>
+class Component extends DCLogic {
+renderVals() {
+return {};
+}
+}
+</script>
+</body>
+</html>

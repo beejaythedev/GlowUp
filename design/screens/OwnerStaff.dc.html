@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Staff and access</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#2456D6}a:hover{color:#173E9E}
+td,th{padding:13px 14px;text-align:left;border-bottom:1px solid #EEF1F6;white-space:nowrap}
+th{font-size:12px;font-weight:600;color:#5B6678}
+</style>
+</helmet>
+<div style="min-height: 760px; box-sizing: border-box; background: #F6F8FC; font-family: 'Plus Jakarta Sans', system-ui, sans-serif; color: #0F1A2B">
+<nav style="background: #0B1F3A; color: #FFFFFF; padding: 12px 24px; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px">
+<div style="display: flex; align-items: center; gap: 14px; flex-wrap: wrap">
+<span style="font-size: 20px; font-weight: 800; letter-spacing: -0.03em">GlowUp</span>
+<span style="font-size: 12px; font-weight: 700; padding: 4px 10px; border-radius: 12px; background: #FF8A5B; color: #0B1F3A">Owner</span>
+<a href="OwnerOverview.dc.html" style="font-size: 14px; color: #C7D4EA; text-decoration: none; padding: 6px 0">Overview</a>
+<a href="OwnerStaff.dc.html" style="font-size: 14px; color: #FFFFFF; font-weight: 700; text-decoration: none; border-bottom: 2px solid #FF8A5B; padding: 6px 0">Staff and access</a>
+<a href="OwnerSettings.dc.html" style="font-size: 14px; color: #C7D4EA; text-decoration: none; padding: 6px 0">Settings</a>
+</div>
+<div style="display: flex; align-items: center; gap: 12px">
+<span style="font-size: 14px">Tolu</span>
+<span style="width: 32px; height: 32px; border-radius: 16px; background: #FF8A5B; color: #0B1F3A; display: inline-flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 800">T</span>
+</div>
+</nav>
+<div style="max-width: 1360px; margin: 0 auto; padding: 24px; display: flex; flex-direction: column; gap: 20px">
+<div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-end; gap: 16px">
+<div style="display: flex; flex-direction: column; gap: 6px">
+<h1 style="margin: 0; font-size: 28px; font-weight: 800; letter-spacing: -0.03em">Staff and access</h1>
+<div style="font-size: 14px; color: #5B6678">Choose who can sign in and what each person can see</div>
+</div>
+<a href="#" style="display: inline-flex; align-items: center; gap: 8px; min-height: 48px; padding: 0 22px; border-radius: 24px; background: #2456D6; color: #FFFFFF; font-size: 15px; font-weight: 700; text-decoration: none">
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+Add staff member</a>
+</div>
+<div style="display: flex; flex-wrap: wrap; gap: 20px; align-items: flex-start">
+<section style="flex: 999 1 560px; min-width: 0; background: #FFFFFF; border: 1px solid #E1E7F0; border-radius: 20px; padding: 8px 6px 6px">
+<div style="display: flex; flex-wrap: wrap; gap: 6px; padding: 10px 14px">
+<button aria-pressed="true" style="all: unset; min-height: 36px; padding: 0 14px; display: flex; align-items: center; border-radius: 18px; background: #0B1F3A; color: #FFFFFF; font-size: 13px; font-weight: 700; cursor: pointer">All branches</button>
+<button style="all: unset; min-height: 36px; padding: 0 14px; display: flex; align-items: center; border-radius: 18px; border: 1px solid #CDD6E3; font-size: 13px; cursor: pointer">Lekki</button>
+<button style="all: unset; min-height: 36px; padding: 0 14px; display: flex; align-items: center; border-radius: 18px; border: 1px solid #CDD6E3; font-size: 13px; cursor: pointer">Ikeja</button>
+<button style="all: unset; min-height: 36px; padding: 0 14px; display: flex; align-items: center; border-radius: 18px; border: 1px solid #CDD6E3; font-size: 13px; cursor: pointer">Yaba</button>
+<button style="all: unset; min-height: 36px; padding: 0 14px; display: flex; align-items: center; border-radius: 18px; border: 1px solid #CDD6E3; font-size: 13px; cursor: pointer">Surulere</button>
+</div>
+<div style="overflow-x: auto">
+<table style="width: 100%; min-width: 700px; border-collapse: collapse; font-size: 14px">
+<thead><tr><th>Name</th><th>Role</th><th>Branch</th><th>Phone</th><th>Status</th><th style="text-align: right">Actions</th></tr></thead>
+<tbody>
+<tr><td style="font-weight: 700">Ada</td><td><span style="font-size: 12px; font-weight: 700; padding: 4px 9px; border-radius: 10px; background: #E8EFFD; color: #173E9E">Receptionist</span></td><td>Lekki</td><td>0803 ••• ••••</td><td style="color: #1F6B45; font-weight: 600">Active</td><td style="text-align: right"><a href="#" style="font-weight: 600">Edit</a> · <a href="#" style="font-weight: 600">Reset password</a></td></tr>
+<tr><td style="font-weight: 700">Grace</td><td><span style="font-size: 12px; font-weight: 700; padding: 4px 9px; border-radius: 10px; background: #0B1F3A; color: #FFFFFF">Branch manager</span></td><td>Lekki</td><td>0803 ••• ••••</td><td style="color: #1F6B45; font-weight: 600">Active</td><td style="text-align: right"><a href="#" style="font-weight: 600">Edit</a> · <a href="#" style="font-weight: 600">Reset password</a></td></tr>
+<tr><td style="font-weight: 700">Blessing</td><td><span style="font-size: 12px; font-weight: 700; padding: 4px 9px; border-radius: 10px; background: #EEF1F6; color: #3F4A5C">Stylist</span></td><td>Lekki</td><td>0803 ••• ••••</td><td style="color: #1F6B45; font-weight: 600">Active</td><td style="text-align: right"><a href="#" style="font-weight: 600">Edit</a> · <a href="#" style="font-weight: 600">Reset password</a></td></tr>
+<tr><td style="font-weight: 700">Ronke</td><td><span style="font-size: 12px; font-weight: 700; padding: 4px 9px; border-radius: 10px; background: #EEF1F6; color: #3F4A5C">Stylist</span></td><td>Lekki</td><td>0803 ••• ••••</td><td style="color: #1F6B45; font-weight: 600">Active</td><td style="text-align: right"><a href="#" style="font-weight: 600">Edit</a> · <a href="#" style="font-weight: 600">Reset password</a></td></tr>
+<tr><td style="font-weight: 700">Kelechi</td><td><span style="font-size: 12px; font-weight: 700; padding: 4px 9px; border-radius: 10px; background: #E8EFFD; color: #173E9E">Receptionist</span></td><td>Ikeja</td><td>0803 ••• ••••</td><td style="color: #7A4A00; font-weight: 600">Invite sent</td><td style="text-align: right"><a href="#" style="font-weight: 600">Resend invite</a></td></tr>
+<tr><td style="font-weight: 700; border-bottom: 0">Hauwa</td><td style="border-bottom: 0"><span style="font-size: 12px; font-weight: 700; padding: 4px 9px; border-radius: 10px; background: #EEF1F6; color: #3F4A5C">Stylist</span></td><td style="border-bottom: 0">Yaba</td><td style="border-bottom: 0">0803 ••• ••••</td><td style="color: #5B6678; font-weight: 600; border-bottom: 0">Access removed</td><td style="text-align: right; border-bottom: 0"><a href="#" style="font-weight: 600">Restore</a></td></tr>
+</tbody>
+</table>
+</div>
+</section>
+<aside style="flex: 1 1 300px; min-width: 0; background: #FFFFFF; border: 1px solid #E1E7F0; border-radius: 20px; padding: 20px; display: flex; flex-direction: column; gap: 16px">
+<h2 style="margin: 0; font-size: 17px; font-weight: 800">What each role can see</h2>
+<div style="display: flex; flex-direction: column; gap: 4px"><span style="font-size: 14px; font-weight: 700">Stylist</span><span style="font-size: 13px; line-height: 1.5; color: #5B6678">Only their own appointments, today and tomorrow.</span></div>
+<div style="display: flex; flex-direction: column; gap: 4px"><span style="font-size: 14px; font-weight: 700">Receptionist</span><span style="font-size: 13px; line-height: 1.5; color: #5B6678">Their branch's schedule. Can add, move and check in bookings.</span></div>
+<div style="display: flex; flex-direction: column; gap: 4px"><span style="font-size: 14px; font-weight: 700">Branch manager</span><span style="font-size: 13px; line-height: 1.5; color: #5B6678">Everything for their own branch, including deposits and reports.</span></div>
+<div style="display: flex; flex-direction: column; gap: 4px"><span style="font-size: 14px; font-weight: 700">Owner</span><span style="font-size: 13px; line-height: 1.5; color: #5B6678">All four branches, staff access and settings.</span></div>
+</aside>
+</div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":760}}'>
+class Component extends DCLogic {
+renderVals() {
+return {};
+}
+}
+</script>
+</body>
+</html>

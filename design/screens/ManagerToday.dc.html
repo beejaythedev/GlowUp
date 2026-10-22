@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Branch manager today</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#2456D6}a:hover{color:#173E9E}
+td,th{padding:12px 14px;text-align:left;border-bottom:1px solid #EEF1F6;white-space:nowrap}
+th{font-size:12px;font-weight:600;color:#5B6678}
+</style>
+</helmet>
+<div style="min-height: 900px; box-sizing: border-box; background: #F6F8FC; font-family: 'Plus Jakarta Sans', system-ui, sans-serif; color: #0F1A2B">
+<nav style="background: #0B1F3A; color: #FFFFFF; padding: 12px 24px; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px">
+<div style="display: flex; align-items: center; gap: 14px; flex-wrap: wrap">
+<span style="font-size: 20px; font-weight: 800; letter-spacing: -0.03em">GlowUp</span>
+<span style="font-size: 12px; font-weight: 700; padding: 4px 10px; border-radius: 12px; background: #2456D6">Manager</span>
+<a href="#" style="font-size: 14px; color: #FFFFFF; font-weight: 700; text-decoration: none; border-bottom: 2px solid #FF8A5B; padding: 6px 0">Today</a>
+<a href="#" style="font-size: 14px; color: #C7D4EA; text-decoration: none; padding: 6px 0">Schedule</a>
+<a href="#" style="font-size: 14px; color: #C7D4EA; text-decoration: none; padding: 6px 0">Deposits</a>
+</div>
+<div style="display: flex; align-items: center; gap: 12px">
+<span style="font-size: 14px; color: #C7D4EA">Lekki</span>
+<span style="width: 32px; height: 32px; border-radius: 16px; background: #FF8A5B; color: #0B1F3A; display: inline-flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 800">G</span>
+</div>
+</nav>
+<div style="max-width: 1360px; margin: 0 auto; padding: 24px; display: flex; flex-direction: column; gap: 20px">
+<div style="display: flex; flex-direction: column; gap: 6px">
+<h1 style="margin: 0; font-size: 28px; font-weight: 800; letter-spacing: -0.03em">Today at Lekki</h1>
+<div style="font-size: 14px; color: #5B6678">Saturday 31 October · updated live · 11:20 am</div>
+</div>
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px">
+<div style="background: #FFFFFF; border: 1px solid #E1E7F0; border-radius: 18px; padding: 16px 18px; display: flex; flex-direction: column; gap: 4px"><span style="font-size: 13px; color: #5B6678">Bookings today</span><span style="font-size: 30px; font-weight: 800; letter-spacing: -0.02em">10</span><span style="font-size: 12px; color: #5B6678">8 online · 2 walk-in</span></div>
+<div style="background: #FFF1D6; border: 1px solid #F5D08A; border-radius: 18px; padding: 16px 18px; display: flex; flex-direction: column; gap: 4px"><span style="font-size: 13px; color: #7A4A00">Waiting now</span><span style="font-size: 30px; font-weight: 800; letter-spacing: -0.02em; color: #7A4A00">1</span><span style="font-size: 12px; color: #7A4A00">Longest 6 min · goal under 15</span></div>
+<div style="background: #FFFFFF; border: 1px solid #E1E7F0; border-radius: 18px; padding: 16px 18px; display: flex; flex-direction: column; gap: 4px"><span style="font-size: 13px; color: #5B6678">No-shows</span><span style="font-size: 30px; font-weight: 800; letter-spacing: -0.02em">1</span><span style="font-size: 12px; color: #5B6678">Deposit kept</span></div>
+<div style="background: #0B1F3A; border-radius: 18px; padding: 16px 18px; display: flex; flex-direction: column; gap: 4px; color: #FFFFFF"><span style="font-size: 13px; color: #C7D4EA">Deposits received</span><span style="font-size: 30px; font-weight: 800; letter-spacing: -0.02em">₦24,200</span><span style="font-size: 12px; color: #C7D4EA">From 8 online bookings</span></div>
+</div>
+<div style="display: flex; flex-wrap: wrap; gap: 20px; align-items: flex-start">
+<section style="flex: 999 1 560px; min-width: 0; background: #FFFFFF; border: 1px solid #E1E7F0; border-radius: 20px; padding: 8px 6px 6px">
+<div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 14px">
+<h2 style="margin: 0; font-size: 17px; font-weight: 800">Today's bookings</h2>
+<span style="font-size: 13px; color: #5B6678">10 bookings</span>
+</div>
+<div style="overflow-x: auto">
+<table style="width: 100%; min-width: 640px; border-collapse: collapse; font-size: 14px">
+<thead><tr><th>Time</th><th>Customer</th><th>Service</th><th>Stylist</th><th>Status</th><th style="text-align: right">Deposit</th></tr></thead>
+<tbody>
+<tr><td style="font-weight: 700">9:00</td><td>Chioma O.</td><td>Knotless braids</td><td>Blessing</td><td><span style="font-size: 12px; font-weight: 700; padding: 4px 9px; border-radius: 10px; background: #2456D6; color: #FFFFFF">In service</span></td><td style="text-align: right">₦5,000</td></tr>
+<tr><td style="font-weight: 700">9:00</td><td>Bisi A.</td><td>Wash and set</td><td>Zainab</td><td><span style="font-size: 12px; font-weight: 700; padding: 4px 9px; border-radius: 10px; background: #EEF1F6; color: #5B6678">Done</span></td><td style="text-align: right">₦1,600</td></tr>
+<tr><td style="font-weight: 700">9:00</td><td>Tola M.</td><td>Makeup</td><td>Ronke</td><td><span style="font-size: 12px; font-weight: 700; padding: 4px 9px; border-radius: 10px; background: #EEF1F6; color: #5B6678">Done</span></td><td style="text-align: right">₦4,000</td></tr>
+<tr><td style="font-weight: 700">10:10</td><td>Funke L.</td><td>Relaxer and styling</td><td>Zainab</td><td><span style="font-size: 12px; font-weight: 700; padding: 4px 9px; border-radius: 10px; background: #2456D6; color: #FFFFFF">In service</span></td><td style="text-align: right">₦2,400</td></tr>
+<tr><td style="font-weight: 700">10:00</td><td>Ife N.</td><td>Wash and set</td><td>Ifeoma</td><td><span style="font-size: 12px; font-weight: 700; padding: 3px 8px; border-radius: 10px; border: 1px dashed #D64545; color: #A12828">No-show</span></td><td style="text-align: right">₦1,600 kept</td></tr>
+<tr style="background: #FFF9EC"><td style="font-weight: 700">11:00</td><td style="font-weight: 600">Amaka</td><td>Knotless braids</td><td>Ronke</td><td><span style="font-size: 12px; font-weight: 700; padding: 4px 9px; border-radius: 10px; background: #FFF1D6; color: #7A4A00">Waiting 6 min</span></td><td style="text-align: right">₦5,000</td></tr>
+<tr><td style="font-weight: 700">11:10</td><td>Kemi A.</td><td>Relaxer and styling</td><td>Ifeoma</td><td><span style="font-size: 12px; font-weight: 700; padding: 4px 9px; border-radius: 10px; background: #2456D6; color: #FFFFFF">In service</span></td><td style="text-align: right; color: #5B6678">Walk-in</td></tr>
+<tr><td style="font-weight: 700">11:50</td><td>Ngozi E.</td><td>Wig installation</td><td>Zainab</td><td><span style="font-size: 12px; font-weight: 700; padding: 4px 9px; border-radius: 10px; background: #E8EFFD; color: #173E9E">Booked</span></td><td style="text-align: right">₦3,000</td></tr>
+<tr><td style="font-weight: 700">12:50</td><td>Yemi O.</td><td>Wash and set</td><td>Ifeoma</td><td><span style="font-size: 12px; font-weight: 700; padding: 4px 9px; border-radius: 10px; background: #E8EFFD; color: #173E9E">Booked</span></td><td style="text-align: right; color: #5B6678">Walk-in</td></tr>
+<tr><td style="font-weight: 700; border-bottom: 0">2:00</td><td style="border-bottom: 0">Joy B.</td><td style="border-bottom: 0">Wash and set</td><td style="border-bottom: 0">Ifeoma</td><td style="border-bottom: 0"><span style="font-size: 12px; font-weight: 700; padding: 4px 9px; border-radius: 10px; background: #E8EFFD; color: #173E9E">Booked</span></td><td style="text-align: right; border-bottom: 0">₦1,600</td></tr>
+</tbody>
+</table>
+</div>
+</section>
+<aside style="flex: 1 1 300px; min-width: 0; background: #FFFFFF; border: 1px solid #E1E7F0; border-radius: 20px; padding: 20px; display: flex; flex-direction: column; gap: 14px">
+<h2 style="margin: 0; font-size: 17px; font-weight: 800">Money today</h2>
+<div style="display: flex; flex-direction: column; gap: 10px; font-size: 14px">
+<div style="display: flex; justify-content: space-between; gap: 8px"><span style="color: #5B6678">Deposits paid online</span><span style="font-weight: 700">₦24,200</span></div>
+<div style="display: flex; justify-content: space-between; gap: 8px"><span style="color: #5B6678">of which kept from no-shows</span><span style="font-weight: 600">₦1,600</span></div>
+<div style="display: flex; justify-content: space-between; gap: 8px"><span style="color: #5B6678">Refunded (cancelled in time)</span><span style="font-weight: 600">₦0</span></div>
+<div style="height: 1px; background: #E1E7F0"></div>
+<div style="display: flex; justify-content: space-between; gap: 8px"><span style="color: #5B6678">Expected at the till</span><span style="font-weight: 800; font-size: 16px">₦110,400</span></div>
+<div style="font-size: 12px; color: #5B6678; line-height: 1.5">Balances after deposits, plus full price for walk-ins. Compare with card and cash takings at closing.</div>
+</div>
+<a href="#" style="display: flex; align-items: center; justify-content: center; min-height: 46px; border-radius: 23px; border: 1px solid #CDD6E3; color: #0F1A2B; font-size: 14px; font-weight: 700; text-decoration: none">Download day report</a>
+</aside>
+</div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":900}}'>
+class Component extends DCLogic {
+renderVals() {
+return {};
+}
+}
+</script>
+</body>
+</html>
