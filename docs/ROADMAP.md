@@ -33,7 +33,7 @@ The schedule is tight. If a week slips, move "Later" items out, never the checks
   *Done when:* `npm run dev` shows a placeholder home page and lint passes.
 - [x] **M0-2** Add the design tokens from `docs/DESIGN.md` (colours, font, radii, status colours) to Tailwind.
   *Done when:* a `/dev/tokens` page shows every token, and no component uses raw hex values.
-- [ ] **M0-3** Set up PostgreSQL and Prisma with `.env.example`.
+- [x] **M0-3** Set up PostgreSQL and Prisma with `.env.example`.
   *Done when:* `npx prisma migrate dev` runs on a fresh machine following the README.
 - [ ] **M0-4** Set up Vitest and Playwright, and an `npm run check` script (lint + type-check + unit tests).
   *Done when:* one sample unit test and one sample e2e test pass.
