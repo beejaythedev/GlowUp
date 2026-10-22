@@ -5,3 +5,5 @@ design
 CLAUDE.md
 START_HERE.md
 README.generated.md
+.agents
+src/generated
