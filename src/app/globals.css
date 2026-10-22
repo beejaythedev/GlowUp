@@ -1,26 +1,49 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+/*
+ * Design tokens from docs/DESIGN.md. Tailwind v4 reads theme values from CSS
+ * variables, so these names generate matching utility classes
+ * (bg-brand-navy, rounded-card, font-sans, ...).
+ * Never use raw hex values in components — add a token here instead.
+ */
+@theme {
+  --font-sans:
+    var(--font-plus-jakarta-sans), ui-sans-serif, system-ui, sans-serif;
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
+  --color-brand-navy: #0b1f3a;
+  --color-primary: #2456d6;
+  --color-primary-dark: #173e9e;
+  --color-primary-tint: #e8effd;
+  --color-accent: #ff8a5b;
+  --color-now-line: #ff6b3d;
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --color-bg: #f6f8fc;
+  --color-surface: #ffffff;
+  --color-border: #e1e7f0;
+  --color-border-strong: #cdd6e3;
+
+  --color-text: #0f1a2b;
+  --color-text-muted: #5b6678;
+  --color-nav-muted: #c7d4ea;
+
+  --color-success-tint: #e3f2ea;
+  --color-success-text: #1f6b45;
+
+  --color-warning-tint: #fff1d6;
+  --color-warning-text: #7a4a00;
+  --color-warning-border: #f5d08a;
+
+  --color-danger-text: #a12828;
+  --color-danger-border: #d64545;
+
+  --color-disabled-bg: #eef1f6;
+  --color-disabled-text: #8a93a3;
+
+  /* Cards 16-20px; inputs 14-16px; buttons and chips use rounded-full (pills). */
+  --radius-card: 18px;
+  --radius-input: 15px;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans);
 }

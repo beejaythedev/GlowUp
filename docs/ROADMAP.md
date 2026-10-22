@@ -31,7 +31,7 @@ The schedule is tight. If a week slips, move "Later" items out, never the checks
 
 - [x] **M0-1** Create the Next.js app with TypeScript (strict), App Router, Tailwind, ESLint and Prettier.
   *Done when:* `npm run dev` shows a placeholder home page and lint passes.
-- [ ] **M0-2** Add the design tokens from `docs/DESIGN.md` (colours, font, radii, status colours) to Tailwind.
+- [x] **M0-2** Add the design tokens from `docs/DESIGN.md` (colours, font, radii, status colours) to Tailwind.
   *Done when:* a `/dev/tokens` page shows every token, and no component uses raw hex values.
 - [ ] **M0-3** Set up PostgreSQL and Prisma with `.env.example`.
   *Done when:* `npx prisma migrate dev` runs on a fresh machine following the README.
