@@ -280,10 +280,34 @@ and writes a handoff note before every session ends.
 > generic error (an earlier pass got this wrong — fixed so the attempt that triggers the lock
 > says so); correct password still refused while locked; show/hide toggle works. Deleted the
 > test account afterward.
-> **Next task:** M4-2 — role-based redirect after sign-in (receptionist → reception, stylist
-> → stylist today, manager → manager today, owner → owner overview). Those destination pages
-> don't exist yet (M5–M7 build them), so this will likely need small placeholder pages per
-> role for now, replaced as each milestone lands.
+> M4-2: `src/server/auth/roleHome.ts` — pure `roleHomePath(role)`, mapping each `StaffRole`
+> to its planned route from `docs/ARCHITECTURE.md`'s file tree (`RECEPTIONIST` →
+> `/staff/reception`, `STYLIST` → `/staff/stylist`, `BRANCH_MANAGER` → `/staff/manager`,
+> `OWNER` → `/staff/owner`). `src/server/auth/currentStaff.ts` — `getCurrentStaff()`, a
+> shared "read the session cookie, verify it, fetch the row, treat REMOVED as signed-out"
+> helper, pulled out so every staff page doesn't repeat that same seven lines.
+> `/staff/sign-in/actions.ts`'s sign-in action now redirects to `roleHomePath(staff.role)`
+> instead of the fixed `/staff` from M4-1. Since the real reception/stylist/manager/owner
+> screens don't exist until M5–M7, each destination is a small shared placeholder
+> (`src/components/staff/StaffSectionPlaceholder.tsx`) behind its real route — so M5-M7 just
+> replace the placeholder's content at the same path, no route or redirect-logic churn later.
+> `/staff` itself (M4-1's placeholder landing page) is now a plain dispatcher: signed in →
+> `roleHomePath`, signed out → `/staff/sign-in`. `/staff/sign-in` redirects away the same way
+> if a session cookie is already valid.
+> Scope note: these placeholder pages only check "is someone signed in", not "is this
+> *their* section" — a stylist can currently open `/staff/owner` and see the owner
+> placeholder. That's deliberately left for M4-3 ("server-side permission checks on every
+> staff page"), which is explicitly where that kind of role/branch authorization belongs
+> per the roadmap, not a gap introduced by this task.
+> One unrelated thing fixed in passing: `npm run check` failed on stale leftover rows in
+> the dev database from an earlier crashed test worker in this session (a `PrismaClientKnownRequestError`
+> unique-constraint chain in `src/server/bookings.test.ts`'s `beforeAll`/`afterAll` — each
+> crashed run left one more row behind, compounding). Deleted the stray branch/customer/
+> service rows by hand; not a code change, no regression in `bookings.test.ts` itself.
+> **Next task:** M4-3 — server-side permission checks on every staff page and API route,
+> with tests proving a stylist can't read another stylist's bookings and a manager can't
+> read another branch. This is also where the placeholder pages above should gain real
+> role-gating (e.g. a stylist redirected away from `/staff/owner`).
 > **Blockers or questions:** none open.
 
 ## Milestones
@@ -309,6 +333,7 @@ Newest first. One line per finished task.
 
 | Date | Task | What changed | Tests |
 |---|---|---|---|
+| 2026-10-27 | M4-2 | `roleHomePath`, `getCurrentStaff`, role-based sign-in redirect, placeholder `/staff/{reception,stylist,manager,owner}`, `/staff` now a dispatcher | `npm run check` (96 tests total), `npm run build`, scripted Playwright check (all 4 seeded roles land on their own section, already-signed-in redirects) |
 | 2026-10-27 | M4-1 | `/staff/sign-in` (phone + password, lockout), `src/server/auth/` (`password`, `lockout`, `session`), placeholder `/staff`, migration for `Staff` lockout fields | `npm run check` (92 tests total), `npm run build`, scripted Playwright end-to-end check (sign in, sign out, 5-attempt lockout, show/hide toggle) against a throwaway staff account |
 | 2026-10-27 | M3-7 | `e2e/booking.spec.ts` (guest books braids at Lekki, Welcome → confirmed), fixed stale `e2e/home.spec.ts`, `scripts/e2e-booking-db.ts` | `npm run e2e` (2 tests, run twice to confirm stability) |
 | 2026-10-27 | M3-6 | `src/server/messages/` (`MessageSender`, `ConsoleMessageSender`), `src/lib/confirmationMessage.ts`, wired into `/book/pay/actions.ts` | `npm run check` (78 tests total), `npm run build`, scripted Playwright end-to-end check (confirmation line verified in the dev server log, caught and fixed a doubled "GlowUp" prefix) |

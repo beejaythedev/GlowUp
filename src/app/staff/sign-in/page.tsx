@@ -1,7 +1,7 @@
-import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import type { Metadata } from "next";
-import { SESSION_COOKIE_NAME, verifySessionToken } from "@/server/auth/session";
+import { getCurrentStaff } from "@/server/auth/currentStaff";
+import { roleHomePath } from "@/server/auth/roleHome";
 import { SignInForm } from "./SignInForm";
 
 export const metadata: Metadata = {
@@ -12,10 +12,9 @@ export const metadata: Metadata = {
 export const instant = false;
 
 export default async function StaffSignInPage() {
-  const cookieStore = await cookies();
-  const token = cookieStore.get(SESSION_COOKIE_NAME)?.value;
-  if (token && verifySessionToken(token)) {
-    redirect("/staff");
+  const staff = await getCurrentStaff();
+  if (staff) {
+    redirect(roleHomePath(staff.role));
   }
 
   return <SignInForm />;

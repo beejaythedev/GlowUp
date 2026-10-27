@@ -6,6 +6,7 @@ import { z } from "zod";
 import { db } from "@/lib/db";
 import { normalizeNigerianPhone } from "@/lib/phone";
 import { evaluateSignInAttempt } from "@/server/auth/lockout";
+import { roleHomePath } from "@/server/auth/roleHome";
 import {
   createSessionToken,
   REMEMBERED_SESSION_SECONDS,
@@ -91,7 +92,5 @@ export async function signIn(_prevState: SignInState, formData: FormData): Promi
     ...(rememberMe ? { maxAge: REMEMBERED_SESSION_SECONDS } : {}),
   });
 
-  // Role-based destinations (reception/stylist/manager/owner home) are M4-2;
-  // this placeholder just proves sign-in itself works end to end.
-  redirect("/staff");
+  redirect(roleHomePath(staff.role));
 }
