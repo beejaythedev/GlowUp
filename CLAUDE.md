@@ -100,4 +100,5 @@ Fill these in during M0 and keep them current.
 - `npm test` — unit tests only
 - `npm run e2e` — end-to-end smoke tests
 - `npx prisma migrate dev` — apply database changes
-- `npx prisma db seed` — load sample branches, staff and services
+- `npx prisma db seed` (or `npm run db:seed`) — load sample branches, staff and services
+- `npm run db:print-lekki` — print today's Lekki schedule, to check the seed loaded correctly

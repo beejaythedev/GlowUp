@@ -16,7 +16,7 @@ datasource db {
 
 model Branch {
   id           String         @id @default(cuid())
-  name         String
+  name         String         @unique
   address      String
   /// Nail services (pedicure, manicure) are only bookable where this is true.
   offersNails  Boolean        @default(false)
@@ -49,7 +49,7 @@ model OpeningHours {
 
 model Service {
   id                 String    @id @default(cuid())
-  name               String
+  name               String    @unique
   priceKobo          Int
   /// For a fixed-duration service, minDurationMinutes == maxDurationMinutes.
   /// For a ranged service (e.g. braids 4–5 hrs): the schedule blocks the

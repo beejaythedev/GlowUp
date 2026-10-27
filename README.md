@@ -66,7 +66,8 @@ See `CLAUDE.md` for the authoritative, kept-current list. In short:
 | `npm run e2e` | End-to-end smoke tests (starts the dev server automatically) |
 | `npm run build` | Production build |
 | `npx prisma migrate dev` | Apply database changes |
-| `npx prisma db seed` | Load sample branches, staff and services (from M1-2) |
+| `npx prisma db seed` (or `npm run db:seed`) | Load sample branches, staff and services |
+| `npm run db:print-lekki` | Print today's Lekki schedule from the database, to check the seed loaded correctly |
 
 ## Project docs
 
