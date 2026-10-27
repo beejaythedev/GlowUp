@@ -83,7 +83,7 @@ The schedule is tight. If a week slips, move "Later" items out, never the checks
 - [x] **M3-1** Welcome page, matching `Welcome.dc.html`.
 - [x] **M3-2** Step 1, choose branch and service, matching `Main.dc.html`. Only services the branch offers.
 - [x] **M3-3** Step 2, choose stylist ("Any available" default), date and time from the availability engine, matching `Time.dc.html`.
-- [ ] **M3-4** Step 3, name and phone, booking summary, cancellation rule, hold countdown, matching `Review.dc.html`. Validate Nigerian phone numbers.
+- [x] **M3-4** Step 3, name and phone, booking summary, cancellation rule, hold countdown, matching `Review.dc.html`. Validate Nigerian phone numbers.
 - [ ] **M3-5** Pay deposit through the fake `PaymentProvider` (always succeeds or fails on demand), then confirmation page with booking reference, matching `Confirmed.dc.html`. A failed payment keeps the hold and lets the customer retry.
 - [ ] **M3-6** Confirmation message sent through the fake `MessageSender` (logged to console), including "please arrive by…".
 - [ ] **M3-7** End-to-end test: book braids at Lekki as a guest from start to confirmation.

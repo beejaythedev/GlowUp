@@ -156,12 +156,37 @@ and writes a handoff note before every session ends.
 > day instead, which showed the full 9:00am–2:00pm/10-minute grid exactly as expected.
 > Confirmed the Continue link resolves correctly for both a requested stylist and "Any
 > available" (resolving to a concrete stylist id with `stylistRequested=false`).
-> **Half-done:** M3 milestone — M3-1 through M3-3 done; M3-4 through M3-7 not started.
-> **Next task:** M3-4 — step 3, name and phone, booking summary, cancellation rule, hold
-> countdown, matching `Review.dc.html`. Validate Nigerian phone numbers. This is where
-> M2-3's `holdSlot` gets its first real caller.
-> **Blockers or questions:** work is on the `m3` branch (off `m2`, approved). Not yet
-> committed.
+> M3-4: `/book/review` (`page.tsx` + `BookingStep3Form.tsx` + `actions.ts` Server Action
+> `confirmBooking`), matching `Review.dc.html`. Name + Nigerian phone form (new
+> `src/lib/phone.ts`, `normalizeNigerianPhone`/`isValidNigerianPhone`, unit-tested — 11
+> digits, local `0` or `+234`/`234` country code, network prefix 7/8/9), booking summary
+> card, free-cancellation deadline computed from `Settings.freeCancellationHours`.
+> **Deliberate scope decision worth your sign-off:** the roadmap lists "hold countdown"
+> under M3-4, but the schema requires `Booking.customerId` NOT NULL — a hold can't exist
+> before we know who's booking, and name/phone are collected ON this same screen. Rather
+> than fake a countdown for a hold that doesn't exist yet (misleading), or add a
+> throwaway placeholder-customer pattern to work around the schema (meaningful extra
+> complexity for a practice project), I read the PRD's own wording — "a slot is held for
+> 10 minutes **while the customer pays**" — as support for creating the hold at
+> submission, not at page-load. Tapping "Pay ₦X deposit" is a Server Action that
+> validates input with Zod, re-checks the service/branch against the database (never
+> trusts the screen), upserts the Customer by phone, and calls M2-3's `holdSlot` for the
+> first time anywhere in the app — then redirects to `/book/pay?bookingId=...` (M3-5,
+> not built yet), where a real, accurate countdown belongs since the hold genuinely
+> exists by then.
+> Verified end-to-end against the dev database: submitted the form, confirmed the created
+> `Booking` row (correct `depositAmountKobo`, `depositStatus: PENDING`, `holdExpiresAt`
+> exactly 10 minutes after `createdAt`, customer upserted with the normalized phone),
+> then cleaned up the test row. Also verified the submit button stays disabled for an
+> invalid phone number.
+> **Half-done:** M3 milestone — M3-1 through M3-4 done; M3-5 through M3-7 not started.
+> **Next task:** M3-5 — pay the deposit through the fake `PaymentProvider`, then the
+> confirmation page. This is where the actual hold countdown belongs (see above), and
+> where the `PaymentProvider` interface from `docs/ARCHITECTURE.md` gets built for the
+> first time.
+> **Blockers or questions:** the hold-countdown placement above needs explicit sign-off
+> at the M3 checkpoint, same treatment as M1-1's BranchService simplification. Work is on
+> the `m3` branch (off `m2`, approved). Not yet committed.
 
 ## Milestones
 
@@ -186,6 +211,7 @@ Newest first. One line per finished task.
 
 | Date | Task | What changed | Tests |
 |---|---|---|---|
+| 2026-10-27 | M3-4 | `/book/review` step 3 (name/phone form, Server Action, first real `holdSlot` caller), `src/lib/phone.ts` | `npm run check` (69 tests total), `npm run build`, manual end-to-end check (verified the created DB row, then cleaned it up) |
 | 2026-10-27 | M3-3 | `/book/time` step 2 (stylist/date/time), `src/lib/lagosTime.ts` | `npm run check` (59 tests total), `npm run build`, visual + manual end-to-end check via Playwright |
 | 2026-10-27 | M3-2 | `/book` step 1 (branch + service choice), `formatDurationLabel`, `formatOpeningHoursLabel` | `npm run check` (54 tests total), `npm run build`, visual check via screenshot (3 states) |
 | 2026-10-27 | M3-1 | Welcome page (`src/app/page.tsx`), `Button` now supports `href` | `npm run check` (48 tests total), `npm run build`, visual check via screenshot |

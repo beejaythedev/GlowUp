@@ -1,6 +1,12 @@
 // Nigeria is WAT (UTC+1) year-round — no DST, so a fixed offset is exact.
 const LAGOS_OFFSET_MINUTES = 60;
 
+const WEEKDAY_LABELS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+const MONTH_LABELS = [
+  "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+  "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
+];
+
 export interface LagosDateParts {
   year: number;
   month: number; // 1–12
@@ -45,4 +51,15 @@ export function formatLagosClockTime(instant: Date): string {
   const period = hour24 >= 12 ? "pm" : "am";
   const hour12 = hour24 % 12 === 0 ? 12 : hour24 % 12;
   return `${hour12}:${String(minute).padStart(2, "0")} ${period}`;
+}
+
+/** "Sat 31 Oct" — the Africa/Lagos calendar date of an instant. */
+export function formatLagosDateLabel(instant: Date): string {
+  const parts = lagosDateParts(instant);
+  return `${WEEKDAY_LABELS[parts.weekday]} ${parts.day} ${MONTH_LABELS[parts.month - 1]}`;
+}
+
+/** The single-letter-weekday label used on the booking date strip, e.g. "Sat". */
+export function lagosWeekdayLabel(weekday: number): string {
+  return WEEKDAY_LABELS[weekday];
 }

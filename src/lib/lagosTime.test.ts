@@ -1,5 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { addLagosDays, formatLagosClockTime, lagosDateParts, lagosInstant } from "./lagosTime";
+import {
+  addLagosDays,
+  formatLagosClockTime,
+  formatLagosDateLabel,
+  lagosDateParts,
+  lagosInstant,
+  lagosWeekdayLabel,
+} from "./lagosTime";
 
 describe("lagosDateParts", () => {
   it("shifts a UTC instant to Africa/Lagos wall-clock date parts", () => {
@@ -33,5 +40,18 @@ describe("formatLagosClockTime", () => {
   it("formats noon and midnight correctly", () => {
     expect(formatLagosClockTime(lagosInstant(2026, 10, 31, 12, 0))).toBe("12:00 pm");
     expect(formatLagosClockTime(lagosInstant(2026, 10, 31, 0, 0))).toBe("12:00 am");
+  });
+});
+
+describe("formatLagosDateLabel", () => {
+  it("formats a date as weekday, day and month", () => {
+    expect(formatLagosDateLabel(lagosInstant(2026, 10, 31, 9, 0))).toBe("Sat 31 Oct");
+  });
+});
+
+describe("lagosWeekdayLabel", () => {
+  it("returns the three-letter label for a weekday number", () => {
+    expect(lagosWeekdayLabel(0)).toBe("Sun");
+    expect(lagosWeekdayLabel(6)).toBe("Sat");
   });
 });

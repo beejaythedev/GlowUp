@@ -1,7 +1,13 @@
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { db } from "@/lib/db";
-import { addLagosDays, lagosDateParts, lagosInstant } from "@/lib/lagosTime";
+import {
+  addLagosDays,
+  formatLagosDateLabel,
+  lagosDateParts,
+  lagosInstant,
+  lagosWeekdayLabel,
+} from "@/lib/lagosTime";
 import type { AvailabilityBooking } from "@/server/availability";
 import { BookingStep2Form, type DayOption, type StylistOption } from "./BookingStep2Form";
 
@@ -13,7 +19,6 @@ export const metadata: Metadata = {
 export const instant = false;
 
 const WINDOW_DAYS = 6;
-const WEEKDAY_LABELS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
 interface PageProps {
   searchParams: Promise<{ branchId?: string; serviceId?: string }>;
@@ -62,9 +67,9 @@ export default async function BookTimePage({ searchParams }: PageProps) {
     : [];
 
   const dayOptions: DayOption[] = days.map((day) => ({
-    label: WEEKDAY_LABELS[day.weekday],
+    label: lagosWeekdayLabel(day.weekday),
     dayNumber: day.day,
-    dateLabel: formatDateLabel(day),
+    dateLabel: formatLagosDateLabel(lagosInstant(day.year, day.month, day.day, 0, 0)),
     opensAt: day.opensAt,
     closesAt: day.closesAt,
     stylists: stylists.map((stylist) => ({
@@ -117,12 +122,4 @@ interface LagosDay {
   weekday: number;
   opensAt: Date | null;
   closesAt: Date | null;
-}
-
-function formatDateLabel(day: LagosDay): string {
-  const months = [
-    "Jan", "Feb", "Mar", "Apr", "May", "Jun",
-    "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
-  ];
-  return `${WEEKDAY_LABELS[day.weekday]} ${day.day} ${months[day.month - 1]}`;
 }
