@@ -65,13 +65,21 @@ and writes a handoff note before every session ends.
 > braids-2pm-on-7pm-close example exactly. Also folded in "ignore expired, unpaid holds"
 > (the M2-3 behaviour) now, since M2-1's own description already asks for it. 11 unit
 > tests cover all six required scenarios plus hold/cancellation edge cases.
-> **Half-done:** M2 milestone — M2-1 done; M2-2 (any-stylist soonest-free selection),
-> M2-3 (slot hold with concurrency test) and M2-4 (soonest-free list for reception) not
-> started.
-> **Next task:** M2-2 — "any available stylist" selection: soonest free, ties broken by
-> fewer bookings that day.
-> **Blockers or questions:** work is on a new `m2` branch (off `m1`, which the supervisor
-> has pushed and approved). Not yet committed.
+> M2-2: `pickAnyAvailableStylist` in `src/server/availability.ts`, plus a private
+> `getStylistSoonestFree` helper that reuses M2-1's per-stylist gap/candidate logic
+> (short blocking, not the requested-stylist long-blocking lens, since "any" assignment
+> doesn't carry that constraint). Picks whichever stylist's own earliest slot is soonest;
+> ties broken by counting each tied stylist's active (non-cancelled) bookings that day,
+> fewest wins. 5 new unit tests: soonest-free pick, tie-break, cancelled bookings excluded
+> from the tie-break count, no stylist free that day, branch closed that day.
+> **Half-done:** M2 milestone — M2-1 and M2-2 done; M2-3 (slot hold with concurrency
+> test) and M2-4 (soonest-free list for reception) not started.
+> **Next task:** M2-3 — slot hold: holding a slot reserves it for 10 minutes; a test must
+> fire two simultaneous holds for the same slot and prove exactly one succeeds. This is
+> the first task needing an actual database transaction/constraint, not just pure
+> functions.
+> **Blockers or questions:** work is on the `m2` branch (off `m1`, approved). Not yet
+> committed.
 
 ## Milestones
 
@@ -96,6 +104,7 @@ Newest first. One line per finished task.
 
 | Date | Task | What changed | Tests |
 |---|---|---|---|
+| 2026-10-27 | M2-2 | `pickAnyAvailableStylist` in `src/server/availability.ts` | `npm run check` (39 unit tests total), `npm run build` |
 | 2026-10-27 | M2-1 | `src/server/availability.ts` — `getAvailableSlots` | `npm run check` (34 unit tests total), `npm run build` |
 | 2026-10-27 | M1 checkpoint | Added `Booking.cancelledAt` (nullable), needed for the M8-2 refund window | `npm run check`, `npm run build`, re-ran `npx prisma db seed` |
 | 2026-10-27 | M1-3 | `src/server/money.ts` (deposit, balance due), `src/server/status.ts` (display status, wait time) | `npm run check` (23 unit tests total), `npm run build` |

@@ -161,3 +161,65 @@ export function getAvailableSlots(input: GetAvailableSlotsInput): Date[] {
 
   return Array.from(candidatesByTime.values()).sort((a, b) => a.getTime() - b.getTime());
 }
+
+/** The earliest time this one stylist could start the service, or null if none fits that day. */
+function getStylistSoonestFree(
+  stylist: AvailabilityStylist,
+  service: GetAvailableSlotsInput["service"],
+  openingHours: { opensAt: Date; closesAt: Date } | null,
+  now: Date,
+): Date | null {
+  if (!openingHours) return null;
+  const { opensAt: windowStart, closesAt: windowEnd } = openingHours;
+  const lastStartOfDay = addMinutes(windowEnd, -service.maxDurationMinutes);
+  if (lastStartOfDay.getTime() < windowStart.getTime()) return null;
+
+  const candidates = stylistCandidates(
+    stylist,
+    service,
+    windowStart,
+    windowEnd,
+    lastStartOfDay,
+    false,
+    now,
+  ).filter((c) => c.getTime() >= now.getTime());
+
+  return candidates.length > 0 ? candidates[0] : null;
+}
+
+export interface PickedStylist {
+  stylistId: string;
+  startsAt: Date;
+}
+
+/**
+ * "Any available stylist": the stylist who becomes free soonest; ties go to
+ * whoever has fewer bookings that day (docs/ROADMAP.md, M2-2). Used once a
+ * customer has chosen "Any available" (M2-1's `getAvailableSlots` already
+ * confirms a time is bookable by *someone* — this resolves it to one
+ * specific stylist for the booking record).
+ */
+export function pickAnyAvailableStylist(
+  stylists: AvailabilityStylist[],
+  service: GetAvailableSlotsInput["service"],
+  openingHours: { opensAt: Date; closesAt: Date } | null,
+  now: Date,
+): PickedStylist | null {
+  const options = stylists
+    .map((stylist) => {
+      const soonest = getStylistSoonestFree(stylist, service, openingHours, now);
+      if (!soonest) return null;
+      const bookingsToday = stylist.bookings.filter((b) => isBookingBlocking(b, now)).length;
+      return { stylistId: stylist.id, startsAt: soonest, bookingsToday };
+    })
+    .filter((option): option is NonNullable<typeof option> => option !== null);
+
+  if (options.length === 0) return null;
+
+  options.sort((a, b) => {
+    const byTime = a.startsAt.getTime() - b.startsAt.getTime();
+    return byTime !== 0 ? byTime : a.bookingsToday - b.bookingsToday;
+  });
+
+  return { stylistId: options[0].stylistId, startsAt: options[0].startsAt };
+}

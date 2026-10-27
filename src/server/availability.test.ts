@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { getAvailableSlots, type AvailabilityBooking } from "./availability";
+import {
+  getAvailableSlots,
+  pickAnyAvailableStylist,
+  type AvailabilityBooking,
+} from "./availability";
 
 // A fixed Saturday, used as "today" for every test unless noted otherwise.
 const DAY = "2026-10-31"; // Saturday
@@ -223,5 +227,76 @@ describe("getAvailableSlots", () => {
     });
 
     expect(slots).toContainEqual(time(10, 0));
+  });
+});
+
+describe("pickAnyAvailableStylist", () => {
+  it("picks the stylist who becomes free soonest", () => {
+    const busyUntilNoon = { id: "busy", bookings: [booking({ startsAt: time(9, 0), serviceMinDurationMinutes: 180 })] };
+    const freeAllDay = { id: "free", bookings: [] };
+
+    const picked = pickAnyAvailableStylist([busyUntilNoon, freeAllDay], washAndSet, MON_SAT_HOURS, EARLY_NOW);
+
+    expect(picked?.stylistId).toBe("free");
+    expect(picked?.startsAt).toEqual(time(9, 0));
+  });
+
+  it("breaks a tie by fewer bookings that day", () => {
+    const busierStylist = {
+      id: "busier",
+      bookings: [
+        booking({ startsAt: time(13, 0) }),
+        booking({ startsAt: time(15, 0) }),
+      ],
+    };
+    const quieterStylist = { id: "quieter", bookings: [booking({ startsAt: time(13, 0) })] };
+
+    // Both are free from 9:00 (nothing is booked before 13:00 for either).
+    const picked = pickAnyAvailableStylist(
+      [busierStylist, quieterStylist],
+      washAndSet,
+      MON_SAT_HOURS,
+      EARLY_NOW,
+    );
+
+    expect(picked?.stylistId).toBe("quieter");
+    expect(picked?.startsAt).toEqual(time(9, 0));
+  });
+
+  it("ignores cancelled bookings when counting bookings for the tie-break", () => {
+    const stylistA = {
+      id: "a",
+      bookings: [
+        booking({ startsAt: time(13, 0) }),
+        booking({ startsAt: time(15, 0), status: "CANCELLED" }),
+      ],
+    };
+    const stylistB = { id: "b", bookings: [booking({ startsAt: time(13, 0) })] };
+
+    // Both have one *active* booking, so it's a true tie — either may win,
+    // but it must not be decided by stylistA's cancelled booking.
+    const picked = pickAnyAvailableStylist([stylistA, stylistB], washAndSet, MON_SAT_HOURS, EARLY_NOW);
+
+    expect(picked?.startsAt).toEqual(time(9, 0));
+    expect(["a", "b"]).toContain(picked?.stylistId);
+  });
+
+  it("returns null when no stylist has any time free that day", () => {
+    const fullyBooked = { id: "full", bookings: [booking({ startsAt: time(9, 0), serviceMinDurationMinutes: 600 })] };
+
+    const picked = pickAnyAvailableStylist([fullyBooked], washAndSet, MON_SAT_HOURS, EARLY_NOW);
+
+    expect(picked).toBeNull();
+  });
+
+  it("returns null when the branch is closed that day", () => {
+    const picked = pickAnyAvailableStylist(
+      [{ id: "s1", bookings: [] }],
+      washAndSet,
+      null,
+      EARLY_NOW,
+    );
+
+    expect(picked).toBeNull();
   });
 });
