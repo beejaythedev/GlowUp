@@ -304,10 +304,34 @@ and writes a handoff note before every session ends.
 > unique-constraint chain in `src/server/bookings.test.ts`'s `beforeAll`/`afterAll` — each
 > crashed run left one more row behind, compounding). Deleted the stray branch/customer/
 > service rows by hand; not a code change, no regression in `bookings.test.ts` itself.
-> **Next task:** M4-3 — server-side permission checks on every staff page and API route,
-> with tests proving a stylist can't read another stylist's bookings and a manager can't
-> read another branch. This is also where the placeholder pages above should gain real
-> role-gating (e.g. a stylist redirected away from `/staff/owner`).
+> M4-3: `src/server/permissions.ts` (the file `docs/ARCHITECTURE.md` already names for this)
+> — `canViewBooking(staff, booking)` (a stylist only their own; a receptionist or branch
+> manager only their branch; the owner, anything — the exact wording of `CLAUDE.md` rule 3),
+> `canViewBranch(staff, branchId)`, and `canAccessStaffSection(staff, section)` (which
+> `/staff/<section>` pages a role may open; the owner, all of them). All pure and unit
+> tested directly against the roadmap's own done-when wording — a stylist can't view
+> another stylist's booking, a branch manager can't view another branch's.
+> No real booking-list page exists yet to call `canViewBooking`/`canViewBranch` against —
+> those come with M5 (reception schedule) and M6 (stylist today) — so today they're tested
+> at the pure-function level, ready to wire into those queries when built. There are also no
+> `/api/*` routes yet (M8 adds the first ones); "every API route" has nothing to check yet.
+> What *is* real now: `src/server/auth/requireStaffSection.ts` wraps
+> `getCurrentStaff`/`canAccessStaffSection`/`roleHomePath` into one guard, now used by all
+> four `/staff/<section>` placeholder pages — closing the gap flagged in M4-2 (a stylist
+> could open `/staff/owner`). A signed-in staff member visiting a section that isn't theirs
+> is redirected to their own, not shown someone else's screen, not just hidden navigation
+> (`CLAUDE.md` rule 3 — "never only by hiding buttons").
+> Verified live: Blessing (stylist) lands on `/staff/stylist` and is bounced back there from
+> `/staff/reception`, `/staff/manager` and `/staff/owner`; Tolu (owner) can open all four;
+> signed out, every section redirects to sign-in. (First pass of the check script had a bug,
+> not the app — `waitForURL(/\/staff\//)` also matches `/staff/sign-in` itself, so it looked
+> like sign-in was failing when it wasn't; fixed the script, not the code, and re-verified.)
+> **M4 milestone is now fully done** — all of M4-1 through M4-3 complete. Ready for the
+> supervisor checkpoint in `docs/ROADMAP.md`: sign in as each seeded role. Demo password for
+> every seeded staff account is `password1` (phones listed in `prisma/seed.ts`, e.g. Ada the
+> Lekki receptionist is `0802 000 0002`).
+> **Next task:** none — waiting on the M4 checkpoint before M5 (Reception) starts, per
+> `CLAUDE.md` rule 6.
 > **Blockers or questions:** none open.
 
 ## Milestones
@@ -318,7 +342,7 @@ and writes a handoff note before every session ends.
 | M1 Data model and seed | Approved | 2026-10-27 |
 | M2 Availability engine | Approved | 2026-10-27 |
 | M3 Customer booking | Approved | 2026-10-27 |
-| M4 Staff sign-in and roles | In progress | |
+| M4 Staff sign-in and roles | Ready for review | |
 | M5 Reception | Not started | |
 | M6 Stylist | Not started | |
 | M7 Manager and owner | Not started | |
@@ -333,6 +357,7 @@ Newest first. One line per finished task.
 
 | Date | Task | What changed | Tests |
 |---|---|---|---|
+| 2026-10-27 | M4-3 | `src/server/permissions.ts` (`canViewBooking`, `canViewBranch`, `canAccessStaffSection`), `requireStaffSection` guard wired into all 4 staff section placeholder pages | `npm run check` (108 tests total), `npm run build`, scripted Playwright check (stylist bounced from every other section, owner can open all 4, signed-out redirects) |
 | 2026-10-27 | M4-2 | `roleHomePath`, `getCurrentStaff`, role-based sign-in redirect, placeholder `/staff/{reception,stylist,manager,owner}`, `/staff` now a dispatcher | `npm run check` (96 tests total), `npm run build`, scripted Playwright check (all 4 seeded roles land on their own section, already-signed-in redirects) |
 | 2026-10-27 | M4-1 | `/staff/sign-in` (phone + password, lockout), `src/server/auth/` (`password`, `lockout`, `session`), placeholder `/staff`, migration for `Staff` lockout fields | `npm run check` (92 tests total), `npm run build`, scripted Playwright end-to-end check (sign in, sign out, 5-attempt lockout, show/hide toggle) against a throwaway staff account |
 | 2026-10-27 | M3-7 | `e2e/booking.spec.ts` (guest books braids at Lekki, Welcome → confirmed), fixed stale `e2e/home.spec.ts`, `scripts/e2e-booking-db.ts` | `npm run e2e` (2 tests, run twice to confirm stability) |

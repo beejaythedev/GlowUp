@@ -1,7 +1,6 @@
-import { redirect } from "next/navigation";
 import type { Metadata } from "next";
 import { StaffSectionPlaceholder } from "@/components/staff/StaffSectionPlaceholder";
-import { getCurrentStaff } from "@/server/auth/currentStaff";
+import { requireStaffSection } from "@/server/auth/requireStaffSection";
 
 export const metadata: Metadata = {
   title: "Owner overview — GlowUp Salons",
@@ -11,8 +10,7 @@ export const metadata: Metadata = {
 export const instant = false;
 
 export default async function OwnerOverviewPage() {
-  const staff = await getCurrentStaff();
-  if (!staff) redirect("/staff/sign-in");
+  const staff = await requireStaffSection("owner");
 
   return (
     <StaffSectionPlaceholder
