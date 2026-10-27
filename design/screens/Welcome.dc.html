@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Welcome to GlowUp</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#2456D6}a:hover{color:#173E9E}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; box-sizing: border-box; background: #F6F8FC; font-family: 'Plus Jakarta Sans', system-ui, sans-serif; color: #0F1A2B; display: flex; flex-direction: column">
+<div style="position: relative; overflow: hidden; background: #0B1F3A; padding: 28px 24px 40px; border-radius: 0 0 32px 32px; display: flex; flex-direction: column; gap: 56px">
+<div aria-hidden="true" style="position: absolute; right: -60px; top: -40px; width: 220px; height: 220px; border-radius: 110px; background: #2456D6"></div>
+<div aria-hidden="true" style="position: absolute; right: 70px; top: 120px; width: 90px; height: 90px; border-radius: 45px; background: #FF8A5B"></div>
+<div aria-hidden="true" style="position: absolute; left: -40px; bottom: -70px; width: 160px; height: 160px; border-radius: 80px; border: 2px solid #2A4470"></div>
+<div style="position: relative; font-size: 22px; font-weight: 800; letter-spacing: -0.03em; color: #FFFFFF">GlowUp</div>
+<div style="position: relative; display: flex; flex-direction: column; gap: 14px; padding-top: 80px">
+<h1 style="margin: 0; font-size: 36px; line-height: 1.1; font-weight: 800; letter-spacing: -0.03em; color: #FFFFFF">Book your next glow in two minutes.</h1>
+<p style="margin: 0; font-size: 15px; line-height: 1.5; color: #D6E2F7">No calls, no waiting on hold. Pick your service, stylist and time at any of our four branches.</p>
+</div>
+</div>
+<div style="padding: 28px 24px 0; display: flex; flex-direction: column; gap: 18px; flex: 1; min-height: 0">
+<div style="display: flex; gap: 14px; align-items: center">
+<div style="flex: none; width: 44px; height: 44px; border-radius: 14px; background: #E8EFFD; display: flex; align-items: center; justify-content: center">
+<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#2456D6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>
+</div>
+<div style="display: flex; flex-direction: column; gap: 2px"><span style="font-size: 15px; font-weight: 700">Live availability</span><span style="font-size: 13px; color: #5B6678">Only real open slots, never double-booked</span></div>
+</div>
+<div style="display: flex; gap: 14px; align-items: center">
+<div style="flex: none; width: 44px; height: 44px; border-radius: 14px; background: #FFEDE4; display: flex; align-items: center; justify-content: center">
+<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#A8461F" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l8 4v5c0 4.5-3.4 8.3-8 9-4.6-.7-8-4.5-8-9V7z"/><path d="M9 12l2 2 4-4"/></svg>
+</div>
+<div style="display: flex; flex-direction: column; gap: 2px"><span style="font-size: 15px; font-weight: 700">Small, safe deposit</span><span style="font-size: 13px; color: #5B6678">20% to hold your slot, refundable up to 24 hrs</span></div>
+</div>
+<div style="display: flex; gap: 14px; align-items: center">
+<div style="flex: none; width: 44px; height: 44px; border-radius: 14px; background: #E0F3FA; display: flex; align-items: center; justify-content: center">
+<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#0B6E99" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8a6 6 0 1112 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.9 1.9 0 003.4 0"/></svg>
+</div>
+<div style="display: flex; flex-direction: column; gap: 2px"><span style="font-size: 15px; font-weight: 700">Reminders by SMS</span><span style="font-size: 13px; color: #5B6678">So you never miss your appointment</span></div>
+</div>
+</div>
+<footer style="padding: 16px 24px 28px; display: flex; flex-direction: column; gap: 14px; align-items: stretch">
+<a href="Main.dc.html" style="display: flex; align-items: center; justify-content: center; gap: 10px; min-height: 56px; border-radius: 28px; background: #2456D6; color: #FFFFFF; font-size: 16px; font-weight: 700; text-decoration: none">Book an appointment
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+</a>
+<div style="text-align: center; font-size: 14px; color: #5B6678">GlowUp staff? <a href="StaffSignIn.dc.html" style="font-weight: 700">Sign in</a></div>
+</footer>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+renderVals() {
+return {};
+}
+}
+</script>
+</body>
+</html>

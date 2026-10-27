@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Owner overview</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#2456D6}a:hover{color:#173E9E}
+td,th{padding:13px 14px;text-align:left;border-bottom:1px solid #EEF1F6;white-space:nowrap}
+th{font-size:12px;font-weight:600;color:#5B6678}
+</style>
+</helmet>
+<div style="min-height: 900px; box-sizing: border-box; background: #F6F8FC; font-family: 'Plus Jakarta Sans', system-ui, sans-serif; color: #0F1A2B">
+<nav style="background: #0B1F3A; color: #FFFFFF; padding: 12px 24px; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px">
+<div style="display: flex; align-items: center; gap: 14px; flex-wrap: wrap">
+<span style="font-size: 20px; font-weight: 800; letter-spacing: -0.03em">GlowUp</span>
+<span style="font-size: 12px; font-weight: 700; padding: 4px 10px; border-radius: 12px; background: #FF8A5B; color: #0B1F3A">Owner</span>
+<a href="OwnerOverview.dc.html" style="font-size: 14px; color: #FFFFFF; font-weight: 700; text-decoration: none; border-bottom: 2px solid #FF8A5B; padding: 6px 0">Overview</a>
+<a href="OwnerStaff.dc.html" style="font-size: 14px; color: #C7D4EA; text-decoration: none; padding: 6px 0">Staff and access</a>
+<a href="OwnerSettings.dc.html" style="font-size: 14px; color: #C7D4EA; text-decoration: none; padding: 6px 0">Settings</a>
+</div>
+<div style="display: flex; align-items: center; gap: 12px">
+<span style="font-size: 14px">Tolu</span>
+<span style="width: 32px; height: 32px; border-radius: 16px; background: #FF8A5B; color: #0B1F3A; display: inline-flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 800">T</span>
+</div>
+</nav>
+<div style="max-width: 1360px; margin: 0 auto; padding: 24px; display: flex; flex-direction: column; gap: 20px">
+<div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-end; gap: 16px">
+<div style="display: flex; flex-direction: column; gap: 6px">
+<h1 style="margin: 0; font-size: 28px; font-weight: 800; letter-spacing: -0.03em">Good morning, Tolu</h1>
+<div style="font-size: 14px; color: #5B6678">All four branches · this week, Mon 26 – Sat 31 Oct</div>
+</div>
+<div style="display: flex; flex-wrap: wrap; gap: 6px">
+<button aria-pressed="true" style="all: unset; min-height: 40px; padding: 0 16px; display: flex; align-items: center; border-radius: 20px; background: #0B1F3A; color: #FFFFFF; font-size: 13px; font-weight: 700; cursor: pointer">All branches</button>
+<button style="all: unset; min-height: 40px; padding: 0 14px; display: flex; align-items: center; border-radius: 20px; border: 1px solid #CDD6E3; font-size: 13px; cursor: pointer">Lekki</button>
+<button style="all: unset; min-height: 40px; padding: 0 14px; display: flex; align-items: center; border-radius: 20px; border: 1px solid #CDD6E3; font-size: 13px; cursor: pointer">Ikeja</button>
+<button style="all: unset; min-height: 40px; padding: 0 14px; display: flex; align-items: center; border-radius: 20px; border: 1px solid #CDD6E3; font-size: 13px; cursor: pointer">Yaba</button>
+<button style="all: unset; min-height: 40px; padding: 0 14px; display: flex; align-items: center; border-radius: 20px; border: 1px solid #CDD6E3; font-size: 13px; cursor: pointer">Surulere</button>
+</div>
+</div>
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px">
+<div style="background: #0B1F3A; color: #FFFFFF; border-radius: 18px; padding: 16px 18px; display: flex; flex-direction: column; gap: 4px"><span style="font-size: 13px; color: #C7D4EA">Bookings this week</span><span style="font-size: 30px; font-weight: 800; letter-spacing: -0.02em">214</span><span style="font-size: 12px; color: #C7D4EA">Across 4 branches</span></div>
+<div style="background: #FFFFFF; border: 1px solid #E1E7F0; border-radius: 18px; padding: 16px 18px; display: flex; flex-direction: column; gap: 4px"><span style="font-size: 13px; color: #5B6678">Booked online</span><span style="font-size: 30px; font-weight: 800; letter-spacing: -0.02em">58%</span><span style="font-size: 12px; color: #5B6678">Target: at least 40%</span></div>
+<div style="background: #FFFFFF; border: 1px solid #E1E7F0; border-radius: 18px; padding: 16px 18px; display: flex; flex-direction: column; gap: 4px"><span style="font-size: 13px; color: #5B6678">No-show rate</span><span style="font-size: 30px; font-weight: 800; letter-spacing: -0.02em">7%</span><span style="font-size: 12px; color: #5B6678">15 of 214 · target under 10%</span></div>
+<div style="background: #FFFFFF; border: 1px solid #E1E7F0; border-radius: 18px; padding: 16px 18px; display: flex; flex-direction: column; gap: 4px"><span style="font-size: 13px; color: #5B6678">Deposits received</span><span style="font-size: 30px; font-weight: 800; letter-spacing: -0.02em">₦486,000</span><span style="font-size: 12px; color: #5B6678">This week</span></div>
+</div>
+<div style="display: flex; flex-wrap: wrap; gap: 20px; align-items: flex-start">
+<section style="flex: 999 1 560px; min-width: 0; background: #FFFFFF; border: 1px solid #E1E7F0; border-radius: 20px; padding: 8px 6px 6px">
+<div style="padding: 10px 14px"><h2 style="margin: 0; font-size: 17px; font-weight: 800">Branches compared</h2></div>
+<div style="overflow-x: auto">
+<table style="width: 100%; min-width: 680px; border-collapse: collapse; font-size: 14px">
+<thead><tr><th>Branch</th><th>Bookings (week)</th><th>Waiting now</th><th>Longest wait</th><th>No-shows</th><th>Deposits</th><th>Status</th></tr></thead>
+<tbody>
+<tr><td style="font-weight: 700">Lekki</td><td>72</td><td>1</td><td>6 min</td><td>5</td><td>₦162,400</td><td><span style="font-size: 12px; font-weight: 700; padding: 4px 9px; border-radius: 10px; background: #E3F2EA; color: #1F6B45">On track</span></td></tr>
+<tr style="background: #FFF9EC"><td style="font-weight: 700">Ikeja</td><td>56</td><td style="font-weight: 700; color: #7A4A00">3</td><td style="font-weight: 700; color: #7A4A00">19 min</td><td>4</td><td>₦118,800</td><td><span style="font-size: 12px; font-weight: 700; padding: 4px 9px; border-radius: 10px; background: #FFF1D6; color: #7A4A00">Wait over 15 min</span></td></tr>
+<tr><td style="font-weight: 700">Yaba</td><td>46</td><td>0</td><td>–</td><td>2</td><td>₦104,000</td><td><span style="font-size: 12px; font-weight: 700; padding: 4px 9px; border-radius: 10px; background: #E3F2EA; color: #1F6B45">On track</span></td></tr>
+<tr><td style="font-weight: 700; border-bottom: 0">Surulere</td><td style="border-bottom: 0">40</td><td style="border-bottom: 0">1</td><td style="border-bottom: 0">4 min</td><td style="border-bottom: 0">4</td><td style="border-bottom: 0">₦100,800</td><td style="border-bottom: 0"><span style="font-size: 12px; font-weight: 700; padding: 4px 9px; border-radius: 10px; background: #E3F2EA; color: #1F6B45">On track</span></td></tr>
+</tbody>
+</table>
+</div>
+<div style="padding: 18px 14px 12px; display: flex; flex-direction: column; gap: 12px">
+<h3 style="margin: 0; font-size: 14px; font-weight: 700; color: #5B6678">Bookings this week by branch</h3>
+<div style="display: grid; grid-template-columns: 90px minmax(0, 1fr) 36px; gap: 10px 12px; align-items: center; font-size: 13px">
+<span>Lekki</span><div style="height: 14px; border-radius: 7px; background: #EEF1F6"><div style="width: 100%; height: 14px; border-radius: 7px; background: #2456D6"></div></div><span style="font-weight: 700; text-align: right">72</span>
+<span>Ikeja</span><div style="height: 14px; border-radius: 7px; background: #EEF1F6"><div style="width: 78%; height: 14px; border-radius: 7px; background: #2456D6"></div></div><span style="font-weight: 700; text-align: right">56</span>
+<span>Yaba</span><div style="height: 14px; border-radius: 7px; background: #EEF1F6"><div style="width: 64%; height: 14px; border-radius: 7px; background: #2456D6"></div></div><span style="font-weight: 700; text-align: right">46</span>
+<span>Surulere</span><div style="height: 14px; border-radius: 7px; background: #EEF1F6"><div style="width: 56%; height: 14px; border-radius: 7px; background: #2456D6"></div></div><span style="font-weight: 700; text-align: right">40</span>
+</div>
+</div>
+</section>
+<aside style="flex: 1 1 300px; min-width: 0; display: flex; flex-direction: column; gap: 16px">
+<div style="background: #FFFFFF; border: 1px solid #E1E7F0; border-radius: 20px; padding: 20px; display: flex; flex-direction: column; gap: 14px">
+<h2 style="margin: 0; font-size: 17px; font-weight: 800">Needs your attention</h2>
+<div style="display: flex; gap: 12px; align-items: flex-start">
+<span style="flex: none; width: 36px; height: 36px; border-radius: 12px; background: #FFF1D6; display: flex; align-items: center; justify-content: center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#7A4A00" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span>
+<div style="font-size: 14px; line-height: 1.45"><strong>Ikeja</strong>: 3 customers waiting, the longest for 19 minutes.</div>
+</div>
+<div style="display: flex; gap: 12px; align-items: flex-start">
+<span style="flex: none; width: 36px; height: 36px; border-radius: 12px; background: #E8EFFD; display: flex; align-items: center; justify-content: center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#173E9E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="6" width="18" height="13" rx="2"/><path d="M3 10h18"/></svg></span>
+<div style="font-size: 14px; line-height: 1.45">4 phone bookings for tomorrow haven't paid their deposit yet.</div>
+</div>
+</div>
+<a href="OwnerStaff.dc.html" style="display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 60px; padding: 0 20px; border-radius: 20px; background: #0B1F3A; color: #FFFFFF; font-size: 15px; font-weight: 700; text-decoration: none">Manage staff and access
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+</aside>
+</div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":900}}'>
+class Component extends DCLogic {
+renderVals() {
+return {};
+}
+}
+</script>
+</body>
+</html>

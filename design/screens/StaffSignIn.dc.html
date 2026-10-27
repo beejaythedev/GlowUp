@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Staff sign in</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#2456D6}a:hover{color:#173E9E}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; box-sizing: border-box; background: #F6F8FC; font-family: 'Plus Jakarta Sans', system-ui, sans-serif; color: #0F1A2B; display: flex; flex-direction: column">
+<header style="padding: 20px 24px 0; display: flex; justify-content: space-between; align-items: center">
+<a href="Welcome.dc.html" aria-label="Back" style="display: flex; align-items: center; justify-content: center; width: 44px; height: 44px; margin-left: -12px; color: #0F1A2B">
+<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg>
+</a>
+<span style="display: inline-flex; align-items: center; min-height: 28px; padding: 0 12px; border-radius: 14px; background: #0B1F3A; color: #FFFFFF; font-size: 12px; font-weight: 700; letter-spacing: 0.02em">STAFF</span>
+</header>
+<div style="padding: 32px 24px 0; display: flex; flex-direction: column; gap: 10px">
+<div aria-hidden="true" style="width: 56px; height: 56px; border-radius: 18px; background: #2456D6; display: flex; align-items: center; justify-content: center; margin-bottom: 8px">
+<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="7" r="3"/><circle cx="6" cy="17" r="3"/><path d="M8.5 8.5L20 18M8.5 15.5L20 6"/></svg>
+</div>
+<h1 style="margin: 0; font-size: 30px; line-height: 1.15; font-weight: 800; letter-spacing: -0.03em">Welcome back</h1>
+<p style="margin: 0; font-size: 15px; line-height: 1.5; color: #5B6678">Sign in to see today's schedule. For receptionists, stylists, managers and the owner.</p>
+</div>
+<form style="padding: 28px 24px 0; display: flex; flex-direction: column; gap: 16px; flex: 1; min-height: 0">
+<div style="display: flex; flex-direction: column; gap: 6px">
+<label for="staff-phone" style="font-size: 13px; font-weight: 600; color: #5B6678">Phone number</label>
+<input id="staff-phone" type="tel" autocomplete="username" placeholder="0803 000 0000" style="box-sizing: border-box; height: 52px; padding: 0 16px; border-radius: 16px; border: 1px solid #CDD6E3; background: #FFFFFF; font: inherit; font-size: 15px; color: #0F1A2B">
+</div>
+<div style="display: flex; flex-direction: column; gap: 6px">
+<label for="staff-password" style="font-size: 13px; font-weight: 600; color: #5B6678">Password</label>
+<div style="display: flex; align-items: center; height: 52px; border-radius: 16px; border: 1px solid #CDD6E3; background: #FFFFFF; padding: 0 6px 0 16px">
+<input id="staff-password" type="password" autocomplete="current-password" value="password1" style="flex: 1; min-width: 0; border: 0; outline-offset: 4px; background: transparent; font: inherit; font-size: 15px; color: #0F1A2B">
+<button type="button" aria-label="Show password" style="all: unset; display: flex; align-items: center; justify-content: center; width: 44px; height: 44px; color: #5B6678; cursor: pointer">
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>
+</button>
+</div>
+</div>
+<label style="display: flex; align-items: center; gap: 10px; min-height: 44px; font-size: 14px; color: #0F1A2B">
+<input type="checkbox" checked style="width: 20px; height: 20px; accent-color: #2456D6; margin: 0">
+Keep me signed in on this device
+</label>
+<p style="margin: 0; font-size: 13px; line-height: 1.5; color: #5B6678">Forgot your password? Ask your branch manager to reset it.</p>
+</form>
+<footer style="padding: 16px 24px 28px; display: flex; flex-direction: column; gap: 14px">
+<a href="ReceptionSchedule.dc.html" style="display: flex; align-items: center; justify-content: center; min-height: 56px; border-radius: 28px; background: #2456D6; color: #FFFFFF; font-size: 16px; font-weight: 700; text-decoration: none">Sign in</a>
+<div style="text-align: center; font-size: 13px; color: #5B6678">Customers don't need an account. <a href="Main.dc.html" style="font-weight: 700">Book now</a></div>
+</footer>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+renderVals() {
+return {};
+}
+}
+</script>
+</body>
+</html>

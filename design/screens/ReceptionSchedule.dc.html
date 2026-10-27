@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Reception schedule</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#2456D6}a:hover{color:#173E9E}
+.prep{position:absolute;left:6px;right:6px;border-radius:6px;background-color:#F6F8FC;background-image:repeating-linear-gradient(135deg,#E1E7F0 0,#E1E7F0 2px,transparent 2px,transparent 7px);font-size:11px;line-height:1;color:#5B6678;display:flex;align-items:center;padding-left:8px;box-sizing:border-box;overflow:hidden}
+</style>
+</helmet>
+<div style="min-height: 1000px; box-sizing: border-box; background: #F6F8FC; font-family: 'Plus Jakarta Sans', system-ui, sans-serif; color: #0F1A2B">
+<nav style="background: #0B1F3A; color: #FFFFFF; padding: 12px 24px; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px">
+<div style="display: flex; align-items: center; gap: 14px; flex-wrap: wrap">
+<span style="font-size: 20px; font-weight: 800; letter-spacing: -0.03em">GlowUp</span>
+<span style="font-size: 12px; font-weight: 700; padding: 4px 10px; border-radius: 12px; background: #2456D6">Reception</span>
+<span style="font-size: 14px; color: #C7D4EA">Lekki branch</span>
+</div>
+<div style="display: flex; align-items: center; gap: 12px">
+<span style="width: 32px; height: 32px; border-radius: 16px; background: #FF8A5B; color: #0B1F3A; display: inline-flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 800">A</span>
+<span style="font-size: 14px">Ada</span>
+<a href="StaffSignIn.dc.html" style="font-size: 13px; color: #C7D4EA">Sign out</a>
+</div>
+</nav>
+<div style="max-width: 1360px; margin: 0 auto; padding: 24px; display: flex; flex-direction: column; gap: 20px">
+<div style="display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 16px">
+<div style="display: flex; flex-direction: column; gap: 6px">
+<h1 style="margin: 0; font-size: 28px; font-weight: 800; letter-spacing: -0.03em">Today's schedule</h1>
+<div style="font-size: 14px; color: #5B6678">Saturday 31 October · Now 11:20 am</div>
+</div>
+<div style="display: flex; flex-wrap: wrap; gap: 10px; align-items: center">
+<label style="display: flex; align-items: center; gap: 8px; min-height: 48px; padding: 0 16px; border-radius: 24px; background: #FFFFFF; border: 1px solid #CDD6E3">
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#5B6678" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+<span style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">Find a customer to check in</span>
+<input type="search" placeholder="Find customer to check in" style="border: 0; outline-offset: 4px; background: transparent; font: inherit; font-size: 14px; width: 210px; color: #0F1A2B">
+</label>
+<a href="ReceptionNew.dc.html" style="display: inline-flex; align-items: center; gap: 8px; min-height: 48px; padding: 0 22px; border-radius: 24px; background: #2456D6; color: #FFFFFF; font-size: 15px; font-weight: 700; text-decoration: none">
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+New booking</a>
+</div>
+</div>
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px">
+<div style="background: #FFFFFF; border: 1px solid #E1E7F0; border-radius: 16px; padding: 14px 16px"><div style="font-size: 13px; color: #5B6678">Bookings today</div><div style="font-size: 26px; font-weight: 800">10</div></div>
+<div style="background: #FFF1D6; border: 1px solid #F5D08A; border-radius: 16px; padding: 14px 16px"><div style="font-size: 13px; color: #7A4A00">Checked in, waiting</div><div style="font-size: 26px; font-weight: 800; color: #7A4A00">1 <span style="font-size: 14px; font-weight: 600">· 6 min</span></div></div>
+<div style="background: #FFFFFF; border: 1px solid #E1E7F0; border-radius: 16px; padding: 14px 16px"><div style="font-size: 13px; color: #5B6678">In service</div><div style="font-size: 26px; font-weight: 800">3</div></div>
+<div style="background: #FFFFFF; border: 1px solid #E1E7F0; border-radius: 16px; padding: 14px 16px"><div style="font-size: 13px; color: #5B6678">No-shows</div><div style="font-size: 26px; font-weight: 800">1</div></div>
+</div>
+<div style="display: flex; flex-wrap: wrap; gap: 20px; align-items: flex-start">
+<section aria-label="Stylist schedule" style="flex: 999 1 560px; min-width: 0; background: #FFFFFF; border: 1px solid #E1E7F0; border-radius: 20px; overflow-x: auto">
+<div style="min-width: 720px">
+<div style="display: grid; grid-template-columns: 64px repeat(4, minmax(0, 1fr)); border-bottom: 1px solid #E1E7F0">
+<div></div>
+<div style="padding: 12px; border-left: 1px solid #E1E7F0"><div style="font-size: 14px; font-weight: 700">Blessing</div><div style="font-size: 12px; color: #5B6678">Busy until 1:30</div></div>
+<div style="padding: 12px; border-left: 1px solid #E1E7F0"><div style="font-size: 14px; font-weight: 700">Zainab</div><div style="font-size: 12px; color: #5B6678">Next: Ngozi at 11:50</div></div>
+<div style="padding: 12px; border-left: 1px solid #E1E7F0"><div style="font-size: 14px; font-weight: 700">Ronke</div><div style="font-size: 12px; color: #7A4A00; font-weight: 600">Customer waiting</div></div>
+<div style="padding: 12px; border-left: 1px solid #E1E7F0"><div style="font-size: 14px; font-weight: 700">Ifeoma</div><div style="font-size: 12px; color: #5B6678">Free at 12:50</div></div>
+</div>
+<div style="position: relative; display: grid; grid-template-columns: 64px repeat(4, minmax(0, 1fr)); height: 600px; background-image: repeating-linear-gradient(to bottom, #EEF1F6 0, #EEF1F6 1px, transparent 1px, transparent 100px)">
+<div style="position: relative; font-size: 12px; color: #5B6678">
+<span style="position: absolute; top: 4px; right: 10px">9:00</span>
+<span style="position: absolute; top: 104px; right: 10px">10:00</span>
+<span style="position: absolute; top: 204px; right: 10px">11:00</span>
+<span style="position: absolute; top: 304px; right: 10px">12:00</span>
+<span style="position: absolute; top: 404px; right: 10px">1:00</span>
+<span style="position: absolute; top: 504px; right: 10px">2:00</span>
+</div>
+<div style="position: relative; border-left: 1px solid #E1E7F0">
+<button style="all: unset; box-sizing: border-box; position: absolute; left: 6px; right: 6px; top: 2px; height: 446px; padding: 10px; border-radius: 12px; background: #2456D6; color: #FFFFFF; cursor: pointer; display: flex; flex-direction: column; gap: 2px"><span style="font-size: 12px; opacity: 0.85">9:00 – 1:30 · In service</span><span style="font-size: 14px; font-weight: 700">Chioma O.</span><span style="font-size: 12px">Knotless braids</span></button>
+<div class="prep" style="top: 452px; height: 22px">Prep 15 min</div>
+</div>
+<div style="position: relative; border-left: 1px solid #E1E7F0">
+<button style="all: unset; box-sizing: border-box; position: absolute; left: 6px; right: 6px; top: 2px; height: 96px; padding: 10px; border-radius: 12px; background: #EEF1F6; color: #5B6678; cursor: pointer; display: flex; flex-direction: column; gap: 2px"><span style="font-size: 12px">9:00 – 10:00 · Done</span><span style="font-size: 14px; font-weight: 700">Bisi A.</span><span style="font-size: 12px">Wash and set</span></button>
+<div class="prep" style="top: 101px; height: 15px">Prep</div>
+<button style="all: unset; box-sizing: border-box; position: absolute; left: 6px; right: 6px; top: 119px; height: 146px; padding: 10px; border-radius: 12px; background: #2456D6; color: #FFFFFF; cursor: pointer; display: flex; flex-direction: column; gap: 2px"><span style="font-size: 12px; opacity: 0.85">10:10 – 11:40 · In service</span><span style="font-size: 14px; font-weight: 700">Funke L.</span><span style="font-size: 12px">Relaxer and styling</span></button>
+<div class="prep" style="top: 268px; height: 15px">Prep</div>
+<button style="all: unset; box-sizing: border-box; position: absolute; left: 6px; right: 6px; top: 285px; height: 196px; padding: 10px; border-radius: 12px; background: #E8EFFD; border: 1px solid #C9D8F8; color: #173E9E; cursor: pointer; display: flex; flex-direction: column; gap: 2px"><span style="font-size: 12px">11:50 – 1:50 · Booked</span><span style="font-size: 14px; font-weight: 700">Ngozi E.</span><span style="font-size: 12px">Wig installation</span><span style="margin-top: 6px; align-self: flex-start; font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 10px; background: #FFFFFF; color: #173E9E">Not checked in</span></button>
+<div class="prep" style="top: 485px; height: 22px">Prep 15 min</div>
+</div>
+<div style="position: relative; border-left: 1px solid #E1E7F0">
+<button style="all: unset; box-sizing: border-box; position: absolute; left: 6px; right: 6px; top: 2px; height: 146px; padding: 10px; border-radius: 12px; background: #EEF1F6; color: #5B6678; cursor: pointer; display: flex; flex-direction: column; gap: 2px"><span style="font-size: 12px">9:00 – 10:30 · Done</span><span style="font-size: 14px; font-weight: 700">Tola M.</span><span style="font-size: 12px">Makeup</span></button>
+<div class="prep" style="top: 151px; height: 15px">Prep</div>
+<button aria-pressed="true" style="all: unset; box-sizing: border-box; position: absolute; left: 6px; right: 6px; top: 202px; height: 396px; padding: 10px; border-radius: 12px; background: #FFF1D6; border: 2px solid #0F1A2B; color: #7A4A00; cursor: pointer; display: flex; flex-direction: column; gap: 2px"><span style="font-size: 12px; font-weight: 600">11:00 – 3:00 · Waiting 6 min</span><span style="font-size: 14px; font-weight: 700">Amaka</span><span style="font-size: 12px">Knotless braids</span></button>
+</div>
+<div style="position: relative; border-left: 1px solid #E1E7F0">
+<button style="all: unset; box-sizing: border-box; position: absolute; left: 6px; right: 6px; top: 102px; height: 96px; padding: 10px; border-radius: 12px; background: #FFFFFF; border: 1px dashed #D64545; color: #A12828; cursor: pointer; display: flex; flex-direction: column; gap: 2px"><span style="font-size: 12px">10:00 – 11:00 · No-show</span><span style="font-size: 14px; font-weight: 700">Ife N.</span><span style="font-size: 12px">Wash and set</span></button>
+<button style="all: unset; box-sizing: border-box; position: absolute; left: 6px; right: 6px; top: 219px; height: 146px; padding: 10px; border-radius: 12px; background: #2456D6; color: #FFFFFF; cursor: pointer; display: flex; flex-direction: column; gap: 2px"><span style="font-size: 12px; opacity: 0.85">11:10 – 12:40 · In service</span><span style="font-size: 14px; font-weight: 700">Kemi A. <span style="font-weight: 500">(walk-in)</span></span><span style="font-size: 12px">Relaxer and styling</span></button>
+<div class="prep" style="top: 368px; height: 15px">Prep</div>
+<button style="all: unset; box-sizing: border-box; position: absolute; left: 6px; right: 6px; top: 385px; height: 96px; padding: 10px; border-radius: 12px; background: #E8EFFD; border: 1px solid #C9D8F8; color: #173E9E; cursor: pointer; display: flex; flex-direction: column; gap: 2px"><span style="font-size: 12px">12:50 – 1:50 · Booked</span><span style="font-size: 14px; font-weight: 700">Yemi O.</span><span style="font-size: 12px">Wash and set</span></button>
+<div class="prep" style="top: 485px; height: 15px">Prep</div>
+<button style="all: unset; box-sizing: border-box; position: absolute; left: 6px; right: 6px; top: 502px; height: 96px; padding: 10px; border-radius: 12px; background: #E8EFFD; border: 1px solid #C9D8F8; color: #173E9E; cursor: pointer; display: flex; flex-direction: column; gap: 2px"><span style="font-size: 12px">2:00 – 3:00 · Booked</span><span style="font-size: 14px; font-weight: 700">Joy B.</span><span style="font-size: 12px">Wash and set</span></button>
+</div>
+<div aria-hidden="true" style="position: absolute; left: 56px; right: 0; top: 233px; height: 2px; background: #FF6B3D"></div>
+<div aria-hidden="true" style="position: absolute; left: 50px; top: 228px; width: 12px; height: 12px; border-radius: 6px; background: #FF6B3D"></div>
+</div>
+</div>
+</section>
+<aside style="flex: 1 1 300px; min-width: 0; display: flex; flex-direction: column; gap: 16px">
+<div style="background: #FFFFFF; border: 1px solid #E1E7F0; border-radius: 20px; padding: 20px; display: flex; flex-direction: column; gap: 14px">
+<div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 12px">
+<div><div style="font-size: 20px; font-weight: 800">Amaka</div><div style="font-size: 13px; color: #5B6678">Booked online · first visit</div></div>
+<span style="font-size: 12px; font-weight: 700; padding: 5px 10px; border-radius: 12px; background: #FFF1D6; color: #7A4A00">Waiting 6 min</span>
+</div>
+<div style="display: flex; flex-direction: column; gap: 8px; font-size: 14px">
+<div style="display: flex; justify-content: space-between; gap: 8px"><span style="color: #5B6678">Service</span><span style="font-weight: 600">Knotless braids</span></div>
+<div style="display: flex; justify-content: space-between; gap: 8px"><span style="color: #5B6678">Stylist</span><span style="font-weight: 600">Ronke</span></div>
+<div style="display: flex; justify-content: space-between; gap: 8px"><span style="color: #5B6678">Deposit</span><span style="font-weight: 600; color: #1F6B45">₦5,000 paid</span></div>
+<div style="display: flex; justify-content: space-between; gap: 8px"><span style="color: #5B6678">Balance due</span><span style="font-weight: 800">₦20,000</span></div>
+</div>
+<div style="border-radius: 14px; background: #F6F8FC; padding: 14px; display: flex; flex-direction: column; gap: 10px; font-size: 13px">
+<div style="font-size: 12px; font-weight: 700; color: #5B6678">Timeline</div>
+<div style="display: grid; grid-template-columns: 14px minmax(0, 1fr) auto; gap: 10px; align-items: center"><span style="width: 10px; height: 10px; border-radius: 5px; background: #2456D6"></span><span>Appointment time</span><span style="font-weight: 700">11:00</span></div>
+<div style="display: grid; grid-template-columns: 14px minmax(0, 1fr) auto; gap: 10px; align-items: center"><span style="width: 10px; height: 10px; border-radius: 5px; background: #E08A00"></span><span>Checked in by Ada</span><span style="font-weight: 700">11:14</span></div>
+<div style="display: grid; grid-template-columns: 14px minmax(0, 1fr) auto; gap: 10px; align-items: center"><span style="width: 10px; height: 10px; border-radius: 5px; border: 2px dashed #8A93A3; box-sizing: border-box"></span><span style="color: #5B6678">Stylist starts</span><span style="color: #5B6678">–</span></div>
+<div style="display: grid; grid-template-columns: 14px minmax(0, 1fr) auto; gap: 10px; align-items: center"><span style="width: 10px; height: 10px; border-radius: 5px; border: 2px dashed #8A93A3; box-sizing: border-box"></span><span style="color: #5B6678">Stylist finishes</span><span style="color: #5B6678">–</span></div>
+<div style="font-size: 12px; color: #5B6678; line-height: 1.45">She arrived 14 min late, so her wait counts from 11:14.</div>
+</div>
+<button style="all: unset; box-sizing: border-box; display: flex; align-items: center; justify-content: center; min-height: 52px; border-radius: 26px; background: #2456D6; color: #FFFFFF; font-size: 15px; font-weight: 700; cursor: pointer">Start service for stylist</button>
+<div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px">
+<button style="all: unset; box-sizing: border-box; display: flex; align-items: center; justify-content: center; min-height: 44px; border-radius: 22px; border: 1px solid #CDD6E3; font-size: 14px; font-weight: 600; cursor: pointer">Move booking</button>
+<button style="all: unset; box-sizing: border-box; display: flex; align-items: center; justify-content: center; min-height: 44px; border-radius: 22px; border: 1px solid #CDD6E3; font-size: 14px; font-weight: 600; cursor: pointer">Undo check-in</button>
+</div>
+</div>
+<div style="background: #FFFFFF; border: 1px solid #E1E7F0; border-radius: 20px; padding: 16px 20px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; font-size: 13px">
+<span style="display: flex; align-items: center; gap: 8px"><span style="width: 14px; height: 14px; border-radius: 4px; background: #E8EFFD; border: 1px solid #C9D8F8"></span>Booked</span>
+<span style="display: flex; align-items: center; gap: 8px"><span style="width: 14px; height: 14px; border-radius: 4px; background: #FFF1D6; border: 1px solid #F5D08A"></span>Checked in, waiting</span>
+<span style="display: flex; align-items: center; gap: 8px"><span style="width: 14px; height: 14px; border-radius: 4px; background: #2456D6"></span>In service</span>
+<span style="display: flex; align-items: center; gap: 8px"><span style="width: 14px; height: 14px; border-radius: 4px; background: #EEF1F6"></span>Done</span>
+<span style="display: flex; align-items: center; gap: 8px"><span style="width: 14px; height: 14px; border-radius: 4px; border: 1px dashed #D64545"></span>No-show</span>
+<span style="display: flex; align-items: center; gap: 8px"><span style="width: 14px; height: 14px; border-radius: 4px; background-color: #F6F8FC; background-image: repeating-linear-gradient(135deg, #CDD6E3 0, #CDD6E3 2px, transparent 2px, transparent 5px)"></span>Prep time</span>
+</div>
+</aside>
+</div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":1000}}'>
+class Component extends DCLogic {
+renderVals() {
+return {};
+}
+}
+</script>
+</body>
+</html>

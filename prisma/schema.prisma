@@ -1,0 +1,20 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// Placeholder model proving the Prisma + PostgreSQL setup works end to end.
+// The real data model (Branch, Service, Staff, Booking, ...) is built in M1-1.
+model SetupCheck {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+}
