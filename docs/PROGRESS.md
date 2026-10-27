@@ -132,10 +132,34 @@ and writes a handoff note before every session ends.
 > confirmed via an isolated test page that it's the authentic ₦ (Naira Sign) glyph design
 > (two horizontal bars through the N), reproducible even in a plain system font with no
 > app styling involved. Not a bug, no change made.
-> **Half-done:** M3 milestone — M3-1 and M3-2 done; M3-3 through M3-7 not started.
-> **Next task:** M3-3 — step 2, choose stylist ("Any available" default), date and time
-> from the availability engine, matching `Time.dc.html`. First real caller of M2's
-> `getAvailableSlots`/`getSoonestFreePerStylist`.
+> M3-3: `/book/time` (`page.tsx` server component + `BookingStep2Form.tsx` client
+> component), matching `Time.dc.html` — first real caller of M2's availability engine.
+> Server fetches the branch's active stylists and all their bookings across a 6-day
+> window in one query, pre-splits them per day, and passes everything to the client as
+> plain data; the client then calls `getAvailableSlots` (M2-1) directly in the browser —
+> it's a pure function with no DB dependency, so this needed no new API route, just
+> reusing what M2 already built. Stylist chips ("Any available" + each named stylist),
+> a 6-day date strip, and a 10-minute time grid, all live-computed from the fetched data
+> with no extra network round-trips as the customer changes stylist/date.
+> For "Any available", added `resolveStylistForTime` (client-local, not exported from
+> `availability.ts`): once the customer taps a specific time from the aggregated "any"
+> list, it finds which stylist actually covers that exact time by calling
+> `getAvailableSlots` once per stylist — simpler than reusing M2-2's soonest-free+
+> fewest-bookings tie-break, which answers a different question ("what's the best slot
+> to suggest") than this one ("who covers the slot the customer already picked").
+> Extracted `src/lib/lagosTime.ts` (date-parts/instant/add-days/clock-time) from the
+> Lagos-time pattern duplicated across `seed.ts` and the M1-2 print script — new app code
+> only, didn't touch those two already-committed files.
+> Verified end-to-end against seeded data: picking a 5-hour ranged service (braids) on
+> today's date correctly showed "No times left" once today's real-world clock time had
+> passed the computed last-start cutoff (2pm) — not a bug, confirmed by checking a future
+> day instead, which showed the full 9:00am–2:00pm/10-minute grid exactly as expected.
+> Confirmed the Continue link resolves correctly for both a requested stylist and "Any
+> available" (resolving to a concrete stylist id with `stylistRequested=false`).
+> **Half-done:** M3 milestone — M3-1 through M3-3 done; M3-4 through M3-7 not started.
+> **Next task:** M3-4 — step 3, name and phone, booking summary, cancellation rule, hold
+> countdown, matching `Review.dc.html`. Validate Nigerian phone numbers. This is where
+> M2-3's `holdSlot` gets its first real caller.
 > **Blockers or questions:** work is on the `m3` branch (off `m2`, approved). Not yet
 > committed.
 
@@ -162,6 +186,7 @@ Newest first. One line per finished task.
 
 | Date | Task | What changed | Tests |
 |---|---|---|---|
+| 2026-10-27 | M3-3 | `/book/time` step 2 (stylist/date/time), `src/lib/lagosTime.ts` | `npm run check` (59 tests total), `npm run build`, visual + manual end-to-end check via Playwright |
 | 2026-10-27 | M3-2 | `/book` step 1 (branch + service choice), `formatDurationLabel`, `formatOpeningHoursLabel` | `npm run check` (54 tests total), `npm run build`, visual check via screenshot (3 states) |
 | 2026-10-27 | M3-1 | Welcome page (`src/app/page.tsx`), `Button` now supports `href` | `npm run check` (48 tests total), `npm run build`, visual check via screenshot |
 | 2026-10-27 | M2-4 | `getSoonestFreePerStylist` in `src/server/availability.ts` | `npm run check` (47 tests total), `npm run build` |
