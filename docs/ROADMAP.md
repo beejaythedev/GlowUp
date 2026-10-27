@@ -35,7 +35,7 @@ The schedule is tight. If a week slips, move "Later" items out, never the checks
   *Done when:* a `/dev/tokens` page shows every token, and no component uses raw hex values.
 - [x] **M0-3** Set up PostgreSQL and Prisma with `.env.example`.
   *Done when:* `npx prisma migrate dev` runs on a fresh machine following the README.
-- [ ] **M0-4** Set up Vitest and Playwright, and an `npm run check` script (lint + type-check + unit tests).
+- [x] **M0-4** Set up Vitest and Playwright, and an `npm run check` script (lint + type-check + unit tests).
   *Done when:* one sample unit test and one sample e2e test pass.
 - [ ] **M0-5** Build the base components: Button, Card, Input with label, StatusBadge, Chip, CustomerShell (phone layout), StaffShell (top nav).
   *Done when:* a `/dev/components` page shows each one, keyboard-accessible, 44px minimum touch targets.
