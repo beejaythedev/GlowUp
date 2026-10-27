@@ -102,15 +102,22 @@ and writes a handoff note before every session ends.
 > later than `now` leaves an earlier gap that's still offered, which doesn't match "Free
 > at 1:30" unless the fixture's booking already started before `now`. M2 milestone is now
 > fully done.
-> **Half-done:** none.
-> **Next task:** M2 supervisor checkpoint — review `src/server/availability.ts` and
-> `src/server/bookings.ts` against `docs/PRD.md` (especially the Ronke worked example and
-> the per-stylist-free-gap grid design, both flagged above). Do not start M3 until
-> approved.
-> **Blockers or questions:** all of M2 (M2-1 through M2-4) is on the `m2` branch (off
-> `m1`, approved). Not yet committed/pushed. `bookings.test.ts` requires the local
-> Postgres container running — same as `npx prisma migrate dev`/`db seed`, nothing new,
-> but worth knowing `npm run check` will fail if Docker isn't up.
+> M2 approved. M3-1: Welcome page (`src/app/page.tsx`, replacing the M0 placeholder),
+> matching `Welcome.dc.html` — navy header with three decorative circles, feature list
+> (live availability / deposit / SMS reminders) using existing tokens rather than the
+> design file's exact (undocumented) icon colors, primary CTA to `/book`, "Sign in" link
+> to `/staff/sign-in`. Extended `Button` to optionally render as a `next/link` Link when
+> given `href`, so a navigating CTA still looks like a button — the first real consumer
+> needing this; `/dev/components` still only shows the plain-button form. Visually
+> checked against the design via screenshot; first pass had the accent circle overlapping
+> the headline (needed more top spacing to clear both decorative circles, matching the
+> original's stacked gap + padding-top) — fixed.
+> **Half-done:** M3 milestone — M3-1 done; M3-2 through M3-7 not started.
+> **Next task:** M3-2 — step 1, choose branch and service, matching `Main.dc.html`. Only
+> services the branch offers (this is where the M1-1 nails-only derivation actually gets
+> exercised by a real screen).
+> **Blockers or questions:** work is on a new `m3` branch (off `m2`, approved). Not yet
+> committed. `/book` (linked from the Welcome page) doesn't exist until M3-2.
 
 ## Milestones
 
@@ -118,8 +125,8 @@ and writes a handoff note before every session ends.
 |---|---|---|
 | M0 Foundations | Ready for review | |
 | M1 Data model and seed | Approved | 2026-10-27 |
-| M2 Availability engine | Ready for review | |
-| M3 Customer booking | Not started | |
+| M2 Availability engine | Approved | 2026-10-27 |
+| M3 Customer booking | In progress | |
 | M4 Staff sign-in and roles | Not started | |
 | M5 Reception | Not started | |
 | M6 Stylist | Not started | |
@@ -135,6 +142,7 @@ Newest first. One line per finished task.
 
 | Date | Task | What changed | Tests |
 |---|---|---|---|
+| 2026-10-27 | M3-1 | Welcome page (`src/app/page.tsx`), `Button` now supports `href` | `npm run check` (48 tests total), `npm run build`, visual check via screenshot |
 | 2026-10-27 | M2-4 | `getSoonestFreePerStylist` in `src/server/availability.ts` | `npm run check` (47 tests total), `npm run build` |
 | 2026-10-27 | M2-3 | No-double-booking exclusion constraint (migration), `holdSlot` in `src/server/bookings.ts`, `vitest.config.mts` now loads `.env` | `npm run check` (44 tests total, including a live-DB concurrency test), `npm run build`, `npx prisma db seed` |
 | 2026-10-27 | M2-2 | `pickAnyAvailableStylist` in `src/server/availability.ts` | `npm run check` (39 unit tests total), `npm run build` |

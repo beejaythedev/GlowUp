@@ -26,4 +26,11 @@ describe("Button", () => {
 
     expect(onClick).not.toHaveBeenCalled();
   });
+
+  it("renders as a link when href is given", () => {
+    render(<Button href="/book">Book an appointment</Button>);
+
+    const link = screen.getByRole("link", { name: "Book an appointment" });
+    expect(link).toHaveAttribute("href", "/book");
+  });
 });
