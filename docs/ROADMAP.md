@@ -39,7 +39,7 @@ The schedule is tight. If a week slips, move "Later" items out, never the checks
   *Done when:* one sample unit test and one sample e2e test pass.
 - [x] **M0-5** Build the base components: Button, Card, Input with label, StatusBadge, Chip, CustomerShell (phone layout), StaffShell (top nav).
   *Done when:* a `/dev/components` page shows each one, keyboard-accessible, 44px minimum touch targets.
-- [ ] **M0-6** Write a README with setup steps and fill in the commands in `CLAUDE.md`.
+- [x] **M0-6** Write a README with setup steps and fill in the commands in `CLAUDE.md`.
 
 **Supervisor checkpoint:** run the app, look at `/dev/tokens` and `/dev/components`, compare with the designs.
 
