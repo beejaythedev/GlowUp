@@ -205,18 +205,34 @@ and writes a handoff note before every session ends.
 > real and landed on `/book/confirmed` with the correct summary, reference and "arrive by"
 > time (screenshot). Queried the DB directly to confirm `depositStatus: "PAID"`, then
 > deleted the test booking/customer and the scratch script.
-> **Half-done:** M3 milestone — M3-1 through M3-5 done; M3-6 and M3-7 not started.
-> **Next task:** M3-6 — send the confirmation message through the fake `MessageSender`
-> (console-logged), including "please arrive by…". Note: `docs/ARCHITECTURE.md`'s file tree
-> implies a `messages` table for CLAUDE.md's "stored in the messages table" line, but
-> `prisma/schema.prisma` has no `Message` model yet — M3-6 will need a small schema addition
-> (a new migration) before the sender can log anything durable; flagging this now so it
-> isn't a surprise mid-task.
+> M3-6: `src/server/messages/` — `MessageSender` interface (`types.ts`), `ConsoleMessageSender`
+> (`console.ts`, logs `to`/`body`), and the one `messageSender` instance app code imports
+> (`index.ts`) — same shape as M3-5's `payments/`. New `src/lib/confirmationMessage.ts`
+> (`formatConfirmationMessage`, pure and unit-tested) builds the SMS body: service, branch,
+> when, "Please arrive by…", deposit paid, booking reference. Sent from `/book/pay/actions.ts`
+> right after `confirmDeposit` succeeds, before the redirect to `/book/confirmed`.
+> Correction to last session's flagged note: I'd assumed a `Message` schema model was needed
+> now because `docs/ARCHITECTURE.md`/`CLAUDE.md` describe messages as "stored in the messages
+> table". Re-reading `docs/ROADMAP.md` before starting, the messages table, status tracking
+> and `/api/jobs/run` scheduling are explicitly **M8-4** ("stored in the messages table with a
+> status... processed by a `/api/jobs/run` endpoint"), not M3. M3-6 only asks for an immediate,
+> unscheduled, console-logged message, so no schema change this task — M8-4 will persist
+> messages (confirmation included) once the table exists.
+> Verified against the dev database via a scripted Playwright run: booked braids at Lekki
+> through all three steps and paid, confirmed the exact expected line appeared in the Next.js
+> dev server log (`[message] to 08039992222: Hi M3-6, you're booked at GlowUp Lekki for
+> Knotless braids on Sat 31 Oct, 9:00 am. Please arrive by 8:50 am...`). First run caught a
+> real bug — `GlowUp ${branchName}` produced "GlowUp GlowUp Lekki" since branch names already
+> start with "GlowUp" — fixed in `formatConfirmationMessage` and covered by a test asserting
+> no doubled prefix, then re-verified the fix live before cleaning up the test rows.
+> **Half-done:** M3 milestone — M3-1 through M3-6 done; only M3-7 left.
+> **Next task:** M3-7 — end-to-end test: book braids at Lekki as a guest from start to
+> confirmation. This is a Playwright test under `npm run e2e`, not another manual check —
+> first real use of that command in the project.
 > **Blockers or questions:** the M3-4 hold-countdown placement still needs explicit
 > sign-off at the M3 checkpoint, same treatment as M1-1's BranchService simplification —
-> now resolved in code (the countdown lives on `/book/pay`, built this session) but the
-> design decision itself hasn't been reviewed yet. Work is on the `m3` branch (off `m2`,
-> approved).
+> resolved in code (the countdown lives on `/book/pay`, built in M3-5) but the design
+> decision itself hasn't been reviewed yet. Work is on the `m3` branch (off `m2`, approved).
 
 ## Milestones
 
@@ -241,6 +257,7 @@ Newest first. One line per finished task.
 
 | Date | Task | What changed | Tests |
 |---|---|---|---|
+| 2026-10-27 | M3-6 | `src/server/messages/` (`MessageSender`, `ConsoleMessageSender`), `src/lib/confirmationMessage.ts`, wired into `/book/pay/actions.ts` | `npm run check` (78 tests total), `npm run build`, scripted Playwright end-to-end check (confirmation line verified in the dev server log, caught and fixed a doubled "GlowUp" prefix) |
 | 2026-10-27 | M3-5 | `/book/pay` (hold countdown, fake-provider payment), `/book/confirmed`, `src/server/payments/`, `confirmDeposit`, `src/lib/bookingReference.ts` | `npm run check` (76 tests total), `npm run build`, scripted Playwright end-to-end check (pay failure → retry → success, DB row verified, then cleaned up) |
 | 2026-10-27 | M3-4 | `/book/review` step 3 (name/phone form, Server Action, first real `holdSlot` caller), `src/lib/phone.ts` | `npm run check` (69 tests total), `npm run build`, manual end-to-end check (verified the created DB row, then cleaned it up) |
 | 2026-10-27 | M3-3 | `/book/time` step 2 (stylist/date/time), `src/lib/lagosTime.ts` | `npm run check` (59 tests total), `npm run build`, visual + manual end-to-end check via Playwright |
