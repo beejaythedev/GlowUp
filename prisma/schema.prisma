@@ -1,8 +1,6 @@
 // This is your Prisma schema file,
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
-// Get a free hosted Postgres database in seconds: `npx create-db`
-
 generator client {
   provider = "prisma-client"
   output   = "../src/generated/prisma"
@@ -12,9 +10,201 @@ datasource db {
   provider = "postgresql"
 }
 
-// Placeholder model proving the Prisma + PostgreSQL setup works end to end.
-// The real data model (Branch, Service, Staff, Booking, ...) is built in M1-1.
-model SetupCheck {
-  id        String   @id @default(cuid())
+// ---------------------------------------------------------------------------
+// Branches
+// ---------------------------------------------------------------------------
+
+model Branch {
+  id           String         @id @default(cuid())
+  name         String
+  address      String
+  /// Nail services (pedicure, manicure) are only bookable where this is true.
+  offersNails  Boolean        @default(false)
+  openingHours OpeningHours[]
+  staff        Staff[]
+  bookings     Booking[]
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+}
+
+/// One row per weekday the branch is open. A missing weekday means closed.
+/// opensAtMinute/closesAtMinute are minutes since midnight, Africa/Lagos wall-clock
+/// time (not a UTC instant — this is a recurring weekly schedule, not a point in
+/// time). The availability engine (M2) converts to UTC for a specific date.
+model OpeningHours {
+  id             String @id @default(cuid())
+  branch         Branch @relation(fields: [branchId], references: [id], onDelete: Cascade)
+  branchId       String
+  /// 0 = Sunday … 6 = Saturday, matching JS Date#getDay() in Africa/Lagos.
+  weekday        Int
+  opensAtMinute  Int
+  closesAtMinute Int
+
+  @@unique([branchId, weekday])
+}
+
+// ---------------------------------------------------------------------------
+// Services
+// ---------------------------------------------------------------------------
+
+model Service {
+  id                 String    @id @default(cuid())
+  name               String
+  priceKobo          Int
+  /// For a fixed-duration service, minDurationMinutes == maxDurationMinutes.
+  /// For a ranged service (e.g. braids 4–5 hrs): the schedule blocks the
+  /// shortest duration plus prep; the longest duration sets the last start of
+  /// the day and gates requested-stylist bookings right after a ranged
+  /// booking (docs/DECISIONS.md, Q1).
+  minDurationMinutes Int
+  maxDurationMinutes Int
+  /// Minutes blocked after the service, before the stylist is free again.
+  /// Never shown to customers. Owner-adjustable (M7-4).
+  prepMinutes        Int
+  /// Only bookable at a branch where Branch.offersNails is true.
+  nailsOnly          Boolean   @default(false)
+  bookings           Booking[]
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+}
+
+// ---------------------------------------------------------------------------
+// Staff and customers
+// ---------------------------------------------------------------------------
+
+enum StaffRole {
+  RECEPTIONIST
+  STYLIST
+  BRANCH_MANAGER
+  OWNER
+}
+
+enum StaffStatus {
+  INVITED
+  ACTIVE
+  REMOVED
+}
+
+model Staff {
+  id           String      @id @default(cuid())
+  name         String
+  /// Login identifier for staff sign-in (M4). Unique across all branches.
+  phone        String      @unique
+  role         StaffRole
+  /// Null only for OWNER, who is not scoped to a single branch.
+  branch       Branch?     @relation(fields: [branchId], references: [id])
+  branchId     String?
+  passwordHash String
+  status       StaffStatus @default(ACTIVE)
+  bookings     Booking[]
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+}
+
+model Customer {
+  id        String    @id @default(cuid())
+  name      String
+  /// Guest customers are matched and re-used by phone number (S8).
+  phone     String    @unique
+  bookings  Booking[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+}
+
+// ---------------------------------------------------------------------------
+// Bookings
+// ---------------------------------------------------------------------------
+
+/// The one shared status list (docs/CLAUDE.md, rule 5). "Checked in early" and
+/// "waiting" are derived display states for CHECKED_IN, not stored here.
+enum BookingStatus {
+  BOOKED
+  CHECKED_IN
+  IN_SERVICE
+  DONE
+  NO_SHOW
+  CANCELLED
+}
+
+enum BookingSource {
+  ONLINE
+  PHONE
+  WALK_IN
+}
+
+/// Walk-ins pay no deposit (NONE). PENDING covers the window between creating
+/// an online/phone booking and Paystack confirming payment (M8-1).
+enum DepositStatus {
+  NONE
+  PENDING
+  PAID
+  REFUNDED
+  KEPT
+}
+
+model Booking {
+  id               String  @id @default(cuid())
+  branch           Branch  @relation(fields: [branchId], references: [id])
+  branchId         String
+  service          Service @relation(fields: [serviceId], references: [id])
+  serviceId        String
+  stylist          Staff   @relation(fields: [stylistId], references: [id])
+  stylistId        String
+  /// Whether the customer chose this stylist, or the system assigned "any
+  /// available" (docs/PRD.md, Check-in and timing, rule 8).
+  stylistRequested Boolean
+
+  customer    Customer @relation(fields: [customerId], references: [id])
+  customerId  String
+  /// Contact number for this booking's messages. Usually customer.phone, but
+  /// kept separate for S3 "book for someone else" (Later).
+  bookerPhone String
+
+  /// What the customer sees as their appointment window.
+  startsAt     DateTime
+  endsAt       DateTime
+  /// endsAt + the service's prep minutes. What the availability engine
+  /// checks for overlaps (docs/ARCHITECTURE.md calls this `blocked_until`).
+  blockedUntil DateTime
+
+  status BookingStatus @default(BOOKED)
+  source BookingSource
+
+  depositAmountKobo Int
+  depositStatus     DepositStatus @default(NONE)
+
+  checkedInAt   DateTime?
+  startedAt     DateTime?
+  finishedAt    DateTime?
+  /// Set only while status is BOOKED and depositStatus is PENDING. Expired,
+  /// unpaid holds are ignored by the availability engine (M2-3) — no
+  /// background job needed to release them.
+  holdExpiresAt DateTime?
+
   createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  // No-double-booking is enforced by a PostgreSQL exclusion constraint on
+  // (stylistId, [startsAt, blockedUntil)) for active bookings, added as a
+  // hand-written SQL migration with the btree_gist extension (M2-3). Prisma's
+  // schema language can't express it, so it isn't modelled here.
+
+  @@index([stylistId, startsAt])
+  @@index([branchId, startsAt])
+  @@index([customerId])
+}
+
+// ---------------------------------------------------------------------------
+// Settings
+// ---------------------------------------------------------------------------
+
+/// Single global row, applies to all four branches (see OwnerSettings design).
+/// App code reads/writes the one row via upsert; Prisma can't enforce
+/// singleton tables directly.
+model Settings {
+  id                        String   @id @default(cuid())
+  depositPercent            Int      @default(20)
+  freeCancellationHours     Int      @default(24)
+  arriveEarlyMinutes        Int      @default(10)
+  checkInPromptAfterMinutes Int      @default(15)
+  updatedAt                 DateTime @updatedAt
 }
