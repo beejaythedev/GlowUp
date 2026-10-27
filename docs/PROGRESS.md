@@ -6,23 +6,28 @@ and writes a handoff note before every session ends.
 ## Latest handoff note
 
 > **Date:** 2026-10-27
-> **Done this session:** M0-4. Added Vitest (`vitest.config.mts`, jsdom environment,
-> `@testing-library/jest-dom` setup) with a sample unit test (`src/lib/money.ts` /
-> `money.test.ts`, a `formatNaira` helper over integer kobo per Rule 1). Added Playwright
-> (`playwright.config.ts`, Chromium only, auto-starts `npm run dev`) with a sample e2e
-> test (`e2e/home.spec.ts`) against the placeholder home page. Added `npm run typecheck`,
-> `npm run test`, `npm run e2e` and `npm run check` (lint && typecheck && test) scripts.
-> Bumped `@types/node` from `^20` to `^24` to match the installed Node (v24) and satisfy
-> `vitest@5`'s peer dependency. Used Vite's native `resolve.tsconfigPaths` instead of the
-> `vite-tsconfig-paths` plugin (newer, one less dependency). `npm run check`, `npm run e2e`
-> and `npm run build` all pass.
+> **Done this session:** M0-5. Added base components under `src/components/`: `ui/Button`,
+> `ui/Card`, `ui/Input` (label + hint/error, associated via `useId`), `ui/StatusBadge`
+> (styles for booked/checked-in-early/waiting/in-service/done/no-show/requested per
+> `docs/DESIGN.md`), `ui/Chip` (selectable pill, `aria-pressed`), `layout/CustomerShell`
+> (phone-width column, `max-w-md`) and `layout/StaffShell` (navy top nav with role badge,
+> branch, avatar, sign-out — matches `ReceptionSchedule.dc.html`). All interactive
+> controls are real `<button>`/`<label>`/`<input>` elements with visible focus rings and
+> 44px+ touch targets (buttons `min-h-11`/`min-h-14`, chips `min-h-11`, inputs 52px).
+> Added a `/dev/components` page showing every component and variant, screenshotted and
+> checked against the tokens. Added unit tests for Button (click/disabled), Input (label
+> association, invalid+error), Chip (`aria-pressed`) and StatusBadge — `npm run test`
+> needed `globals: true` in `vitest.config.mts` so `@testing-library/react`'s auto
+> `afterEach` cleanup registers (without it, tests that render more than once leaked
+> DOM nodes between tests). Added `@testing-library/user-event`. `npm run check`,
+> `npm run e2e` and `npm run build` all pass.
 > **Half-done:** none.
-> **Next task:** M0-5 — base components (Button, Card, Input, StatusBadge, Chip,
-> CustomerShell, StaffShell) on a `/dev/components` page.
-> **Blockers or questions:** this session worked on branch `setup`, continuing the
-> existing M0-1..M0-3 history there, rather than a milestone-named branch — flagged to
-> the supervisor per the branch-per-milestone preference; no action taken without
-> confirmation.
+> **Next task:** M0-6 — write the README with setup steps and fill in the `CLAUDE.md`
+> commands, then the M0 supervisor checkpoint.
+> **Blockers or questions:** this session's work is on a new `m0-foundations` branch
+> (branched off `setup`, which now matches `origin/setup`) per the branch-per-milestone
+> preference; not yet committed — the supervisor is committing and pushing manually, and
+> wants no Co-Authored-By trailer on commits/PRs in this repo (see project memory).
 
 ## Milestones
 
@@ -47,6 +52,7 @@ Newest first. One line per finished task.
 
 | Date | Task | What changed | Tests |
 |---|---|---|---|
+| 2026-10-27 | M0-5 | Base components (Button, Card, Input, StatusBadge, Chip, CustomerShell, StaffShell), `/dev/components` page | `npm run check` (10 unit tests), `npm run e2e`, `npm run build`, visual check via screenshot |
 | 2026-10-27 | M0-4 | Vitest + Playwright, `npm run check`/`test`/`e2e`/`typecheck` scripts, bumped `@types/node` to `^24` | `npm run check` (lint, typecheck, 3 unit tests), `npm run e2e` (1 test), `npm run build` |
 | 2026-10-22 | M0-3 | Prisma + PostgreSQL (Docker for local dev), `.env.example`, `src/lib/db.ts` | `npx prisma migrate dev` against a fresh container; `npm run lint`, `npm run build` |
 | 2026-10-22 | M0-2 | Tailwind design tokens (`@theme` in globals.css), Plus Jakarta Sans, `/dev/tokens` page | `npm run lint`, `npm run build`, manual check of `/dev/tokens` |
