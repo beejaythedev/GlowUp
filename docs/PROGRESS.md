@@ -50,20 +50,36 @@ and writes a handoff note before every session ends.
 > simplification as-is, and asked for one schema fix before moving on — added
 > `Booking.cancelledAt` (nullable `DateTime`), needed to apply the 24-hour
 > free-cancellation window later (M8-2). Added as its own migration
-> (`20261027120710_m1_add_cancelled_at`) rather than reopening the M1-1 migration.
-> **Half-done:** none.
-> **Next task:** M2 Availability engine (M2-1: `getAvailableSlots`). M1 is fully approved.
-> **Blockers or questions:** none. `m1` has been pushed to `origin/m1` by the supervisor;
-> `origin/m1-data-model` (the stale pre-rename remote branch) can be deleted whenever
-> convenient. This `cancelledAt` commit still needs pushing.
+> (`20261027120710_m1_add_cancelled_at`) rather than reopening the M1-1 migration. M1 is
+> now fully approved.
+> M2-1: `src/server/availability.ts` — `getAvailableSlots`, a pure function (plain data
+> in, no DB calls; a thin DB-fetching wrapper will be added when M3 needs a real caller).
+> Core design decision worth flagging: the PRD's worked example (any-stylist 3:15,
+> requested-Ronke 4:15 after an 11:00 braids booking) only works if each stylist's slot
+> grid is anchored to when THEY become free, not a single clock grid anchored to branch
+> opening — so "every 10 minutes" is per free-gap, not a fixed :00/:10/:20 grid across the
+> whole day. Ranged-service blocking asymmetry (rule 8): an "any" search always uses a
+> stylist's shortest-duration-plus-prep block; a specific requested-stylist search uses
+> that SAME stylist's longest-duration-plus-prep block for their own ranged bookings.
+> "Last start of day" uses only the longest duration (no prep added), matching the PRD's
+> braids-2pm-on-7pm-close example exactly. Also folded in "ignore expired, unpaid holds"
+> (the M2-3 behaviour) now, since M2-1's own description already asks for it. 11 unit
+> tests cover all six required scenarios plus hold/cancellation edge cases.
+> **Half-done:** M2 milestone — M2-1 done; M2-2 (any-stylist soonest-free selection),
+> M2-3 (slot hold with concurrency test) and M2-4 (soonest-free list for reception) not
+> started.
+> **Next task:** M2-2 — "any available stylist" selection: soonest free, ties broken by
+> fewer bookings that day.
+> **Blockers or questions:** work is on a new `m2` branch (off `m1`, which the supervisor
+> has pushed and approved). Not yet committed.
 
 ## Milestones
 
 | Milestone | Status | Supervisor approved |
 |---|---|---|
 | M0 Foundations | Ready for review | |
-| M1 Data model and seed | Ready for review | |
-| M2 Availability engine | Not started | |
+| M1 Data model and seed | Approved | 2026-10-27 |
+| M2 Availability engine | In progress | |
 | M3 Customer booking | Not started | |
 | M4 Staff sign-in and roles | Not started | |
 | M5 Reception | Not started | |
@@ -80,6 +96,7 @@ Newest first. One line per finished task.
 
 | Date | Task | What changed | Tests |
 |---|---|---|---|
+| 2026-10-27 | M2-1 | `src/server/availability.ts` — `getAvailableSlots` | `npm run check` (34 unit tests total), `npm run build` |
 | 2026-10-27 | M1 checkpoint | Added `Booking.cancelledAt` (nullable), needed for the M8-2 refund window | `npm run check`, `npm run build`, re-ran `npx prisma db seed` |
 | 2026-10-27 | M1-3 | `src/server/money.ts` (deposit, balance due), `src/server/status.ts` (display status, wait time) | `npm run check` (23 unit tests total), `npm run build` |
 | 2026-10-27 | M1-2 | `prisma/seed.ts` (branches, services, staff, settings, 10 sample Lekki bookings), `scripts/print-lekki-schedule.ts`, added `tsx` dev dependency | `npx prisma db seed`, `npm run db:print-lekki`, `npm run check`, `npm run build` |
