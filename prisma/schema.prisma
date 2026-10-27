@@ -176,6 +176,10 @@ model Booking {
   checkedInAt   DateTime?
   startedAt     DateTime?
   finishedAt    DateTime?
+  /// When status became CANCELLED. Needed to apply the free-cancellation
+  /// window (docs/PRD.md, Business rules: full refund 24+ hours before
+  /// startsAt) — M8-2.
+  cancelledAt   DateTime?
   /// Set only while status is BOOKED and depositStatus is PENDING. Expired,
   /// unpaid holds are ignored by the availability engine (M2-3) — no
   /// background job needed to release them.

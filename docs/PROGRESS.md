@@ -46,17 +46,16 @@ and writes a handoff note before every session ends.
 > derived from stored status + the clock, never stored; `getWaitMinutes` — start minus the
 > later of check-in and appointment time). 13 new unit tests covering early arrival, late
 > arrival and walk-ins, as required. M1 milestone is now fully done.
+> M1 checkpoint review follow-up: supervisor approved the BranchService-vs-derived-booleans
+> simplification as-is, and asked for one schema fix before moving on — added
+> `Booking.cancelledAt` (nullable `DateTime`), needed to apply the 24-hour
+> free-cancellation window later (M8-2). Added as its own migration
+> (`20261027120710_m1_add_cancelled_at`) rather than reopening the M1-1 migration.
 > **Half-done:** none.
-> **Next task:** M1 supervisor checkpoint — review the schema (including the
-> BranchService-vs-derived-booleans simplification from M1-1, still pending explicit
-> sign-off) and the seed data against `docs/PRD.md`. Do not start M2 until approved.
-> **Blockers or questions:** all of M1 (M1-1, M1-2, M1-3) is on the `m1` branch as three
-> separate commits (branch was renamed from `m1-data-model` partway through, per the
-> supervisor's branch-per-milestone preference — see project memory); not yet pushed under
-> the new name. Supervisor will push `m1` as a new `origin/m1` remote branch and can
-> delete the stale `origin/m1-data-model` whenever convenient. Supervisor commits and
-> pushes manually, no Co-Authored-By trailer, and wants one combined PR summary once the
-> whole milestone is done rather than one per task (see project memory).
+> **Next task:** M2 Availability engine (M2-1: `getAvailableSlots`). M1 is fully approved.
+> **Blockers or questions:** none. `m1` has been pushed to `origin/m1` by the supervisor;
+> `origin/m1-data-model` (the stale pre-rename remote branch) can be deleted whenever
+> convenient. This `cancelledAt` commit still needs pushing.
 
 ## Milestones
 
@@ -81,6 +80,7 @@ Newest first. One line per finished task.
 
 | Date | Task | What changed | Tests |
 |---|---|---|---|
+| 2026-10-27 | M1 checkpoint | Added `Booking.cancelledAt` (nullable), needed for the M8-2 refund window | `npm run check`, `npm run build`, re-ran `npx prisma db seed` |
 | 2026-10-27 | M1-3 | `src/server/money.ts` (deposit, balance due), `src/server/status.ts` (display status, wait time) | `npm run check` (23 unit tests total), `npm run build` |
 | 2026-10-27 | M1-2 | `prisma/seed.ts` (branches, services, staff, settings, 10 sample Lekki bookings), `scripts/print-lekki-schedule.ts`, added `tsx` dev dependency | `npx prisma db seed`, `npm run db:print-lekki`, `npm run check`, `npm run build` |
 | 2026-10-27 | M1-1 | Full Prisma schema (Branch, OpeningHours, Service, Staff, Customer, Booking, Settings) and migration | `npx prisma migrate dev` on a fresh database, `npm run check`, `npm run build` |
