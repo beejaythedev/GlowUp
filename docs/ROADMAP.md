@@ -53,7 +53,7 @@ The schedule is tight. If a week slips, move "Later" items out, never the checks
   *Done when:* migration runs and the schema is reviewed against `docs/PRD.md`.
 - [x] **M1-2** Seed data matching the designs: 4 branches, 7 services with prices and prep times, Lekki staff (Ada, Grace, Blessing, Zainab, Ronke, Ifeoma), Kelechi at Ikeja, Tolu as owner, and sample bookings for "today".
   *Done when:* `npx prisma db seed` loads it and a quick script prints the Lekki schedule.
-- [ ] **M1-3** Pure functions with unit tests: deposit amount (20%, rounded to whole naira), wait time, display status (booked / checked in early / waiting / in service / done / no-show), balance due.
+- [x] **M1-3** Pure functions with unit tests: deposit amount (20%, rounded to whole naira), wait time, display status (booked / checked in early / waiting / in service / done / no-show), balance due.
   *Done when:* tests cover early arrival, late arrival and walk-ins.
 
 **Supervisor checkpoint:** read the schema and the seed script; confirm names and prices match the PRD.

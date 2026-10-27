@@ -40,23 +40,30 @@ and writes a handoff note before every session ends.
 > `glowup-postgres` Docker container had to be recreated (Docker Desktop wasn't running at
 > session start) — it only ever held the empty `SetupCheck` placeholder, so no data was
 > lost; this matches the README's "disposable container" setup.
-> **Half-done:** M1 milestone — M1-1 and M1-2 done, M1-3 (pure functions: deposit/wait
-> time/display status/balance due) not started.
-> **Next task:** M1-3 — pure functions with unit tests (deposit amount, wait time, display
-> status, balance due), covering early arrival, late arrival and walk-ins. Then the M1
-> supervisor checkpoint.
-> **Blockers or questions:** M1-2's work is on a new `m1-2-seed-data` branch (branched off
-> `m1-data-model`, which is already committed and pushed); not yet committed itself — the
-> supervisor commits and pushes manually, no Co-Authored-By trailer (see project memory).
-> The BranchService-vs-derived-booleans simplification from M1-1 is still worth the
-> supervisor's explicit sign-off at the M1 schema review called for in `docs/ROADMAP.md`.
+> M1-3: `src/server/money.ts` (`calculateDepositKobo` — 20% rounded to the nearest whole
+> naira, zero for walk-ins; `balanceDueKobo`) and `src/server/status.ts`
+> (`getDisplayStatus` — booked/checkedInEarly/waiting/inService/done/noShow/cancelled,
+> derived from stored status + the clock, never stored; `getWaitMinutes` — start minus the
+> later of check-in and appointment time). 13 new unit tests covering early arrival, late
+> arrival and walk-ins, as required. M1 milestone is now fully done.
+> **Half-done:** none.
+> **Next task:** M1 supervisor checkpoint — review the schema (including the
+> BranchService-vs-derived-booleans simplification from M1-1, still pending explicit
+> sign-off) and the seed data against `docs/PRD.md`. Do not start M2 until approved.
+> **Blockers or questions:** all of M1 (M1-1, M1-2, M1-3) is on the `m1` branch as three
+> separate commits (branch was renamed from `m1-data-model` partway through, per the
+> supervisor's branch-per-milestone preference — see project memory); not yet pushed under
+> the new name. Supervisor will push `m1` as a new `origin/m1` remote branch and can
+> delete the stale `origin/m1-data-model` whenever convenient. Supervisor commits and
+> pushes manually, no Co-Authored-By trailer, and wants one combined PR summary once the
+> whole milestone is done rather than one per task (see project memory).
 
 ## Milestones
 
 | Milestone | Status | Supervisor approved |
 |---|---|---|
 | M0 Foundations | Ready for review | |
-| M1 Data model and seed | In progress | |
+| M1 Data model and seed | Ready for review | |
 | M2 Availability engine | Not started | |
 | M3 Customer booking | Not started | |
 | M4 Staff sign-in and roles | Not started | |
@@ -74,6 +81,7 @@ Newest first. One line per finished task.
 
 | Date | Task | What changed | Tests |
 |---|---|---|---|
+| 2026-10-27 | M1-3 | `src/server/money.ts` (deposit, balance due), `src/server/status.ts` (display status, wait time) | `npm run check` (23 unit tests total), `npm run build` |
 | 2026-10-27 | M1-2 | `prisma/seed.ts` (branches, services, staff, settings, 10 sample Lekki bookings), `scripts/print-lekki-schedule.ts`, added `tsx` dev dependency | `npx prisma db seed`, `npm run db:print-lekki`, `npm run check`, `npm run build` |
 | 2026-10-27 | M1-1 | Full Prisma schema (Branch, OpeningHours, Service, Staff, Customer, Booking, Settings) and migration | `npx prisma migrate dev` on a fresh database, `npm run check`, `npm run build` |
 | 2026-10-27 | M0-6 | `README.md` with setup steps and a commands table; verified `CLAUDE.md` commands are current | `npm run check` |
