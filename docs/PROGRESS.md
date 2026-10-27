@@ -179,14 +179,44 @@ and writes a handoff note before every session ends.
 > exactly 10 minutes after `createdAt`, customer upserted with the normalized phone),
 > then cleaned up the test row. Also verified the submit button stays disabled for an
 > invalid phone number.
-> **Half-done:** M3 milestone — M3-1 through M3-4 done; M3-5 through M3-7 not started.
-> **Next task:** M3-5 — pay the deposit through the fake `PaymentProvider`, then the
-> confirmation page. This is where the actual hold countdown belongs (see above), and
-> where the `PaymentProvider` interface from `docs/ARCHITECTURE.md` gets built for the
-> first time.
-> **Blockers or questions:** the hold-countdown placement above needs explicit sign-off
-> at the M3 checkpoint, same treatment as M1-1's BranchService simplification. Work is on
-> the `m3` branch (off `m2`, approved). Not yet committed.
+> M3-5: `src/server/payments/` — `PaymentProvider` interface (`types.ts`), `FakePaymentProvider`
+> (`fake.ts`, always succeeds unless asked to fail via `forceFailure`), and the one
+> `paymentProvider` instance app code imports (`index.ts`) — matches
+> `docs/ARCHITECTURE.md`'s planned shape, swapping in Paystack later is changing one line.
+> Added `confirmDeposit` to `src/server/bookings.ts`: marks a held booking's deposit
+> `PAID`, refusing if the 10-minute hold already expired (`HOLD_EXPIRED`) so a customer
+> can't pay for a slot that may have gone to someone else.
+> `/book/pay` (`page.tsx` + `PayForm.tsx` + `actions.ts`): the real hold countdown promised
+> in the M3-4 handoff now lives here, ticking down client-side from the booking's actual
+> `holdExpiresAt`. A failed charge (including "Simulate a failed payment", a visible
+> test-mode control since there's no real Paystack yet) leaves the hold untouched and shows
+> an inline error so the customer can just press Pay again; an expired hold instead shows a
+> "start again" message, no retry. On success, redirects to `/book/confirmed`.
+> `/book/confirmed` (`page.tsx` + `ConfirmedScreen.tsx`), matching `Confirmed.dc.html`:
+> bounces back to `/book/pay` if the deposit isn't actually `PAID` yet (no guessing from the
+> URL alone). New `src/lib/bookingReference.ts` — `formatBookingReference` (a short
+> "GU-XXXXXX" reference derived from the booking id's last 6 characters, no new column) and
+> `maskPhone` ("0803 ••• 8888") for the SMS-sent confirmation line. "Directions" links to a
+> Google Maps search on the branch address; "Call branch" is left as a static label since
+> `Branch` has no phone number field in the schema (not required by any M3 task).
+> Verified end-to-end against the dev database via a scripted Playwright run: booked braids
+> at Lekki through all three steps, landed on `/book/pay`, clicked "Simulate a failed
+> payment" and confirmed the hold survived with a visible error (screenshot), then paid for
+> real and landed on `/book/confirmed` with the correct summary, reference and "arrive by"
+> time (screenshot). Queried the DB directly to confirm `depositStatus: "PAID"`, then
+> deleted the test booking/customer and the scratch script.
+> **Half-done:** M3 milestone — M3-1 through M3-5 done; M3-6 and M3-7 not started.
+> **Next task:** M3-6 — send the confirmation message through the fake `MessageSender`
+> (console-logged), including "please arrive by…". Note: `docs/ARCHITECTURE.md`'s file tree
+> implies a `messages` table for CLAUDE.md's "stored in the messages table" line, but
+> `prisma/schema.prisma` has no `Message` model yet — M3-6 will need a small schema addition
+> (a new migration) before the sender can log anything durable; flagging this now so it
+> isn't a surprise mid-task.
+> **Blockers or questions:** the M3-4 hold-countdown placement still needs explicit
+> sign-off at the M3 checkpoint, same treatment as M1-1's BranchService simplification —
+> now resolved in code (the countdown lives on `/book/pay`, built this session) but the
+> design decision itself hasn't been reviewed yet. Work is on the `m3` branch (off `m2`,
+> approved).
 
 ## Milestones
 
@@ -211,6 +241,7 @@ Newest first. One line per finished task.
 
 | Date | Task | What changed | Tests |
 |---|---|---|---|
+| 2026-10-27 | M3-5 | `/book/pay` (hold countdown, fake-provider payment), `/book/confirmed`, `src/server/payments/`, `confirmDeposit`, `src/lib/bookingReference.ts` | `npm run check` (76 tests total), `npm run build`, scripted Playwright end-to-end check (pay failure → retry → success, DB row verified, then cleaned up) |
 | 2026-10-27 | M3-4 | `/book/review` step 3 (name/phone form, Server Action, first real `holdSlot` caller), `src/lib/phone.ts` | `npm run check` (69 tests total), `npm run build`, manual end-to-end check (verified the created DB row, then cleaned it up) |
 | 2026-10-27 | M3-3 | `/book/time` step 2 (stylist/date/time), `src/lib/lagosTime.ts` | `npm run check` (59 tests total), `npm run build`, visual + manual end-to-end check via Playwright |
 | 2026-10-27 | M3-2 | `/book` step 1 (branch + service choice), `formatDurationLabel`, `formatOpeningHoursLabel` | `npm run check` (54 tests total), `npm run build`, visual check via screenshot (3 states) |
