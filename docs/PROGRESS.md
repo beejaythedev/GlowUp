@@ -112,12 +112,32 @@ and writes a handoff note before every session ends.
 > checked against the design via screenshot; first pass had the accent circle overlapping
 > the headline (needed more top spacing to clear both decorative circles, matching the
 > original's stacked gap + padding-top) — fixed.
-> **Half-done:** M3 milestone — M3-1 done; M3-2 through M3-7 not started.
-> **Next task:** M3-2 — step 1, choose branch and service, matching `Main.dc.html`. Only
-> services the branch offers (this is where the M1-1 nails-only derivation actually gets
-> exercised by a real screen).
-> **Blockers or questions:** work is on a new `m3` branch (off `m2`, approved). Not yet
-> committed. `/book` (linked from the Welcome page) doesn't exist until M3-2.
+> M3-2: `/book` (`src/app/book/page.tsx` server component fetching branches/services/
+> settings, `BookingStep1Form.tsx` client component for the interactive picker), matching
+> `Main.dc.html`. Branch defaults to the first branch by `createdAt` (Lekki, since seed
+> order matches the PRD's branch listing order); tapping "Change" expands an inline list
+> of all 4 branches rather than a separate screen (the design file doesn't show that
+> step — reasonable interpretation, not literal). Picking a different branch re-filters
+> services via `!service.nailsOnly || branch.offersNails` — the M1-1 nails-only
+> derivation's first real exercise, confirmed working (Pedicure/Manicure show at Lekki).
+> Added `formatDurationLabel` (`src/lib/duration.ts`) and `formatOpeningHoursLabel`
+> (`src/lib/openingHours.ts`), both pure and unit-tested. Deposit amounts use M1-3's
+> `calculateDepositKobo` with `source: "ONLINE"`.
+> Hit a real Next.js 16 build issue: `/book` does a live, uncached DB read, which the
+> "Cache Components" feature (enabled since M0-1's scaffold) refuses to prerender —
+> fixed with `export const instant = false`, making it a per-request dynamic route
+> (confirmed in the build output: `ƒ /book` vs `○` for the static pages). Worth knowing
+> for any future page that reads the database directly.
+> Investigated what looked like a strikethrough through every price on screen —
+> confirmed via an isolated test page that it's the authentic ₦ (Naira Sign) glyph design
+> (two horizontal bars through the N), reproducible even in a plain system font with no
+> app styling involved. Not a bug, no change made.
+> **Half-done:** M3 milestone — M3-1 and M3-2 done; M3-3 through M3-7 not started.
+> **Next task:** M3-3 — step 2, choose stylist ("Any available" default), date and time
+> from the availability engine, matching `Time.dc.html`. First real caller of M2's
+> `getAvailableSlots`/`getSoonestFreePerStylist`.
+> **Blockers or questions:** work is on the `m3` branch (off `m2`, approved). Not yet
+> committed.
 
 ## Milestones
 
@@ -142,6 +162,7 @@ Newest first. One line per finished task.
 
 | Date | Task | What changed | Tests |
 |---|---|---|---|
+| 2026-10-27 | M3-2 | `/book` step 1 (branch + service choice), `formatDurationLabel`, `formatOpeningHoursLabel` | `npm run check` (54 tests total), `npm run build`, visual check via screenshot (3 states) |
 | 2026-10-27 | M3-1 | Welcome page (`src/app/page.tsx`), `Button` now supports `href` | `npm run check` (48 tests total), `npm run build`, visual check via screenshot |
 | 2026-10-27 | M2-4 | `getSoonestFreePerStylist` in `src/server/availability.ts` | `npm run check` (47 tests total), `npm run build` |
 | 2026-10-27 | M2-3 | No-double-booking exclusion constraint (migration), `holdSlot` in `src/server/bookings.ts`, `vitest.config.mts` now loads `.env` | `npm run check` (44 tests total, including a live-DB concurrency test), `npm run build`, `npx prisma db seed` |
