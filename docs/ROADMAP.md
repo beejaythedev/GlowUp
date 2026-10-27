@@ -64,13 +64,13 @@ The schedule is tight. If a week slips, move "Later" items out, never the checks
 
 **Goal:** the system can answer "which times can this service be booked?" correctly. This is the heart of the product, so it gets its own milestone.
 
-- [ ] **M2-1** `getAvailableSlots(branch, service, stylist or "any", date)` respecting opening hours (including Sunday at Lekki), service duration, prep time, existing bookings and active holds. Start times every 10 minutes.
+- [x] **M2-1** `getAvailableSlots(branch, service, stylist or "any", date)` respecting opening hours (including Sunday at Lekki), service duration, prep time, existing bookings and active holds. Start times every 10 minutes.
   Services with a range block their shortest duration; the longest sets the last start of the day. After a ranged service, requested-stylist bookings only get times after the longest duration plus prep (PRD, Check-in and timing, rules 7–8).
   *Done when:* unit tests pass for: full day, partly booked day, last start time before closing (braids: 2pm), nails only at Lekki and Ikeja, Sunday hours, and the Ronke example (any stylist 3:15, requested Ronke 4:15).
-- [ ] **M2-2** "Any available stylist": pick the stylist who becomes free soonest; ties go to the one with fewer bookings that day.
-- [ ] **M2-3** Slot hold: holding a slot reserves it for 10 minutes. Expired, unpaid holds are ignored by the availability engine, so release needs no background job.
+- [x] **M2-2** "Any available stylist": pick the stylist who becomes free soonest; ties go to the one with fewer bookings that day.
+- [x] **M2-3** Slot hold: holding a slot reserves it for 10 minutes. Expired, unpaid holds are ignored by the availability engine, so release needs no background job.
   *Done when:* a test fires two simultaneous holds for the same slot and exactly one succeeds.
-- [ ] **M2-4** "Soonest free" list per stylist for the reception's new-booking screen (S8).
+- [x] **M2-4** "Soonest free" list per stylist for the reception's new-booking screen (S8).
 
 **Supervisor checkpoint:** review the tests; try three tricky cases by hand. Resolve open question Q1 (braids duration) before this milestone ends.
 

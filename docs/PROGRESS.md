@@ -50,20 +50,75 @@ and writes a handoff note before every session ends.
 > simplification as-is, and asked for one schema fix before moving on — added
 > `Booking.cancelledAt` (nullable `DateTime`), needed to apply the 24-hour
 > free-cancellation window later (M8-2). Added as its own migration
-> (`20261027120710_m1_add_cancelled_at`) rather than reopening the M1-1 migration.
+> (`20261027120710_m1_add_cancelled_at`) rather than reopening the M1-1 migration. M1 is
+> now fully approved.
+> M2-1: `src/server/availability.ts` — `getAvailableSlots`, a pure function (plain data
+> in, no DB calls; a thin DB-fetching wrapper will be added when M3 needs a real caller).
+> Core design decision worth flagging: the PRD's worked example (any-stylist 3:15,
+> requested-Ronke 4:15 after an 11:00 braids booking) only works if each stylist's slot
+> grid is anchored to when THEY become free, not a single clock grid anchored to branch
+> opening — so "every 10 minutes" is per free-gap, not a fixed :00/:10/:20 grid across the
+> whole day. Ranged-service blocking asymmetry (rule 8): an "any" search always uses a
+> stylist's shortest-duration-plus-prep block; a specific requested-stylist search uses
+> that SAME stylist's longest-duration-plus-prep block for their own ranged bookings.
+> "Last start of day" uses only the longest duration (no prep added), matching the PRD's
+> braids-2pm-on-7pm-close example exactly. Also folded in "ignore expired, unpaid holds"
+> (the M2-3 behaviour) now, since M2-1's own description already asks for it. 11 unit
+> tests cover all six required scenarios plus hold/cancellation edge cases.
+> M2-2: `pickAnyAvailableStylist` in `src/server/availability.ts`, plus a private
+> `getStylistSoonestFree` helper that reuses M2-1's per-stylist gap/candidate logic
+> (short blocking, not the requested-stylist long-blocking lens, since "any" assignment
+> doesn't carry that constraint). Picks whichever stylist's own earliest slot is soonest;
+> ties broken by counting each tied stylist's active (non-cancelled) bookings that day,
+> fewest wins. 5 new unit tests: soonest-free pick, tie-break, cancelled bookings excluded
+> from the tie-break count, no stylist free that day, branch closed that day.
+> M2-3: added the no-double-booking exclusion constraint deferred from M1-1/M2-1
+> (`prisma/migrations/20261027123351_m2_3_no_double_booking` — `btree_gist`, exclude on
+> `stylistId` + `tsrange(startsAt, blockedUntil)` for non-`CANCELLED` bookings). Added
+> `holdSlot` in `src/server/bookings.ts`: inside one transaction, deletes any stale
+> expired/unpaid hold for that stylist first (so a slot whose old hold expired is
+> reclaimed without a background job), then inserts the new hold row; the exclusion
+> constraint is what actually guarantees only one of two concurrent inserts for an
+> overlapping range can win — `holdSlot` just turns that DB error into a clean
+> `{ ok: false, reason: "SLOT_TAKEN" }` instead of throwing.
+> One real snag: Prisma doesn't surface the underlying Postgres SQLSTATE (`23P01` for an
+> exclusion violation) as `error.code` — that's always Prisma's own generic `P2039` for
+> driver-level errors — so conflict detection has to pattern-match the constraint name in
+> the error message instead. Confirmed by writing a throwaway debug script that dumped
+> the real error shape before fixing the detection (script deleted after).
+> This test genuinely needs a live database (it's proving real Postgres concurrency
+> control, not something a mock can demonstrate), so `src/server/bookings.test.ts` opens
+> its own `PrismaClient` against `DATABASE_URL` and creates/tears down its own fixture
+> rows. Updated `vitest.config.mts` to load `.env` via Vite's `loadEnv` so `DATABASE_URL`
+> reaches the test process. 5 new tests, including the required "two simultaneous holds,
+> exactly one succeeds" case.
+> M2-4: `getSoonestFreePerStylist` in `src/server/availability.ts` — reuses the private
+> `getStylistSoonestFree` helper from M2-2 across every stylist, sorted soonest-first
+> (stylists with nothing left today sort last). Matches `ReceptionNew.dc.html`'s
+> "Stylist, soonest free first" picker exactly. 3 new tests, including the mockup's own
+> worked example (Ifeoma 12:50, Zainab/Blessing tied at 1:30, Ronke 3:00). One test-fixture
+> trap worth remembering: a stylist is only "busy" relative to a given `now` if their
+> booking's `[startsAt, blockedUntil)` actually covers that `now` — a booking starting
+> later than `now` leaves an earlier gap that's still offered, which doesn't match "Free
+> at 1:30" unless the fixture's booking already started before `now`. M2 milestone is now
+> fully done.
 > **Half-done:** none.
-> **Next task:** M2 Availability engine (M2-1: `getAvailableSlots`). M1 is fully approved.
-> **Blockers or questions:** none. `m1` has been pushed to `origin/m1` by the supervisor;
-> `origin/m1-data-model` (the stale pre-rename remote branch) can be deleted whenever
-> convenient. This `cancelledAt` commit still needs pushing.
+> **Next task:** M2 supervisor checkpoint — review `src/server/availability.ts` and
+> `src/server/bookings.ts` against `docs/PRD.md` (especially the Ronke worked example and
+> the per-stylist-free-gap grid design, both flagged above). Do not start M3 until
+> approved.
+> **Blockers or questions:** all of M2 (M2-1 through M2-4) is on the `m2` branch (off
+> `m1`, approved). Not yet committed/pushed. `bookings.test.ts` requires the local
+> Postgres container running — same as `npx prisma migrate dev`/`db seed`, nothing new,
+> but worth knowing `npm run check` will fail if Docker isn't up.
 
 ## Milestones
 
 | Milestone | Status | Supervisor approved |
 |---|---|---|
 | M0 Foundations | Ready for review | |
-| M1 Data model and seed | Ready for review | |
-| M2 Availability engine | Not started | |
+| M1 Data model and seed | Approved | 2026-10-27 |
+| M2 Availability engine | Ready for review | |
 | M3 Customer booking | Not started | |
 | M4 Staff sign-in and roles | Not started | |
 | M5 Reception | Not started | |
@@ -80,6 +135,10 @@ Newest first. One line per finished task.
 
 | Date | Task | What changed | Tests |
 |---|---|---|---|
+| 2026-10-27 | M2-4 | `getSoonestFreePerStylist` in `src/server/availability.ts` | `npm run check` (47 tests total), `npm run build` |
+| 2026-10-27 | M2-3 | No-double-booking exclusion constraint (migration), `holdSlot` in `src/server/bookings.ts`, `vitest.config.mts` now loads `.env` | `npm run check` (44 tests total, including a live-DB concurrency test), `npm run build`, `npx prisma db seed` |
+| 2026-10-27 | M2-2 | `pickAnyAvailableStylist` in `src/server/availability.ts` | `npm run check` (39 unit tests total), `npm run build` |
+| 2026-10-27 | M2-1 | `src/server/availability.ts` — `getAvailableSlots` | `npm run check` (34 unit tests total), `npm run build` |
 | 2026-10-27 | M1 checkpoint | Added `Booking.cancelledAt` (nullable), needed for the M8-2 refund window | `npm run check`, `npm run build`, re-ran `npx prisma db seed` |
 | 2026-10-27 | M1-3 | `src/server/money.ts` (deposit, balance due), `src/server/status.ts` (display status, wait time) | `npm run check` (23 unit tests total), `npm run build` |
 | 2026-10-27 | M1-2 | `prisma/seed.ts` (branches, services, staff, settings, 10 sample Lekki bookings), `scripts/print-lekki-schedule.ts`, added `tsx` dev dependency | `npx prisma db seed`, `npm run db:print-lekki`, `npm run check`, `npm run build` |

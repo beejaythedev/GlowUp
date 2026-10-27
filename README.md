@@ -61,7 +61,7 @@ See `CLAUDE.md` for the authoritative, kept-current list. In short:
 | Command | What it does |
 |---|---|
 | `npm run dev` | Start the app locally |
-| `npm run check` | Lint, type-check and run unit tests — must pass before every commit |
+| `npm run check` | Lint, type-check and run unit tests — must pass before every commit (needs the local Postgres container running — see `src/server/bookings.test.ts`, which proves the no-double-booking constraint against a real database) |
 | `npm test` | Unit tests only |
 | `npm run e2e` | End-to-end smoke tests (starts the dev server automatically) |
 | `npm run build` | Production build |
