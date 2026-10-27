@@ -86,7 +86,7 @@ The schedule is tight. If a week slips, move "Later" items out, never the checks
 - [x] **M3-4** Step 3, name and phone, booking summary, cancellation rule, hold countdown, matching `Review.dc.html`. Validate Nigerian phone numbers.
 - [x] **M3-5** Pay deposit through the fake `PaymentProvider` (always succeeds or fails on demand), then confirmation page with booking reference, matching `Confirmed.dc.html`. A failed payment keeps the hold and lets the customer retry.
 - [x] **M3-6** Confirmation message sent through the fake `MessageSender` (logged to console), including "please arrive by…".
-- [ ] **M3-7** End-to-end test: book braids at Lekki as a guest from start to confirmation.
+- [x] **M3-7** End-to-end test: book braids at Lekki as a guest from start to confirmation.
 
 **Supervisor checkpoint:** book on a real phone; check it on a slow connection.
 

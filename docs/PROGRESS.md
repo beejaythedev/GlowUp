@@ -225,14 +225,36 @@ and writes a handoff note before every session ends.
 > real bug — `GlowUp ${branchName}` produced "GlowUp GlowUp Lekki" since branch names already
 > start with "GlowUp" — fixed in `formatConfirmationMessage` and covered by a test asserting
 > no doubled prefix, then re-verified the fix live before cleaning up the test rows.
-> **Half-done:** M3 milestone — M3-1 through M3-6 done; only M3-7 left.
-> **Next task:** M3-7 — end-to-end test: book braids at Lekki as a guest from start to
-> confirmation. This is a Playwright test under `npm run e2e`, not another manual check —
-> first real use of that command in the project.
-> **Blockers or questions:** the M3-4 hold-countdown placement still needs explicit
-> sign-off at the M3 checkpoint, same treatment as M1-1's BranchService simplification —
-> resolved in code (the countdown lives on `/book/pay`, built in M3-5) but the design
-> decision itself hasn't been reviewed yet. Work is on the `m3` branch (off `m2`, approved).
+> M3-7: `e2e/booking.spec.ts` — a guest books knotless braids at Lekki end to end (Welcome →
+> step 1/2/3 → pay → confirmed), picking the first day in the 6-day window with a real
+> available time slot rather than a hardcoded date, so the test keeps working as "today"
+> moves. Asserts the confirmation heading, "Please arrive by…" line and `GU-XXXXXX`
+> reference are visible, then checks the actual database row directly (branch, service,
+> `depositStatus: PAID`, `status: BOOKED`) before deleting it.
+> Also fixed `e2e/home.spec.ts`, which had gone stale since M3-1 replaced the placeholder
+> home page — it still asserted a "GlowUp Salons" heading and a `/dev/tokens` link that no
+> longer exist; updated it to check the real Welcome page heading and the "Book an
+> appointment" link instead. `npm run e2e` hadn't been run since M0, so this was the first
+> time either test was actually exercised against current code.
+> One real build-vs-test-runner mismatch to flag: Playwright Test compiles spec files to
+> CommonJS and can't load the Prisma generated client's `import.meta` usage directly —the
+> same ESM/CJS mismatch `tsx` was added to fix for the seed/print scripts (M1-2,
+> `docs/DECISIONS.md`), but Playwright doesn't go through `tsx`. Rather than changing the
+> project's module system (`"type": "module"` in `package.json`) just for this, which would
+> risk the Next.js build and other scripts, the e2e test's DB check/cleanup now runs through
+> a small script (`scripts/e2e-booking-db.ts`) in a `tsx` child process, the same pattern
+> already proven for `db:print-lekki`. No new dependency added.
+> **M3 milestone is now fully done** — all of M3-1 through M3-7 complete. Ready for the
+> supervisor checkpoint listed in `docs/ROADMAP.md`: book on a real phone, check it on a
+> slow connection.
+> **Next task:** none — waiting on the M3 checkpoint before M4 (Staff sign-in and roles)
+> can start, per `CLAUDE.md` rule 6.
+> **Blockers or questions:** the M3-4 hold-countdown placement needs explicit sign-off at
+> this checkpoint, same treatment M1-1's BranchService simplification got at the M1
+> checkpoint. The roadmap lists the countdown under M3-4, but it's actually built on
+> `/book/pay` (M3-5), since no real hold exists until the customer submits their name/phone
+> on the review screen. Full reasoning in the M3-4 and M3-5 entries above.
+> Work is on the `m3` branch (off `m2`, approved), all seven tasks committed.
 
 ## Milestones
 
@@ -241,7 +263,7 @@ and writes a handoff note before every session ends.
 | M0 Foundations | Ready for review | |
 | M1 Data model and seed | Approved | 2026-10-27 |
 | M2 Availability engine | Approved | 2026-10-27 |
-| M3 Customer booking | In progress | |
+| M3 Customer booking | Ready for review | |
 | M4 Staff sign-in and roles | Not started | |
 | M5 Reception | Not started | |
 | M6 Stylist | Not started | |
@@ -257,6 +279,7 @@ Newest first. One line per finished task.
 
 | Date | Task | What changed | Tests |
 |---|---|---|---|
+| 2026-10-27 | M3-7 | `e2e/booking.spec.ts` (guest books braids at Lekki, Welcome → confirmed), fixed stale `e2e/home.spec.ts`, `scripts/e2e-booking-db.ts` | `npm run e2e` (2 tests, run twice to confirm stability) |
 | 2026-10-27 | M3-6 | `src/server/messages/` (`MessageSender`, `ConsoleMessageSender`), `src/lib/confirmationMessage.ts`, wired into `/book/pay/actions.ts` | `npm run check` (78 tests total), `npm run build`, scripted Playwright end-to-end check (confirmation line verified in the dev server log, caught and fixed a doubled "GlowUp" prefix) |
 | 2026-10-27 | M3-5 | `/book/pay` (hold countdown, fake-provider payment), `/book/confirmed`, `src/server/payments/`, `confirmDeposit`, `src/lib/bookingReference.ts` | `npm run check` (76 tests total), `npm run build`, scripted Playwright end-to-end check (pay failure → retry → success, DB row verified, then cleaned up) |
 | 2026-10-27 | M3-4 | `/book/review` step 3 (name/phone form, Server Action, first real `holdSlot` caller), `src/lib/phone.ts` | `npm run check` (69 tests total), `npm run build`, manual end-to-end check (verified the created DB row, then cleaned it up) |
