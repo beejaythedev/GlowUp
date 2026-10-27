@@ -6,7 +6,21 @@ and writes a handoff note before every session ends.
 ## Latest handoff note
 
 > **Date:** 2026-10-27
-> **Done this session:** M0 complete (M0-4, M0-5, M0-6 — see task log) and M1-1 started.
+> **Done this session:** M0 complete (M0-4, M0-5, M0-6) and M1-1, M1-2 done — see task
+> log. M1-2: `prisma/seed.ts` loads the 4 branches (addresses for Ikeja/Yaba/Surulere are
+> placeholders pending Open Question Q5), 7 services, Lekki staff (Ada, Grace, Blessing,
+> Zainab, Ronke, Ifeoma) + Kelechi at Ikeja + Tolu as owner (demo password `password1`,
+> hashed with Node's built-in `scrypt` as a stand-in — M4 will re-seed with real Better
+> Auth hashing), the global Settings row, and 10 sample bookings for "today" at Lekki
+> spread across the 4 stylists with varied statuses (DONE/IN_SERVICE/CHECKED_IN/BOOKED/
+> NO_SHOW) and one requested-stylist booking. Added `scripts/print-lekki-schedule.ts`
+> (`npm run db:print-lekki`) to check the seed by eye — output matches the
+> `ReceptionSchedule.dc.html` pattern.
+> Added `tsx` as a dev dependency (logged in `docs/DECISIONS.md`) — Prisma's generated
+> client uses extensionless ESM imports meant for bundler resolution, which Node's native
+> TS runner can't resolve directly; `tsx` is Prisma's own documented fix. Added `@unique`
+> to `Branch.name` and `Service.name` (needed for idempotent upserts in the seed script)
+> as a follow-up migration.
 > M1-1: full Prisma schema in `prisma/schema.prisma` — `Branch`/`OpeningHours` (weekday
 > opening hours as minutes-since-midnight Africa/Lagos wall-clock, missing weekday =
 > closed), `Service` (min/max duration for ranged services like braids, per Q1 in
@@ -26,15 +40,16 @@ and writes a handoff note before every session ends.
 > `glowup-postgres` Docker container had to be recreated (Docker Desktop wasn't running at
 > session start) — it only ever held the empty `SetupCheck` placeholder, so no data was
 > lost; this matches the README's "disposable container" setup.
-> **Half-done:** M1 milestone — M1-1 done, M1-2 (seed data) and M1-3 (pure functions:
-> deposit/wait-time/display-status/balance) not started.
-> **Next task:** M1-2 — seed data (4 branches, 7 services, Lekki staff, Kelechi at Ikeja,
-> Tolu as owner, sample "today" bookings) matching the designs.
-> **Blockers or questions:** work is on a new `m1-data-model` branch (branched off
-> `m0-foundations`); not yet committed — the supervisor commits and pushes manually, no
-> Co-Authored-By trailer (see project memory). The BranchService-vs-derived-booleans
-> simplification above is worth the supervisor's explicit sign-off at the M1 schema review
-> called for in `docs/ROADMAP.md`.
+> **Half-done:** M1 milestone — M1-1 and M1-2 done, M1-3 (pure functions: deposit/wait
+> time/display status/balance due) not started.
+> **Next task:** M1-3 — pure functions with unit tests (deposit amount, wait time, display
+> status, balance due), covering early arrival, late arrival and walk-ins. Then the M1
+> supervisor checkpoint.
+> **Blockers or questions:** M1-2's work is on a new `m1-2-seed-data` branch (branched off
+> `m1-data-model`, which is already committed and pushed); not yet committed itself — the
+> supervisor commits and pushes manually, no Co-Authored-By trailer (see project memory).
+> The BranchService-vs-derived-booleans simplification from M1-1 is still worth the
+> supervisor's explicit sign-off at the M1 schema review called for in `docs/ROADMAP.md`.
 
 ## Milestones
 
@@ -59,6 +74,7 @@ Newest first. One line per finished task.
 
 | Date | Task | What changed | Tests |
 |---|---|---|---|
+| 2026-10-27 | M1-2 | `prisma/seed.ts` (branches, services, staff, settings, 10 sample Lekki bookings), `scripts/print-lekki-schedule.ts`, added `tsx` dev dependency | `npx prisma db seed`, `npm run db:print-lekki`, `npm run check`, `npm run build` |
 | 2026-10-27 | M1-1 | Full Prisma schema (Branch, OpeningHours, Service, Staff, Customer, Booking, Settings) and migration | `npx prisma migrate dev` on a fresh database, `npm run check`, `npm run build` |
 | 2026-10-27 | M0-6 | `README.md` with setup steps and a commands table; verified `CLAUDE.md` commands are current | `npm run check` |
 | 2026-10-27 | M0-5 | Base components (Button, Card, Input, StatusBadge, Chip, CustomerShell, StaffShell), `/dev/components` page | `npm run check` (10 unit tests), `npm run e2e`, `npm run build`, visual check via screenshot |

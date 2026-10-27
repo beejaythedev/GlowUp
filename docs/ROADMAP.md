@@ -51,7 +51,7 @@ The schedule is tight. If a week slips, move "Later" items out, never the checks
 
 - [x] **M1-1** Prisma schema: Branch (name, address, opening hours per weekday, offers nails), Service (name, min and max duration, price in kobo, prep minutes, nails only), Staff (name, phone, role, branch, password hash, status), Customer (name, phone), Booking (branch, service, stylist, stylist requested yes/no, customer, booker phone, start, end, prep end, status, source, deposit amount and status, checkedInAt, startedAt, finishedAt, holdExpiresAt), Settings (deposit %, free-cancel hours, arrive-early minutes, prompt-after minutes).
   *Done when:* migration runs and the schema is reviewed against `docs/PRD.md`.
-- [ ] **M1-2** Seed data matching the designs: 4 branches, 7 services with prices and prep times, Lekki staff (Ada, Grace, Blessing, Zainab, Ronke, Ifeoma), Kelechi at Ikeja, Tolu as owner, and sample bookings for "today".
+- [x] **M1-2** Seed data matching the designs: 4 branches, 7 services with prices and prep times, Lekki staff (Ada, Grace, Blessing, Zainab, Ronke, Ifeoma), Kelechi at Ikeja, Tolu as owner, and sample bookings for "today".
   *Done when:* `npx prisma db seed` loads it and a quick script prints the Lekki schedule.
 - [ ] **M1-3** Pure functions with unit tests: deposit amount (20%, rounded to whole naira), wait time, display status (booked / checked in early / waiting / in service / done / no-show), balance due.
   *Done when:* tests cover early arrival, late arrival and walk-ins.
