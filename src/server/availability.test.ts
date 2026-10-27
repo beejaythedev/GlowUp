@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   getAvailableSlots,
+  getSoonestFreePerStylist,
   pickAnyAvailableStylist,
   type AvailabilityBooking,
 } from "./availability";
@@ -298,5 +299,52 @@ describe("pickAnyAvailableStylist", () => {
     );
 
     expect(picked).toBeNull();
+  });
+});
+
+describe("getSoonestFreePerStylist", () => {
+  it("sorts stylists soonest-free first (ReceptionNew.dc.html example)", () => {
+    // Each stylist is already mid-service at "now" (11:00) — the booking
+    // started at opening so the whole morning is covered, and only
+    // `blockedUntil` (when they actually clear) varies.
+    const ifeoma = { id: "ifeoma", bookings: [booking({ startsAt: time(9, 0), blockedUntil: time(12, 50) })] };
+    const zainab = { id: "zainab", bookings: [booking({ startsAt: time(9, 0), blockedUntil: time(13, 30) })] };
+    const blessing = { id: "blessing", bookings: [booking({ startsAt: time(9, 0), blockedUntil: time(13, 30) })] };
+    const ronke = { id: "ronke", bookings: [booking({ startsAt: time(9, 0), blockedUntil: time(15, 0) })] };
+
+    const list = getSoonestFreePerStylist(
+      [ifeoma, zainab, blessing, ronke],
+      washAndSet,
+      MON_SAT_HOURS,
+      time(11, 0),
+    );
+
+    expect(list.map((s) => s.stylistId)).toEqual(["ifeoma", "zainab", "blessing", "ronke"]);
+    expect(list[0].soonestFree).toEqual(time(12, 50));
+    expect(list[3].soonestFree).toEqual(time(15, 0));
+  });
+
+  it("sorts a stylist with no time left today last", () => {
+    const fullyBooked = {
+      id: "full",
+      bookings: [booking({ startsAt: time(9, 0), serviceMinDurationMinutes: 600 })],
+    };
+    const free = { id: "free", bookings: [] };
+
+    const list = getSoonestFreePerStylist([fullyBooked, free], washAndSet, MON_SAT_HOURS, EARLY_NOW);
+
+    expect(list.map((s) => s.stylistId)).toEqual(["free", "full"]);
+    expect(list[1].soonestFree).toBeNull();
+  });
+
+  it("every stylist is null when the branch is closed that day", () => {
+    const list = getSoonestFreePerStylist(
+      [{ id: "s1", bookings: [] }],
+      washAndSet,
+      null,
+      EARLY_NOW,
+    );
+
+    expect(list).toEqual([{ stylistId: "s1", soonestFree: null }]);
   });
 });

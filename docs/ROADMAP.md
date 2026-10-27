@@ -70,7 +70,7 @@ The schedule is tight. If a week slips, move "Later" items out, never the checks
 - [x] **M2-2** "Any available stylist": pick the stylist who becomes free soonest; ties go to the one with fewer bookings that day.
 - [x] **M2-3** Slot hold: holding a slot reserves it for 10 minutes. Expired, unpaid holds are ignored by the availability engine, so release needs no background job.
   *Done when:* a test fires two simultaneous holds for the same slot and exactly one succeeds.
-- [ ] **M2-4** "Soonest free" list per stylist for the reception's new-booking screen (S8).
+- [x] **M2-4** "Soonest free" list per stylist for the reception's new-booking screen (S8).
 
 **Supervisor checkpoint:** review the tests; try three tricky cases by hand. Resolve open question Q1 (braids duration) before this milestone ends.
 

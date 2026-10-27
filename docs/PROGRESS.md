@@ -92,14 +92,25 @@ and writes a handoff note before every session ends.
 > rows. Updated `vitest.config.mts` to load `.env` via Vite's `loadEnv` so `DATABASE_URL`
 > reaches the test process. 5 new tests, including the required "two simultaneous holds,
 > exactly one succeeds" case.
-> **Half-done:** M2 milestone — M2-1, M2-2, M2-3 done; M2-4 (soonest-free list for
-> reception) not started.
-> **Next task:** M2-4 — "soonest free" list per stylist for reception's new-booking
-> screen (S8). Last task in M2, then the M2 supervisor checkpoint.
-> **Blockers or questions:** work is on the `m2` branch (off `m1`, approved). Not yet
-> committed. `bookings.test.ts` requires the local Postgres container running — same as
-> `npx prisma migrate dev`/`db seed`, nothing new, but worth knowing `npm run check` will
-> fail if Docker isn't up.
+> M2-4: `getSoonestFreePerStylist` in `src/server/availability.ts` — reuses the private
+> `getStylistSoonestFree` helper from M2-2 across every stylist, sorted soonest-first
+> (stylists with nothing left today sort last). Matches `ReceptionNew.dc.html`'s
+> "Stylist, soonest free first" picker exactly. 3 new tests, including the mockup's own
+> worked example (Ifeoma 12:50, Zainab/Blessing tied at 1:30, Ronke 3:00). One test-fixture
+> trap worth remembering: a stylist is only "busy" relative to a given `now` if their
+> booking's `[startsAt, blockedUntil)` actually covers that `now` — a booking starting
+> later than `now` leaves an earlier gap that's still offered, which doesn't match "Free
+> at 1:30" unless the fixture's booking already started before `now`. M2 milestone is now
+> fully done.
+> **Half-done:** none.
+> **Next task:** M2 supervisor checkpoint — review `src/server/availability.ts` and
+> `src/server/bookings.ts` against `docs/PRD.md` (especially the Ronke worked example and
+> the per-stylist-free-gap grid design, both flagged above). Do not start M3 until
+> approved.
+> **Blockers or questions:** all of M2 (M2-1 through M2-4) is on the `m2` branch (off
+> `m1`, approved). Not yet committed/pushed. `bookings.test.ts` requires the local
+> Postgres container running — same as `npx prisma migrate dev`/`db seed`, nothing new,
+> but worth knowing `npm run check` will fail if Docker isn't up.
 
 ## Milestones
 
@@ -107,7 +118,7 @@ and writes a handoff note before every session ends.
 |---|---|---|
 | M0 Foundations | Ready for review | |
 | M1 Data model and seed | Approved | 2026-10-27 |
-| M2 Availability engine | In progress | |
+| M2 Availability engine | Ready for review | |
 | M3 Customer booking | Not started | |
 | M4 Staff sign-in and roles | Not started | |
 | M5 Reception | Not started | |
@@ -124,6 +135,7 @@ Newest first. One line per finished task.
 
 | Date | Task | What changed | Tests |
 |---|---|---|---|
+| 2026-10-27 | M2-4 | `getSoonestFreePerStylist` in `src/server/availability.ts` | `npm run check` (47 tests total), `npm run build` |
 | 2026-10-27 | M2-3 | No-double-booking exclusion constraint (migration), `holdSlot` in `src/server/bookings.ts`, `vitest.config.mts` now loads `.env` | `npm run check` (44 tests total, including a live-DB concurrency test), `npm run build`, `npx prisma db seed` |
 | 2026-10-27 | M2-2 | `pickAnyAvailableStylist` in `src/server/availability.ts` | `npm run check` (39 unit tests total), `npm run build` |
 | 2026-10-27 | M2-1 | `src/server/availability.ts` — `getAvailableSlots` | `npm run check` (34 unit tests total), `npm run build` |

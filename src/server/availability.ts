@@ -223,3 +223,34 @@ export function pickAnyAvailableStylist(
 
   return { stylistId: options[0].stylistId, startsAt: options[0].startsAt };
 }
+
+export interface StylistSoonestFree {
+  stylistId: string;
+  /** Null means this stylist has no time left for the service today. */
+  soonestFree: Date | null;
+}
+
+/**
+ * Every stylist's own soonest-free time for a service, soonest first —
+ * reception's new-booking screen picks a stylist from this list
+ * (`ReceptionNew.dc.html`: "Stylist, soonest free first"). Stylists with no
+ * time left today sort last.
+ */
+export function getSoonestFreePerStylist(
+  stylists: AvailabilityStylist[],
+  service: GetAvailableSlotsInput["service"],
+  openingHours: { opensAt: Date; closesAt: Date } | null,
+  now: Date,
+): StylistSoonestFree[] {
+  return stylists
+    .map((stylist) => ({
+      stylistId: stylist.id,
+      soonestFree: getStylistSoonestFree(stylist, service, openingHours, now),
+    }))
+    .sort((a, b) => {
+      if (a.soonestFree === null && b.soonestFree === null) return 0;
+      if (a.soonestFree === null) return 1;
+      if (b.soonestFree === null) return -1;
+      return a.soonestFree.getTime() - b.soonestFree.getTime();
+    });
+}
