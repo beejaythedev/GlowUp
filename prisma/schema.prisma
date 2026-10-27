@@ -188,9 +188,10 @@ model Booking {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   // No-double-booking is enforced by a PostgreSQL exclusion constraint on
-  // (stylistId, [startsAt, blockedUntil)) for active bookings, added as a
-  // hand-written SQL migration with the btree_gist extension (M2-3). Prisma's
-  // schema language can't express it, so it isn't modelled here.
+  // (stylistId, [startsAt, blockedUntil)) for active (non-CANCELLED)
+  // bookings — see migrations/20261027123351_m2_3_no_double_booking. Hand
+  // written with the btree_gist extension; Prisma's schema language can't
+  // express it, so it isn't modelled here.
 
   @@index([stylistId, startsAt])
   @@index([branchId, startsAt])

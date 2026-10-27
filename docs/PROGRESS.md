@@ -72,14 +72,34 @@ and writes a handoff note before every session ends.
 > ties broken by counting each tied stylist's active (non-cancelled) bookings that day,
 > fewest wins. 5 new unit tests: soonest-free pick, tie-break, cancelled bookings excluded
 > from the tie-break count, no stylist free that day, branch closed that day.
-> **Half-done:** M2 milestone — M2-1 and M2-2 done; M2-3 (slot hold with concurrency
-> test) and M2-4 (soonest-free list for reception) not started.
-> **Next task:** M2-3 — slot hold: holding a slot reserves it for 10 minutes; a test must
-> fire two simultaneous holds for the same slot and prove exactly one succeeds. This is
-> the first task needing an actual database transaction/constraint, not just pure
-> functions.
+> M2-3: added the no-double-booking exclusion constraint deferred from M1-1/M2-1
+> (`prisma/migrations/20261027123351_m2_3_no_double_booking` — `btree_gist`, exclude on
+> `stylistId` + `tsrange(startsAt, blockedUntil)` for non-`CANCELLED` bookings). Added
+> `holdSlot` in `src/server/bookings.ts`: inside one transaction, deletes any stale
+> expired/unpaid hold for that stylist first (so a slot whose old hold expired is
+> reclaimed without a background job), then inserts the new hold row; the exclusion
+> constraint is what actually guarantees only one of two concurrent inserts for an
+> overlapping range can win — `holdSlot` just turns that DB error into a clean
+> `{ ok: false, reason: "SLOT_TAKEN" }` instead of throwing.
+> One real snag: Prisma doesn't surface the underlying Postgres SQLSTATE (`23P01` for an
+> exclusion violation) as `error.code` — that's always Prisma's own generic `P2039` for
+> driver-level errors — so conflict detection has to pattern-match the constraint name in
+> the error message instead. Confirmed by writing a throwaway debug script that dumped
+> the real error shape before fixing the detection (script deleted after).
+> This test genuinely needs a live database (it's proving real Postgres concurrency
+> control, not something a mock can demonstrate), so `src/server/bookings.test.ts` opens
+> its own `PrismaClient` against `DATABASE_URL` and creates/tears down its own fixture
+> rows. Updated `vitest.config.mts` to load `.env` via Vite's `loadEnv` so `DATABASE_URL`
+> reaches the test process. 5 new tests, including the required "two simultaneous holds,
+> exactly one succeeds" case.
+> **Half-done:** M2 milestone — M2-1, M2-2, M2-3 done; M2-4 (soonest-free list for
+> reception) not started.
+> **Next task:** M2-4 — "soonest free" list per stylist for reception's new-booking
+> screen (S8). Last task in M2, then the M2 supervisor checkpoint.
 > **Blockers or questions:** work is on the `m2` branch (off `m1`, approved). Not yet
-> committed.
+> committed. `bookings.test.ts` requires the local Postgres container running — same as
+> `npx prisma migrate dev`/`db seed`, nothing new, but worth knowing `npm run check` will
+> fail if Docker isn't up.
 
 ## Milestones
 
@@ -104,6 +124,7 @@ Newest first. One line per finished task.
 
 | Date | Task | What changed | Tests |
 |---|---|---|---|
+| 2026-10-27 | M2-3 | No-double-booking exclusion constraint (migration), `holdSlot` in `src/server/bookings.ts`, `vitest.config.mts` now loads `.env` | `npm run check` (44 tests total, including a live-DB concurrency test), `npm run build`, `npx prisma db seed` |
 | 2026-10-27 | M2-2 | `pickAnyAvailableStylist` in `src/server/availability.ts` | `npm run check` (39 unit tests total), `npm run build` |
 | 2026-10-27 | M2-1 | `src/server/availability.ts` — `getAvailableSlots` | `npm run check` (34 unit tests total), `npm run build` |
 | 2026-10-27 | M1 checkpoint | Added `Booking.cancelledAt` (nullable), needed for the M8-2 refund window | `npm run check`, `npm run build`, re-ran `npx prisma db seed` |

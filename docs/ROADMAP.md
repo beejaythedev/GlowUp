@@ -68,7 +68,7 @@ The schedule is tight. If a week slips, move "Later" items out, never the checks
   Services with a range block their shortest duration; the longest sets the last start of the day. After a ranged service, requested-stylist bookings only get times after the longest duration plus prep (PRD, Check-in and timing, rules 7–8).
   *Done when:* unit tests pass for: full day, partly booked day, last start time before closing (braids: 2pm), nails only at Lekki and Ikeja, Sunday hours, and the Ronke example (any stylist 3:15, requested Ronke 4:15).
 - [x] **M2-2** "Any available stylist": pick the stylist who becomes free soonest; ties go to the one with fewer bookings that day.
-- [ ] **M2-3** Slot hold: holding a slot reserves it for 10 minutes. Expired, unpaid holds are ignored by the availability engine, so release needs no background job.
+- [x] **M2-3** Slot hold: holding a slot reserves it for 10 minutes. Expired, unpaid holds are ignored by the availability engine, so release needs no background job.
   *Done when:* a test fires two simultaneous holds for the same slot and exactly one succeeds.
 - [ ] **M2-4** "Soonest free" list per stylist for the reception's new-booking screen (S8).
 
