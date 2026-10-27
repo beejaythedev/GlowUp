@@ -5,22 +5,12 @@
  * Addresses for Ikeja, Yaba and Surulere are placeholders pending Open
  * Question Q5 (docs/OPEN_QUESTIONS.md) — Tolu hasn't sent them yet.
  */
-import { randomBytes, scryptSync } from "node:crypto";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "../src/generated/prisma/client";
+import { hashPassword } from "../src/server/auth/password";
 
 const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL });
 const db = new PrismaClient({ adapter });
-
-/**
- * Stand-in password hashing for seed data only. M4 wires up Better Auth,
- * which brings its own hashing — demo accounts will be re-seeded then.
- */
-function hashPassword(password: string): string {
-  const salt = randomBytes(16).toString("hex");
-  const hash = scryptSync(password, salt, 64).toString("hex");
-  return `${salt}:${hash}`;
-}
 
 const DEMO_PASSWORD = "password1";
 

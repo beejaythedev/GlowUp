@@ -5,6 +5,7 @@ changes how the product works. Don't reverse a decision without a new entry.
 
 | Date | Decision | Why | Decided by |
 |---|---|---|---|
+| 27 Oct 2026 | Staff sign-in is hand-rolled (phone + password hashed into `Staff.passwordHash`, our own httpOnly session cookie), not the Better Auth library | `docs/TECH_STACK.md` flagged this for confirmation before M4. Better Auth's `phoneNumber` plugin does support phone+password sign-in, but its core `user` model always requires an `email` column we don't otherwise need, plus its own `user`/`session`/`account`/`verification` tables alongside — or instead of — `Staff`. For a practice project with one simple role-based session, that's meaningfully more schema and moving parts than the problem needs. Overrides the 22 Oct "proposed" Better Auth entry below | Supervisor |
 | 27 Oct 2026 | `tsx` added as a dev dependency to run `prisma/seed.ts` and dev scripts | Prisma's generated client uses extensionless ESM imports meant for bundler resolution; Node's native TS runner can't resolve them directly. `tsx` is Prisma's own documented fix | Supervisor |
 | 22 Oct 2026 | Treat the build as a practice project: Vercel Hobby, Neon Free, Paystack test mode, console messages only | Learning project; keep it free and simple. `docs/TECH_STACK.md` keeps the real-project options for reference | Supervisor |
 | 22 Oct 2026 | Better Auth for staff sign-in instead of Auth.js | Auth.js moved under the Better Auth team in 2025, which recommends Better Auth for new projects | Supervisor (proposed) |

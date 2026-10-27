@@ -43,7 +43,8 @@ Proposed for v1. Changing any of these is a decision for the supervisor.
 - Next.js (App Router) with TypeScript in strict mode
 - Tailwind CSS, using the design tokens in `docs/DESIGN.md` (never raw hex in components)
 - PostgreSQL with Prisma ORM
-- Better Auth for staff sign-in (phone number + password, passwords hashed)
+- Hand-rolled staff sign-in (phone number + password, passwords hashed, own session
+  cookie) — not the Better Auth library. See `docs/DECISIONS.md`, 27 Oct 2026.
 - Zod for validating every form and API input
 - Vitest for unit tests; Playwright for end-to-end smoke tests
 - Payments and SMS behind interfaces (`PaymentProvider`, `MessageSender`) with fake

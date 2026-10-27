@@ -22,7 +22,7 @@ future project: tools and prices change.
 | UI building blocks | Own components, optionally shadcn/ui (Radix) for dialogs, selects, menus | Accessible behaviour without fighting a library's look | MUI, Chakra, Mantine | Need many complex widgets quickly |
 | Database | PostgreSQL | Relational data, transactions, and it can refuse overlapping bookings itself | MySQL, MongoDB, Firebase | Rarely; Postgres scales far beyond a salon chain |
 | Database access | Prisma | Readable schema, safe migrations, typed queries | Drizzle, Kysely, raw SQL | Queries get complex or performance-critical |
-| Staff sign-in | Better Auth | Open source, runs in our app, actively developed | Auth.js, Clerk, Supabase Auth | You need social login, SSO or many users fast |
+| Staff sign-in | Hand-rolled (phone + password on `Staff`, own session cookie) — see `docs/DECISIONS.md`, 27 Oct 2026 | Better Auth's core schema needs an email column we don't use and its own user/session tables alongside `Staff`; not worth the extra moving parts for one simple role-based session | Better Auth, Auth.js, Clerk, Supabase Auth | Staff accounts need social login, SSO, or grow past a handful of simple roles |
 | Validation | Zod | One schema checks forms and server input | Valibot, Yup | — |
 | Payments | Paystack | Decided by Tolu; card and bank transfer, confirmed automatically | Flutterwave, manual transfer with receipts | Fees or reliability become an issue |
 | SMS | Not decided yet (see Q4) | Must work on every phone | Termii, Africa's Talking, Twilio, WhatsApp Business | — |
@@ -78,15 +78,22 @@ hand-written SQL migration. Prisma adds a layer between you and SQL.
 **Alternative:** **Drizzle** stays closer to SQL, is lighter, and is popular for new
 projects. A fair choice; Prisma wins here on readability for a learning team.
 
-### Staff sign-in: Better Auth
+### Staff sign-in: hand-rolled, not Better Auth
 
-**Why:** sign-in runs inside our app and our database, with no per-user fees. In September
-2025, the Auth.js (NextAuth) project moved under the Better Auth team, which now recommends
-Better Auth for new projects; Auth.js gets security fixes only. Before M4, confirm how
-Better Auth handles phone number plus password (via its plugins), or use the phone number
-as the username.
+**Why:** Better Auth was the plan going into M4 (open source, runs in our app, actively
+developed; Auth.js moved under the Better Auth team in September 2025, which now recommends
+Better Auth for new projects). Checking its `phoneNumber` plugin before starting M4, as
+planned, found that Better Auth's core `user` model always requires an `email` column
+even when only phone sign-in is used, and brings its own `user`/`session`/`account`/
+`verification` tables alongside (or instead of) `Staff`. For one practice project with a
+handful of simple roles, that's more schema and moving parts than the problem needs — so
+M4 hashes passwords into the existing `Staff.passwordHash` column and issues our own
+httpOnly session cookie, checked server-side on every staff route. See `docs/DECISIONS.md`,
+27 Oct 2026.
 
 **Alternatives:**
+- **Better Auth:** still the right call if staff accounts grow past a handful of roles, or
+  social login/SSO is ever needed.
 - **Auth.js:** still works and widely used, but no longer the recommended path for new projects.
 - **Clerk:** hosted sign-in with ready-made screens, very fast to set up, but a paid
   service per user and your user data lives with them.

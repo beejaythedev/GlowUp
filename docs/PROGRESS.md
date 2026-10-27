@@ -244,17 +244,47 @@ and writes a handoff note before every session ends.
 > risk the Next.js build and other scripts, the e2e test's DB check/cleanup now runs through
 > a small script (`scripts/e2e-booking-db.ts`) in a `tsx` child process, the same pattern
 > already proven for `db:print-lekki`. No new dependency added.
-> **M3 milestone is now fully done** — all of M3-1 through M3-7 complete. Ready for the
-> supervisor checkpoint listed in `docs/ROADMAP.md`: book on a real phone, check it on a
-> slow connection.
-> **Next task:** none — waiting on the M3 checkpoint before M4 (Staff sign-in and roles)
-> can start, per `CLAUDE.md` rule 6.
-> **Blockers or questions:** the M3-4 hold-countdown placement needs explicit sign-off at
-> this checkpoint, same treatment M1-1's BranchService simplification got at the M1
-> checkpoint. The roadmap lists the countdown under M3-4, but it's actually built on
-> `/book/pay` (M3-5), since no real hold exists until the customer submits their name/phone
-> on the review screen. Full reasoning in the M3-4 and M3-5 entries above.
-> Work is on the `m3` branch (off `m2`, approved), all seven tasks committed.
+> **M3 milestone is now fully done** — all of M3-1 through M3-7 complete.
+> M3 checkpoint review: supervisor approved M3 as-is, including the M3-4/M3-5
+> hold-countdown placement (the roadmap lists it under M3-4, but it's actually built on
+> `/book/pay` since no real hold exists until the customer submits name/phone on the review
+> screen — see the M3-4 and M3-5 entries above for the full reasoning). M3 is now fully
+> approved and pushed to the remote `m3` branch.
+> M4 started on a new `m4` branch (off `m3`). Before M4-1, checked `docs/TECH_STACK.md`'s
+> own flag — "before M4, confirm how Better Auth handles phone number plus password" —
+> and found Better Auth's `phoneNumber` plugin does support it, but its core `user` model
+> always requires an `email` column we don't use, plus its own `user`/`session`/`account`/
+> `verification` tables alongside `Staff`. Supervisor approved hand-rolling sign-in instead:
+> passwords hashed into the existing `Staff.passwordHash`, our own session cookie. Logged in
+> `docs/DECISIONS.md` (27 Oct 2026), and `docs/TECH_STACK.md`/`CLAUDE.md` updated to match —
+> this is a real stack change, not just an implementation detail, so it's written down the
+> same way the original Better Auth choice was.
+> M4-1: `src/server/auth/` — `password.ts` (scrypt `hashPassword`/`verifyPassword`, extracted
+> from `prisma/seed.ts` which now imports it instead of hashing inline — same hashing, no
+> longer a stand-in), `lockout.ts` (pure `evaluateSignInAttempt`: wrong password increments
+> a counter, the 5th consecutive failure locks the account for 15 minutes and resets the
+> counter, an active lock refuses even the correct password), `session.ts` (HMAC-signed,
+> timing-safe session token; "keep me signed in" controls a 30-day vs 24-hour expiry).
+> New migration `20261027210000_m4_1_staff_lockout` adds `Staff.failedSignInAttempts` and
+> `Staff.lockedUntil`. New `AUTH_SECRET` env var (`.env.example` updated) signs the cookie.
+> `/staff/sign-in` (`page.tsx` + `SignInForm.tsx` + `actions.ts`) matches `StaffSignIn.dc.html`
+> — phone + password, show/hide toggle, "keep me signed in" (defaulted checked, via a hidden
+> `false` input before the checkbox so an unchecked box still submits a value), a single
+> generic error for both "no such phone" and "wrong password" so neither is distinguishable
+> to an attacker, and the lockout message once 5 attempts are reached.
+> Also added a minimal `/staff` placeholder landing page (shows who's signed in, a sign-out
+> button) — not a roadmap task, but sign-in needs *somewhere* to redirect to prove the
+> session cookie actually works; M4-2 replaces it with the real per-role destinations.
+> Verified live end to end against a throwaway test stylist account: correct password → signed
+> in → sign out → back at sign-in; 5 wrong passwords → lockout message on the 5th, not just a
+> generic error (an earlier pass got this wrong — fixed so the attempt that triggers the lock
+> says so); correct password still refused while locked; show/hide toggle works. Deleted the
+> test account afterward.
+> **Next task:** M4-2 — role-based redirect after sign-in (receptionist → reception, stylist
+> → stylist today, manager → manager today, owner → owner overview). Those destination pages
+> don't exist yet (M5–M7 build them), so this will likely need small placeholder pages per
+> role for now, replaced as each milestone lands.
+> **Blockers or questions:** none open.
 
 ## Milestones
 
@@ -263,8 +293,8 @@ and writes a handoff note before every session ends.
 | M0 Foundations | Ready for review | |
 | M1 Data model and seed | Approved | 2026-10-27 |
 | M2 Availability engine | Approved | 2026-10-27 |
-| M3 Customer booking | Ready for review | |
-| M4 Staff sign-in and roles | Not started | |
+| M3 Customer booking | Approved | 2026-10-27 |
+| M4 Staff sign-in and roles | In progress | |
 | M5 Reception | Not started | |
 | M6 Stylist | Not started | |
 | M7 Manager and owner | Not started | |
@@ -279,6 +309,7 @@ Newest first. One line per finished task.
 
 | Date | Task | What changed | Tests |
 |---|---|---|---|
+| 2026-10-27 | M4-1 | `/staff/sign-in` (phone + password, lockout), `src/server/auth/` (`password`, `lockout`, `session`), placeholder `/staff`, migration for `Staff` lockout fields | `npm run check` (92 tests total), `npm run build`, scripted Playwright end-to-end check (sign in, sign out, 5-attempt lockout, show/hide toggle) against a throwaway staff account |
 | 2026-10-27 | M3-7 | `e2e/booking.spec.ts` (guest books braids at Lekki, Welcome → confirmed), fixed stale `e2e/home.spec.ts`, `scripts/e2e-booking-db.ts` | `npm run e2e` (2 tests, run twice to confirm stability) |
 | 2026-10-27 | M3-6 | `src/server/messages/` (`MessageSender`, `ConsoleMessageSender`), `src/lib/confirmationMessage.ts`, wired into `/book/pay/actions.ts` | `npm run check` (78 tests total), `npm run build`, scripted Playwright end-to-end check (confirmation line verified in the dev server log, caught and fixed a doubled "GlowUp" prefix) |
 | 2026-10-27 | M3-5 | `/book/pay` (hold countdown, fake-provider payment), `/book/confirmed`, `src/server/payments/`, `confirmDeposit`, `src/lib/bookingReference.ts` | `npm run check` (76 tests total), `npm run build`, scripted Playwright end-to-end check (pay failure → retry → success, DB row verified, then cleaned up) |
