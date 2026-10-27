@@ -102,15 +102,159 @@ and writes a handoff note before every session ends.
 > later than `now` leaves an earlier gap that's still offered, which doesn't match "Free
 > at 1:30" unless the fixture's booking already started before `now`. M2 milestone is now
 > fully done.
-> **Half-done:** none.
-> **Next task:** M2 supervisor checkpoint — review `src/server/availability.ts` and
-> `src/server/bookings.ts` against `docs/PRD.md` (especially the Ronke worked example and
-> the per-stylist-free-gap grid design, both flagged above). Do not start M3 until
-> approved.
-> **Blockers or questions:** all of M2 (M2-1 through M2-4) is on the `m2` branch (off
-> `m1`, approved). Not yet committed/pushed. `bookings.test.ts` requires the local
-> Postgres container running — same as `npx prisma migrate dev`/`db seed`, nothing new,
-> but worth knowing `npm run check` will fail if Docker isn't up.
+> M2 approved. M3-1: Welcome page (`src/app/page.tsx`, replacing the M0 placeholder),
+> matching `Welcome.dc.html` — navy header with three decorative circles, feature list
+> (live availability / deposit / SMS reminders) using existing tokens rather than the
+> design file's exact (undocumented) icon colors, primary CTA to `/book`, "Sign in" link
+> to `/staff/sign-in`. Extended `Button` to optionally render as a `next/link` Link when
+> given `href`, so a navigating CTA still looks like a button — the first real consumer
+> needing this; `/dev/components` still only shows the plain-button form. Visually
+> checked against the design via screenshot; first pass had the accent circle overlapping
+> the headline (needed more top spacing to clear both decorative circles, matching the
+> original's stacked gap + padding-top) — fixed.
+> M3-2: `/book` (`src/app/book/page.tsx` server component fetching branches/services/
+> settings, `BookingStep1Form.tsx` client component for the interactive picker), matching
+> `Main.dc.html`. Branch defaults to the first branch by `createdAt` (Lekki, since seed
+> order matches the PRD's branch listing order); tapping "Change" expands an inline list
+> of all 4 branches rather than a separate screen (the design file doesn't show that
+> step — reasonable interpretation, not literal). Picking a different branch re-filters
+> services via `!service.nailsOnly || branch.offersNails` — the M1-1 nails-only
+> derivation's first real exercise, confirmed working (Pedicure/Manicure show at Lekki).
+> Added `formatDurationLabel` (`src/lib/duration.ts`) and `formatOpeningHoursLabel`
+> (`src/lib/openingHours.ts`), both pure and unit-tested. Deposit amounts use M1-3's
+> `calculateDepositKobo` with `source: "ONLINE"`.
+> Hit a real Next.js 16 build issue: `/book` does a live, uncached DB read, which the
+> "Cache Components" feature (enabled since M0-1's scaffold) refuses to prerender —
+> fixed with `export const instant = false`, making it a per-request dynamic route
+> (confirmed in the build output: `ƒ /book` vs `○` for the static pages). Worth knowing
+> for any future page that reads the database directly.
+> Investigated what looked like a strikethrough through every price on screen —
+> confirmed via an isolated test page that it's the authentic ₦ (Naira Sign) glyph design
+> (two horizontal bars through the N), reproducible even in a plain system font with no
+> app styling involved. Not a bug, no change made.
+> M3-3: `/book/time` (`page.tsx` server component + `BookingStep2Form.tsx` client
+> component), matching `Time.dc.html` — first real caller of M2's availability engine.
+> Server fetches the branch's active stylists and all their bookings across a 6-day
+> window in one query, pre-splits them per day, and passes everything to the client as
+> plain data; the client then calls `getAvailableSlots` (M2-1) directly in the browser —
+> it's a pure function with no DB dependency, so this needed no new API route, just
+> reusing what M2 already built. Stylist chips ("Any available" + each named stylist),
+> a 6-day date strip, and a 10-minute time grid, all live-computed from the fetched data
+> with no extra network round-trips as the customer changes stylist/date.
+> For "Any available", added `resolveStylistForTime` (client-local, not exported from
+> `availability.ts`): once the customer taps a specific time from the aggregated "any"
+> list, it finds which stylist actually covers that exact time by calling
+> `getAvailableSlots` once per stylist — simpler than reusing M2-2's soonest-free+
+> fewest-bookings tie-break, which answers a different question ("what's the best slot
+> to suggest") than this one ("who covers the slot the customer already picked").
+> Extracted `src/lib/lagosTime.ts` (date-parts/instant/add-days/clock-time) from the
+> Lagos-time pattern duplicated across `seed.ts` and the M1-2 print script — new app code
+> only, didn't touch those two already-committed files.
+> Verified end-to-end against seeded data: picking a 5-hour ranged service (braids) on
+> today's date correctly showed "No times left" once today's real-world clock time had
+> passed the computed last-start cutoff (2pm) — not a bug, confirmed by checking a future
+> day instead, which showed the full 9:00am–2:00pm/10-minute grid exactly as expected.
+> Confirmed the Continue link resolves correctly for both a requested stylist and "Any
+> available" (resolving to a concrete stylist id with `stylistRequested=false`).
+> M3-4: `/book/review` (`page.tsx` + `BookingStep3Form.tsx` + `actions.ts` Server Action
+> `confirmBooking`), matching `Review.dc.html`. Name + Nigerian phone form (new
+> `src/lib/phone.ts`, `normalizeNigerianPhone`/`isValidNigerianPhone`, unit-tested — 11
+> digits, local `0` or `+234`/`234` country code, network prefix 7/8/9), booking summary
+> card, free-cancellation deadline computed from `Settings.freeCancellationHours`.
+> **Deliberate scope decision worth your sign-off:** the roadmap lists "hold countdown"
+> under M3-4, but the schema requires `Booking.customerId` NOT NULL — a hold can't exist
+> before we know who's booking, and name/phone are collected ON this same screen. Rather
+> than fake a countdown for a hold that doesn't exist yet (misleading), or add a
+> throwaway placeholder-customer pattern to work around the schema (meaningful extra
+> complexity for a practice project), I read the PRD's own wording — "a slot is held for
+> 10 minutes **while the customer pays**" — as support for creating the hold at
+> submission, not at page-load. Tapping "Pay ₦X deposit" is a Server Action that
+> validates input with Zod, re-checks the service/branch against the database (never
+> trusts the screen), upserts the Customer by phone, and calls M2-3's `holdSlot` for the
+> first time anywhere in the app — then redirects to `/book/pay?bookingId=...` (M3-5,
+> not built yet), where a real, accurate countdown belongs since the hold genuinely
+> exists by then.
+> Verified end-to-end against the dev database: submitted the form, confirmed the created
+> `Booking` row (correct `depositAmountKobo`, `depositStatus: PENDING`, `holdExpiresAt`
+> exactly 10 minutes after `createdAt`, customer upserted with the normalized phone),
+> then cleaned up the test row. Also verified the submit button stays disabled for an
+> invalid phone number.
+> M3-5: `src/server/payments/` — `PaymentProvider` interface (`types.ts`), `FakePaymentProvider`
+> (`fake.ts`, always succeeds unless asked to fail via `forceFailure`), and the one
+> `paymentProvider` instance app code imports (`index.ts`) — matches
+> `docs/ARCHITECTURE.md`'s planned shape, swapping in Paystack later is changing one line.
+> Added `confirmDeposit` to `src/server/bookings.ts`: marks a held booking's deposit
+> `PAID`, refusing if the 10-minute hold already expired (`HOLD_EXPIRED`) so a customer
+> can't pay for a slot that may have gone to someone else.
+> `/book/pay` (`page.tsx` + `PayForm.tsx` + `actions.ts`): the real hold countdown promised
+> in the M3-4 handoff now lives here, ticking down client-side from the booking's actual
+> `holdExpiresAt`. A failed charge (including "Simulate a failed payment", a visible
+> test-mode control since there's no real Paystack yet) leaves the hold untouched and shows
+> an inline error so the customer can just press Pay again; an expired hold instead shows a
+> "start again" message, no retry. On success, redirects to `/book/confirmed`.
+> `/book/confirmed` (`page.tsx` + `ConfirmedScreen.tsx`), matching `Confirmed.dc.html`:
+> bounces back to `/book/pay` if the deposit isn't actually `PAID` yet (no guessing from the
+> URL alone). New `src/lib/bookingReference.ts` — `formatBookingReference` (a short
+> "GU-XXXXXX" reference derived from the booking id's last 6 characters, no new column) and
+> `maskPhone` ("0803 ••• 8888") for the SMS-sent confirmation line. "Directions" links to a
+> Google Maps search on the branch address; "Call branch" is left as a static label since
+> `Branch` has no phone number field in the schema (not required by any M3 task).
+> Verified end-to-end against the dev database via a scripted Playwright run: booked braids
+> at Lekki through all three steps, landed on `/book/pay`, clicked "Simulate a failed
+> payment" and confirmed the hold survived with a visible error (screenshot), then paid for
+> real and landed on `/book/confirmed` with the correct summary, reference and "arrive by"
+> time (screenshot). Queried the DB directly to confirm `depositStatus: "PAID"`, then
+> deleted the test booking/customer and the scratch script.
+> M3-6: `src/server/messages/` — `MessageSender` interface (`types.ts`), `ConsoleMessageSender`
+> (`console.ts`, logs `to`/`body`), and the one `messageSender` instance app code imports
+> (`index.ts`) — same shape as M3-5's `payments/`. New `src/lib/confirmationMessage.ts`
+> (`formatConfirmationMessage`, pure and unit-tested) builds the SMS body: service, branch,
+> when, "Please arrive by…", deposit paid, booking reference. Sent from `/book/pay/actions.ts`
+> right after `confirmDeposit` succeeds, before the redirect to `/book/confirmed`.
+> Correction to last session's flagged note: I'd assumed a `Message` schema model was needed
+> now because `docs/ARCHITECTURE.md`/`CLAUDE.md` describe messages as "stored in the messages
+> table". Re-reading `docs/ROADMAP.md` before starting, the messages table, status tracking
+> and `/api/jobs/run` scheduling are explicitly **M8-4** ("stored in the messages table with a
+> status... processed by a `/api/jobs/run` endpoint"), not M3. M3-6 only asks for an immediate,
+> unscheduled, console-logged message, so no schema change this task — M8-4 will persist
+> messages (confirmation included) once the table exists.
+> Verified against the dev database via a scripted Playwright run: booked braids at Lekki
+> through all three steps and paid, confirmed the exact expected line appeared in the Next.js
+> dev server log (`[message] to 08039992222: Hi M3-6, you're booked at GlowUp Lekki for
+> Knotless braids on Sat 31 Oct, 9:00 am. Please arrive by 8:50 am...`). First run caught a
+> real bug — `GlowUp ${branchName}` produced "GlowUp GlowUp Lekki" since branch names already
+> start with "GlowUp" — fixed in `formatConfirmationMessage` and covered by a test asserting
+> no doubled prefix, then re-verified the fix live before cleaning up the test rows.
+> M3-7: `e2e/booking.spec.ts` — a guest books knotless braids at Lekki end to end (Welcome →
+> step 1/2/3 → pay → confirmed), picking the first day in the 6-day window with a real
+> available time slot rather than a hardcoded date, so the test keeps working as "today"
+> moves. Asserts the confirmation heading, "Please arrive by…" line and `GU-XXXXXX`
+> reference are visible, then checks the actual database row directly (branch, service,
+> `depositStatus: PAID`, `status: BOOKED`) before deleting it.
+> Also fixed `e2e/home.spec.ts`, which had gone stale since M3-1 replaced the placeholder
+> home page — it still asserted a "GlowUp Salons" heading and a `/dev/tokens` link that no
+> longer exist; updated it to check the real Welcome page heading and the "Book an
+> appointment" link instead. `npm run e2e` hadn't been run since M0, so this was the first
+> time either test was actually exercised against current code.
+> One real build-vs-test-runner mismatch to flag: Playwright Test compiles spec files to
+> CommonJS and can't load the Prisma generated client's `import.meta` usage directly —the
+> same ESM/CJS mismatch `tsx` was added to fix for the seed/print scripts (M1-2,
+> `docs/DECISIONS.md`), but Playwright doesn't go through `tsx`. Rather than changing the
+> project's module system (`"type": "module"` in `package.json`) just for this, which would
+> risk the Next.js build and other scripts, the e2e test's DB check/cleanup now runs through
+> a small script (`scripts/e2e-booking-db.ts`) in a `tsx` child process, the same pattern
+> already proven for `db:print-lekki`. No new dependency added.
+> **M3 milestone is now fully done** — all of M3-1 through M3-7 complete. Ready for the
+> supervisor checkpoint listed in `docs/ROADMAP.md`: book on a real phone, check it on a
+> slow connection.
+> **Next task:** none — waiting on the M3 checkpoint before M4 (Staff sign-in and roles)
+> can start, per `CLAUDE.md` rule 6.
+> **Blockers or questions:** the M3-4 hold-countdown placement needs explicit sign-off at
+> this checkpoint, same treatment M1-1's BranchService simplification got at the M1
+> checkpoint. The roadmap lists the countdown under M3-4, but it's actually built on
+> `/book/pay` (M3-5), since no real hold exists until the customer submits their name/phone
+> on the review screen. Full reasoning in the M3-4 and M3-5 entries above.
+> Work is on the `m3` branch (off `m2`, approved), all seven tasks committed.
 
 ## Milestones
 
@@ -118,8 +262,8 @@ and writes a handoff note before every session ends.
 |---|---|---|
 | M0 Foundations | Ready for review | |
 | M1 Data model and seed | Approved | 2026-10-27 |
-| M2 Availability engine | Ready for review | |
-| M3 Customer booking | Not started | |
+| M2 Availability engine | Approved | 2026-10-27 |
+| M3 Customer booking | Ready for review | |
 | M4 Staff sign-in and roles | Not started | |
 | M5 Reception | Not started | |
 | M6 Stylist | Not started | |
@@ -135,6 +279,13 @@ Newest first. One line per finished task.
 
 | Date | Task | What changed | Tests |
 |---|---|---|---|
+| 2026-10-27 | M3-7 | `e2e/booking.spec.ts` (guest books braids at Lekki, Welcome → confirmed), fixed stale `e2e/home.spec.ts`, `scripts/e2e-booking-db.ts` | `npm run e2e` (2 tests, run twice to confirm stability) |
+| 2026-10-27 | M3-6 | `src/server/messages/` (`MessageSender`, `ConsoleMessageSender`), `src/lib/confirmationMessage.ts`, wired into `/book/pay/actions.ts` | `npm run check` (78 tests total), `npm run build`, scripted Playwright end-to-end check (confirmation line verified in the dev server log, caught and fixed a doubled "GlowUp" prefix) |
+| 2026-10-27 | M3-5 | `/book/pay` (hold countdown, fake-provider payment), `/book/confirmed`, `src/server/payments/`, `confirmDeposit`, `src/lib/bookingReference.ts` | `npm run check` (76 tests total), `npm run build`, scripted Playwright end-to-end check (pay failure → retry → success, DB row verified, then cleaned up) |
+| 2026-10-27 | M3-4 | `/book/review` step 3 (name/phone form, Server Action, first real `holdSlot` caller), `src/lib/phone.ts` | `npm run check` (69 tests total), `npm run build`, manual end-to-end check (verified the created DB row, then cleaned it up) |
+| 2026-10-27 | M3-3 | `/book/time` step 2 (stylist/date/time), `src/lib/lagosTime.ts` | `npm run check` (59 tests total), `npm run build`, visual + manual end-to-end check via Playwright |
+| 2026-10-27 | M3-2 | `/book` step 1 (branch + service choice), `formatDurationLabel`, `formatOpeningHoursLabel` | `npm run check` (54 tests total), `npm run build`, visual check via screenshot (3 states) |
+| 2026-10-27 | M3-1 | Welcome page (`src/app/page.tsx`), `Button` now supports `href` | `npm run check` (48 tests total), `npm run build`, visual check via screenshot |
 | 2026-10-27 | M2-4 | `getSoonestFreePerStylist` in `src/server/availability.ts` | `npm run check` (47 tests total), `npm run build` |
 | 2026-10-27 | M2-3 | No-double-booking exclusion constraint (migration), `holdSlot` in `src/server/bookings.ts`, `vitest.config.mts` now loads `.env` | `npm run check` (44 tests total, including a live-DB concurrency test), `npm run build`, `npx prisma db seed` |
 | 2026-10-27 | M2-2 | `pickAnyAvailableStylist` in `src/server/availability.ts` | `npm run check` (39 unit tests total), `npm run build` |

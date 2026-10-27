@@ -2,7 +2,7 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "../generated/prisma/client";
-import { holdSlot } from "./bookings";
+import { confirmDeposit, holdSlot } from "./bookings";
 
 const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL });
 const db = new PrismaClient({ adapter });
@@ -159,5 +159,40 @@ describe("holdSlot", () => {
 
     expect(first.ok).toBe(true);
     expect(second.ok).toBe(true);
+  });
+});
+
+describe("confirmDeposit", () => {
+  it("marks a held booking's deposit as paid", async () => {
+    const startsAt = new Date("2026-11-08T10:00:00Z");
+    const now = new Date("2026-11-08T09:00:00Z");
+
+    const held = await holdSlot(db, holdParams(startsAt, { now }));
+    expect(held.ok).toBe(true);
+    if (!held.ok) return;
+
+    const result = await confirmDeposit(db, held.bookingId, now);
+    expect(result).toEqual({ ok: true });
+
+    const booking = await db.booking.findUniqueOrThrow({ where: { id: held.bookingId } });
+    expect(booking.depositStatus).toBe("PAID");
+  });
+
+  it("refuses a booking whose hold already expired", async () => {
+    const startsAt = new Date("2026-11-08T12:00:00Z");
+    const now = new Date("2026-11-08T09:00:00Z");
+    const later = new Date("2026-11-08T09:11:00Z");
+
+    const held = await holdSlot(db, holdParams(startsAt, { now }));
+    expect(held.ok).toBe(true);
+    if (!held.ok) return;
+
+    const result = await confirmDeposit(db, held.bookingId, later);
+    expect(result).toEqual({ ok: false, reason: "HOLD_EXPIRED" });
+  });
+
+  it("refuses an unknown booking id", async () => {
+    const result = await confirmDeposit(db, "does-not-exist");
+    expect(result).toEqual({ ok: false, reason: "NOT_FOUND" });
   });
 });

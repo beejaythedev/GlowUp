@@ -84,6 +84,37 @@ export async function holdSlot(db: Db, params: HoldSlotParams): Promise<HoldSlot
   }
 }
 
+export type ConfirmDepositResult =
+  | { ok: true }
+  | { ok: false; reason: "NOT_FOUND" | "HOLD_EXPIRED" };
+
+/**
+ * Marks a held booking's deposit as paid, once the payment provider has
+ * confirmed the charge. Refuses a booking whose 10-minute hold already
+ * expired — the customer must go back and re-check availability rather than
+ * pay for a slot that may have been taken by someone else in the meantime.
+ */
+export async function confirmDeposit(
+  db: Pick<PrismaClient, "booking">,
+  bookingId: string,
+  now: Date = new Date(),
+): Promise<ConfirmDepositResult> {
+  const booking = await db.booking.findUnique({ where: { id: bookingId } });
+  if (!booking) return { ok: false, reason: "NOT_FOUND" };
+  if (booking.status !== "BOOKED" || booking.depositStatus !== "PENDING") {
+    return { ok: false, reason: "NOT_FOUND" };
+  }
+  if (booking.holdExpiresAt && booking.holdExpiresAt < now) {
+    return { ok: false, reason: "HOLD_EXPIRED" };
+  }
+
+  await db.booking.update({
+    where: { id: bookingId },
+    data: { depositStatus: "PAID" },
+  });
+  return { ok: true };
+}
+
 /**
  * True if `error` is the no-double-booking exclusion constraint (Postgres
  * SQLSTATE 23P01). Prisma's driver-level errors don't surface the raw
