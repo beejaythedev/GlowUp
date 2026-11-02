@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { getDisplayStatus, getWaitMinutes } from "./status";
+import { allowedFromStatuses, getDisplayStatus, getWaitMinutes, isActionAllowed } from "./status";
 
 const appointmentStart = new Date("2026-10-31T10:00:00Z");
 
@@ -68,5 +68,60 @@ describe("getWaitMinutes", () => {
         comparedTo: walkInTime,
       }),
     ).toBe(0);
+  });
+});
+
+describe("isActionAllowed", () => {
+  it("only checks in a booked appointment", () => {
+    expect(isActionAllowed("BOOKED", "CHECK_IN")).toBe(true);
+    expect(isActionAllowed("CHECKED_IN", "CHECK_IN")).toBe(false);
+    expect(isActionAllowed("DONE", "CHECK_IN")).toBe(false);
+  });
+
+  it("only starts a checked-in appointment", () => {
+    expect(isActionAllowed("CHECKED_IN", "START")).toBe(true);
+    expect(isActionAllowed("BOOKED", "START")).toBe(false);
+  });
+
+  it("only finishes an in-service appointment", () => {
+    expect(isActionAllowed("IN_SERVICE", "FINISH")).toBe(true);
+    expect(isActionAllowed("CHECKED_IN", "FINISH")).toBe(false);
+  });
+
+  it("only undoes a check-in from checked-in", () => {
+    expect(isActionAllowed("CHECKED_IN", "UNDO_CHECK_IN")).toBe(true);
+    expect(isActionAllowed("IN_SERVICE", "UNDO_CHECK_IN")).toBe(false);
+  });
+
+  it("only marks a booked (not yet checked in) appointment as a no-show", () => {
+    expect(isActionAllowed("BOOKED", "NO_SHOW")).toBe(true);
+    expect(isActionAllowed("CHECKED_IN", "NO_SHOW")).toBe(false);
+  });
+
+  it("cancels only before service starts", () => {
+    expect(isActionAllowed("BOOKED", "CANCEL")).toBe(true);
+    expect(isActionAllowed("CHECKED_IN", "CANCEL")).toBe(true);
+    expect(isActionAllowed("IN_SERVICE", "CANCEL")).toBe(false);
+    expect(isActionAllowed("DONE", "CANCEL")).toBe(false);
+  });
+
+  it("moves only before service starts", () => {
+    expect(isActionAllowed("BOOKED", "MOVE")).toBe(true);
+    expect(isActionAllowed("CHECKED_IN", "MOVE")).toBe(true);
+    expect(isActionAllowed("IN_SERVICE", "MOVE")).toBe(false);
+  });
+});
+
+describe("allowedFromStatuses", () => {
+  it("matches isActionAllowed for every status", () => {
+    const allStatuses = ["BOOKED", "CHECKED_IN", "IN_SERVICE", "DONE", "NO_SHOW", "CANCELLED"] as const;
+    const allActions = [
+      "CHECK_IN", "START", "FINISH", "UNDO_CHECK_IN", "NO_SHOW", "CANCEL", "MOVE",
+    ] as const;
+    for (const action of allActions) {
+      for (const status of allStatuses) {
+        expect(allowedFromStatuses(action).includes(status)).toBe(isActionAllowed(status, action));
+      }
+    }
   });
 });

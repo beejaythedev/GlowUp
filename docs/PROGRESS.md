@@ -366,9 +366,51 @@ and writes a handoff note before every session ends.
 > access violation) then succeeded immediately on retry. Not reproducible on demand, not
 > something `npm run check` or the app code can detect or correct — just worth remembering
 > if a command fails with that exact exit code: retry before assuming a real bug.
-> **Next task:** M5-2 — booking panel with timeline and actions (check in, start/finish as
-> backup, move, cancel, no-show, undo check-in). This is where clicking a schedule block
-> finally does something.
+> M5-2: `src/server/status.ts` gained the other half of what `docs/ARCHITECTURE.md` always
+> said belonged there — `isActionAllowed`/`allowedFromStatuses`, one `ALLOWED_FROM` map that
+> is the single source of truth for which stored `BookingStatus` each of the seven actions
+> may start from (check in only from `BOOKED`; start only from `CHECKED_IN`; finish only
+> from `IN_SERVICE`; undo-check-in only from `CHECKED_IN`; no-show only from `BOOKED`
+> — a checked-in customer showed up, so they can't retroactively be a no-show; cancel and
+> move both only before service starts). `src/server/bookings.ts` gained the seven DB
+> functions (`checkIn`, `startService`, `finishService`, `undoCheckIn`, `markNoShow`,
+> `cancelBooking`, `moveBooking`), each a single `updateMany` guarded by that same allowed-
+> status list, so the status check and the write happen atomically — two staff members
+> tapping the same button at once can't both succeed, the same safety property `holdSlot`
+> already had for double-booking. `moveBooking` reuses `holdSlot`'s `isSlotConflict` pattern:
+> reassigning to a stylist who's already booked then fails the DB's own exclusion constraint
+> and reports `SLOT_TAKEN` instead of throwing.
+> `/staff/reception` now has a real booking panel: clicking a schedule block (a `Link` to
+> `?bookingId=...`, so selection is server-rendered and shareable, not client state) opens
+> `BookingPanel.tsx` — customer, service, stylist, deposit, a timeline (appointment/checked-
+> in/started/finished, pending rows shown as "–"), a late-arrival note when relevant, and
+> only the action buttons that `isActionAllowed` says are valid for the booking's current
+> status. One server action (`performBookingAction` in `actions.ts`) handles all seven
+> actions — `action` is a hidden form field each button sets, matching the pattern from
+> M3-5's pay/simulate-failure buttons — and re-checks `canViewBooking` (M4-3) before doing
+> anything, so this is also where that permission check gets its first real caller.
+> Two scoping decisions, deliberately kept narrow: "Move booking" reassigns to a different
+> stylist at the *same* time only (a dropdown of the branch's other active stylists, no new
+> time-and-stylist picker UI) — covers the common case ("that stylist's out today, move to
+> someone else") without building a second availability widget; and plain check-in has no
+> "arrived 5/10 min ago" correction — that's M5-3's dedicated check-in flow with search, a
+> different entry point from this panel's one-tap check-in.
+> Also fixed in passing: `/staff/reception` 404'd for the owner, even though `canAccess-
+> StaffSection` (M4-3) explicitly lets the owner into every section — there's no branch-
+> switcher, so an owner has no branch to show a schedule for. Now redirects to `/staff/owner`
+> instead of a dead end.
+> Verified live against seeded Lekki data as Ada: selected a `BOOKED` slot and walked it
+> through check in → start (backup) → finish (backup), watching the schedule block's colour,
+> the panel's badge/timeline, and the summary tiles update correctly at each step (including
+> the late-arrival note, since the seeded appointment time had long passed); moved a
+> different booking to another stylist and confirmed it reappeared in the right column; and
+> confirmed a `DONE` booking's panel shows the timeline with no action buttons. Re-seeded
+> afterward (`npx prisma db seed`) to restore the dev database's clean baseline, since this
+> task's actions genuinely mutate the seeded bookings rather than just creating throwaway
+> test rows.
+> **Next task:** M5-3 — check-in: one tap, with "arrived 5 or 10 minutes ago" correction;
+> search by name, phone or service. Matches `ReceptionCheckIn.dc.html` and
+> `CheckedInOnTime.dc.html`.
 > **Blockers or questions:** none open.
 
 ## Milestones
@@ -394,6 +436,7 @@ Newest first. One line per finished task.
 
 | Date | Task | What changed | Tests |
 |---|---|---|---|
+| 2026-11-02 | M5-2 | Booking panel (`BookingPanel.tsx`, `actions.ts`), `isActionAllowed`/`allowedFromStatuses` in `status.ts`, 7 action functions in `bookings.ts` (check in, start, finish, undo, no-show, cancel, move) | `npm run check` (145 tests total), `npm run build`, screenshot-verified full check-in→start→finish flow and a stylist move against seeded Lekki data |
 | 2026-11-02 | M5-1 | `/staff/reception` real schedule grid, `src/server/schedule.ts`, `src/components/staff/AutoRefresh.tsx`, `.schedule-prep` CSS pattern | `npm run check` (124 tests total), `npm run build`, screenshot-verified against seeded Lekki data |
 | 2026-10-27 | M4-3 | `src/server/permissions.ts` (`canViewBooking`, `canViewBranch`, `canAccessStaffSection`), `requireStaffSection` guard wired into all 4 staff section placeholder pages | `npm run check` (108 tests total), `npm run build`, scripted Playwright check (stylist bounced from every other section, owner can open all 4, signed-out redirects) |
 | 2026-10-27 | M4-2 | `roleHomePath`, `getCurrentStaff`, role-based sign-in redirect, placeholder `/staff/{reception,stylist,manager,owner}`, `/staff` now a dispatcher | `npm run check` (96 tests total), `npm run build`, scripted Playwright check (all 4 seeded roles land on their own section, already-signed-in redirects) |

@@ -2,7 +2,17 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "../generated/prisma/client";
-import { confirmDeposit, holdSlot } from "./bookings";
+import {
+  cancelBooking,
+  checkIn,
+  confirmDeposit,
+  finishService,
+  holdSlot,
+  markNoShow,
+  moveBooking,
+  startService,
+  undoCheckIn,
+} from "./bookings";
 
 const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL });
 const db = new PrismaClient({ adapter });
@@ -194,5 +204,201 @@ describe("confirmDeposit", () => {
   it("refuses an unknown booking id", async () => {
     const result = await confirmDeposit(db, "does-not-exist");
     expect(result).toEqual({ ok: false, reason: "NOT_FOUND" });
+  });
+});
+
+interface CreateBookingOverrides {
+  startsAt?: Date;
+  endsAt?: Date;
+  blockedUntil?: Date;
+  stylistId?: string;
+  status?: "BOOKED" | "CHECKED_IN" | "IN_SERVICE" | "DONE" | "NO_SHOW" | "CANCELLED";
+  checkedInAt?: Date;
+  startedAt?: Date;
+}
+
+function createBooking(overrides: CreateBookingOverrides = {}) {
+  return db.booking.create({
+    data: {
+      branchId,
+      serviceId,
+      stylistId,
+      stylistRequested: false,
+      customerId,
+      bookerPhone: "07000000002",
+      startsAt: new Date("2026-11-09T10:00:00Z"),
+      endsAt: new Date("2026-11-09T11:00:00Z"),
+      blockedUntil: new Date("2026-11-09T11:10:00Z"),
+      status: "BOOKED",
+      source: "ONLINE",
+      depositAmountKobo: 160_000,
+      depositStatus: "PAID",
+      ...overrides,
+    },
+  });
+}
+
+// Each test below creates its own booking for the same stylist, so every
+// test needs a time slot that doesn't overlap any other test's — the
+// no-double-booking exclusion constraint applies just as much here as to
+// a real concurrent hold.
+function slot(hoursFromBase: number) {
+  const startsAt = new Date(new Date("2026-11-09T06:00:00Z").getTime() + hoursFromBase * 2 * 60 * 60_000);
+  return { startsAt, endsAt: new Date(startsAt.getTime() + 60 * 60_000), blockedUntil: new Date(startsAt.getTime() + 70 * 60_000) };
+}
+
+describe("reception actions", () => {
+  it("checks in a booked appointment", async () => {
+    const booking = await createBooking(slot(0));
+    const now = new Date("2026-11-09T10:00:00Z");
+
+    const result = await checkIn(db, booking.id, now);
+    expect(result).toEqual({ ok: true });
+
+    const updated = await db.booking.findUniqueOrThrow({ where: { id: booking.id } });
+    expect(updated.status).toBe("CHECKED_IN");
+    expect(updated.checkedInAt).toEqual(now);
+  });
+
+  it("refuses to check in a booking that's already checked in", async () => {
+    const booking = await createBooking({ ...slot(1), status: "CHECKED_IN", checkedInAt: new Date() });
+    const result = await checkIn(db, booking.id);
+    expect(result).toEqual({ ok: false, reason: "NOT_ALLOWED" });
+  });
+
+  it("starts service for a checked-in booking", async () => {
+    const booking = await createBooking({
+      ...slot(2),
+      status: "CHECKED_IN",
+      checkedInAt: new Date("2026-11-09T10:00:00Z"),
+    });
+    const now = new Date("2026-11-09T10:05:00Z");
+
+    const result = await startService(db, booking.id, now);
+    expect(result).toEqual({ ok: true });
+
+    const updated = await db.booking.findUniqueOrThrow({ where: { id: booking.id } });
+    expect(updated.status).toBe("IN_SERVICE");
+    expect(updated.startedAt).toEqual(now);
+  });
+
+  it("refuses to start a booking that hasn't been checked in", async () => {
+    const booking = await createBooking(slot(3));
+    const result = await startService(db, booking.id);
+    expect(result).toEqual({ ok: false, reason: "NOT_ALLOWED" });
+  });
+
+  it("finishes an in-service booking", async () => {
+    const booking = await createBooking({
+      ...slot(4),
+      status: "IN_SERVICE",
+      startedAt: new Date("2026-11-09T10:05:00Z"),
+    });
+    const now = new Date("2026-11-09T11:00:00Z");
+
+    const result = await finishService(db, booking.id, now);
+    expect(result).toEqual({ ok: true });
+
+    const updated = await db.booking.findUniqueOrThrow({ where: { id: booking.id } });
+    expect(updated.status).toBe("DONE");
+    expect(updated.finishedAt).toEqual(now);
+  });
+
+  it("undoes a check-in back to booked", async () => {
+    const booking = await createBooking({ ...slot(5), status: "CHECKED_IN", checkedInAt: new Date() });
+
+    const result = await undoCheckIn(db, booking.id);
+    expect(result).toEqual({ ok: true });
+
+    const updated = await db.booking.findUniqueOrThrow({ where: { id: booking.id } });
+    expect(updated.status).toBe("BOOKED");
+    expect(updated.checkedInAt).toBeNull();
+  });
+
+  it("marks a booked appointment as a no-show", async () => {
+    const booking = await createBooking(slot(6));
+    const result = await markNoShow(db, booking.id);
+    expect(result).toEqual({ ok: true });
+
+    const updated = await db.booking.findUniqueOrThrow({ where: { id: booking.id } });
+    expect(updated.status).toBe("NO_SHOW");
+  });
+
+  it("refuses to mark an already-checked-in booking as a no-show", async () => {
+    const booking = await createBooking({ ...slot(7), status: "CHECKED_IN", checkedInAt: new Date() });
+    const result = await markNoShow(db, booking.id);
+    expect(result).toEqual({ ok: false, reason: "NOT_ALLOWED" });
+  });
+
+  it("cancels a booked appointment", async () => {
+    const booking = await createBooking(slot(8));
+    const now = new Date("2026-11-09T09:00:00Z");
+
+    const result = await cancelBooking(db, booking.id, now);
+    expect(result).toEqual({ ok: true });
+
+    const updated = await db.booking.findUniqueOrThrow({ where: { id: booking.id } });
+    expect(updated.status).toBe("CANCELLED");
+    expect(updated.cancelledAt).toEqual(now);
+  });
+
+  it("refuses to cancel a booking already in service", async () => {
+    const booking = await createBooking({ ...slot(9), status: "IN_SERVICE", startedAt: new Date() });
+    const result = await cancelBooking(db, booking.id);
+    expect(result).toEqual({ ok: false, reason: "NOT_ALLOWED" });
+  });
+
+  it("moves a booking to a different, free stylist", async () => {
+    const otherStylist = await db.staff.create({
+      data: {
+        name: "M5-2 Test Stylist",
+        phone: "07000000004",
+        role: "STYLIST",
+        branchId,
+        passwordHash: "test",
+      },
+    });
+    extraStylistIds.push(otherStylist.id);
+
+    const booking = await createBooking({
+      startsAt: new Date("2026-11-10T10:00:00Z"),
+      endsAt: new Date("2026-11-10T11:00:00Z"),
+      blockedUntil: new Date("2026-11-10T11:10:00Z"),
+    });
+
+    const result = await moveBooking(db, booking.id, otherStylist.id);
+    expect(result).toEqual({ ok: true });
+
+    const updated = await db.booking.findUniqueOrThrow({ where: { id: booking.id } });
+    expect(updated.stylistId).toBe(otherStylist.id);
+  });
+
+  it("refuses to move a booking onto a stylist who's already busy then", async () => {
+    const otherStylist = await db.staff.create({
+      data: {
+        name: "M5-2 Test Stylist 2",
+        phone: "07000000005",
+        role: "STYLIST",
+        branchId,
+        passwordHash: "test",
+      },
+    });
+    extraStylistIds.push(otherStylist.id);
+
+    const startsAt = new Date("2026-11-11T10:00:00Z");
+    const endsAt = new Date("2026-11-11T11:00:00Z");
+    const blockedUntil = new Date("2026-11-11T11:10:00Z");
+
+    await createBooking({ startsAt, endsAt, blockedUntil, stylistId: otherStylist.id });
+    const booking = await createBooking({ startsAt, endsAt, blockedUntil });
+
+    const result = await moveBooking(db, booking.id, otherStylist.id);
+    expect(result).toEqual({ ok: false, reason: "SLOT_TAKEN" });
+  });
+
+  it("refuses to move a booking that's already in service", async () => {
+    const booking = await createBooking({ ...slot(10), status: "IN_SERVICE", startedAt: new Date() });
+    const result = await moveBooking(db, booking.id, stylistId);
+    expect(result).toEqual({ ok: false, reason: "NOT_ALLOWED" });
   });
 });

@@ -1,5 +1,6 @@
 import type { BookingSource } from "@/generated/prisma/enums";
 import type { PrismaClient } from "@/generated/prisma/client";
+import { allowedFromStatuses, type BookingAction } from "./status";
 
 const HOLD_MINUTES = 10;
 
@@ -113,6 +114,81 @@ export async function confirmDeposit(
     data: { depositStatus: "PAID" },
   });
   return { ok: true };
+}
+
+export type BookingActionResult = { ok: true } | { ok: false; reason: "NOT_ALLOWED" };
+
+type BookingDb = Pick<PrismaClient, "booking">;
+
+/**
+ * Applies a status transition only if the booking is currently in one of
+ * `action`'s allowed starting statuses (`src/server/status.ts`'s
+ * `allowedFromStatuses` — the single source of truth both here and for the
+ * UI). The status check and the write happen in one `updateMany`, so two
+ * staff members tapping the same button at once can't both succeed.
+ */
+async function applyBookingAction(
+  db: BookingDb,
+  bookingId: string,
+  action: BookingAction,
+  data: Parameters<PrismaClient["booking"]["updateMany"]>[0]["data"],
+): Promise<BookingActionResult> {
+  const result = await db.booking.updateMany({
+    where: { id: bookingId, status: { in: allowedFromStatuses(action) } },
+    data,
+  });
+  return result.count > 0 ? { ok: true } : { ok: false, reason: "NOT_ALLOWED" };
+}
+
+/** Reception taps one tap to check a customer in (docs/PRD.md, Check-in and timing, rule 1). */
+export function checkIn(db: BookingDb, bookingId: string, now: Date = new Date()) {
+  return applyBookingAction(db, bookingId, "CHECK_IN", { status: "CHECKED_IN", checkedInAt: now });
+}
+
+/** The stylist's own Start tap, or reception as backup (docs/PRD.md rule 2). */
+export function startService(db: BookingDb, bookingId: string, now: Date = new Date()) {
+  return applyBookingAction(db, bookingId, "START", { status: "IN_SERVICE", startedAt: now });
+}
+
+/** The stylist's own Finish tap, or reception as backup (docs/PRD.md rule 2). */
+export function finishService(db: BookingDb, bookingId: string, now: Date = new Date()) {
+  return applyBookingAction(db, bookingId, "FINISH", { status: "DONE", finishedAt: now });
+}
+
+/** Reverses a mistaken or premature check-in back to a plain booking. */
+export function undoCheckIn(db: BookingDb, bookingId: string) {
+  return applyBookingAction(db, bookingId, "UNDO_CHECK_IN", { status: "BOOKED", checkedInAt: null });
+}
+
+/** Marks a booking that never arrived (docs/PRD.md rule 5's safety-net outcome). */
+export function markNoShow(db: BookingDb, bookingId: string) {
+  return applyBookingAction(db, bookingId, "NO_SHOW", { status: "NO_SHOW" });
+}
+
+/** Cancels before service starts (docs/PRD.md, Business rules — refund handling is M8-2). */
+export function cancelBooking(db: BookingDb, bookingId: string, now: Date = new Date()) {
+  return applyBookingAction(db, bookingId, "CANCEL", { status: "CANCELLED", cancelledAt: now });
+}
+
+export type MoveBookingResult = BookingActionResult | { ok: false; reason: "SLOT_TAKEN" };
+
+/**
+ * Reassigns a booking to a different stylist, same time. Relies on the same
+ * no-double-booking exclusion constraint `holdSlot` does: if the new stylist
+ * already has an overlapping booking, the update itself fails and this
+ * reports SLOT_TAKEN instead of throwing.
+ */
+export async function moveBooking(
+  db: BookingDb,
+  bookingId: string,
+  newStylistId: string,
+): Promise<MoveBookingResult> {
+  try {
+    return await applyBookingAction(db, bookingId, "MOVE", { stylistId: newStylistId });
+  } catch (error) {
+    if (isSlotConflict(error)) return { ok: false, reason: "SLOT_TAKEN" };
+    throw error;
+  }
 }
 
 /**

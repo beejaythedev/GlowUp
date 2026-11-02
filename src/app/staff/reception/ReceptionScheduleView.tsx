@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { AutoRefresh } from "@/components/staff/AutoRefresh";
 import { signOut } from "@/app/staff/actions";
 import type { DisplayStatus } from "@/server/status";
@@ -7,6 +8,9 @@ import type {
   SchedulePrepBlock,
   ScheduleHourMark,
 } from "@/server/schedule";
+import { BookingPanel, type SelectedBooking } from "./BookingPanel";
+
+export type { SelectedBooking };
 
 export interface StylistColumn {
   stylistId: string;
@@ -27,6 +31,8 @@ export interface ReceptionScheduleViewProps {
   hourMarks: ScheduleHourMark[];
   nowLineTopPx: number | null;
   isOpenToday: boolean;
+  selectedBookingId: string | null;
+  selectedBooking: SelectedBooking | null;
 }
 
 const REFRESH_INTERVAL_MS = 30_000;
@@ -45,6 +51,7 @@ export function ReceptionScheduleView(props: ReceptionScheduleViewProps) {
   const {
     staffName, branchName, dateLabel, nowLabel, summary,
     columns, gridHeightPx, hourMarks, nowLineTopPx, isOpenToday,
+    selectedBookingId, selectedBooking,
   } = props;
 
   return (
@@ -141,9 +148,14 @@ export function ReceptionScheduleView(props: ReceptionScheduleViewProps) {
                   {columns.map((column) => (
                     <div key={column.stylistId} className="relative border-l border-border">
                       {column.blocks.map((block) => (
-                        <div
+                        <Link
                           key={block.bookingId}
-                          className={`absolute left-1.5 right-1.5 flex flex-col gap-0.5 overflow-hidden rounded-xl p-2.5 text-xs ${blockStyles[block.displayStatus]}`}
+                          href={`/staff/reception?bookingId=${block.bookingId}`}
+                          scroll={false}
+                          aria-current={block.bookingId === selectedBookingId}
+                          className={`absolute left-1.5 right-1.5 flex flex-col gap-0.5 overflow-hidden rounded-xl p-2.5 text-xs ${blockStyles[block.displayStatus]} ${
+                            block.bookingId === selectedBookingId ? "ring-2 ring-text ring-offset-1" : ""
+                          }`}
                           style={{ top: `${block.topPx}px`, height: `${block.heightPx}px` }}
                         >
                           <span className="opacity-85">{block.timeLabel}</span>
@@ -152,7 +164,7 @@ export function ReceptionScheduleView(props: ReceptionScheduleViewProps) {
                             {block.isWalkIn ? <span className="font-medium"> (walk-in)</span> : null}
                           </span>
                           <span>{block.serviceName}</span>
-                        </div>
+                        </Link>
                       ))}
                       {column.prepBlocks.map((prep, index) => (
                         <div
@@ -186,6 +198,14 @@ export function ReceptionScheduleView(props: ReceptionScheduleViewProps) {
           </section>
 
           <aside className="flex w-full min-w-0 flex-1 flex-col gap-4 sm:w-[300px] sm:flex-none">
+            {selectedBooking ? (
+              <BookingPanel key={selectedBooking.bookingId} booking={selectedBooking} />
+            ) : (
+              <div className="rounded-card border border-dashed border-border-strong bg-surface p-5 text-sm text-text-muted">
+                Select a booking from the schedule to see its details.
+              </div>
+            )}
+
             <div className="grid grid-cols-2 gap-2.5 rounded-card border border-border bg-surface p-5 text-[13px]">
               <LegendSwatch className="border border-primary/20 bg-primary-tint" label="Booked" />
               <LegendSwatch className="border border-warning-border bg-warning-tint" label="Checked in, waiting" />
