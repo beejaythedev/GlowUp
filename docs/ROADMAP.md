@@ -109,7 +109,7 @@ The schedule is tight. If a week slips, move "Later" items out, never the checks
 
 **Goal:** Ada can run a Saturday from the schedule (S7, S8, S9, S22).
 
-- [ ] **M5-1** Today's schedule grid: one column per stylist, bookings coloured by status, striped prep blocks, the "now" line, summary tiles. Matches `ReceptionSchedule.dc.html`. Refreshes every 30 seconds.
+- [x] **M5-1** Today's schedule grid: one column per stylist, bookings coloured by status, striped prep blocks, the "now" line, summary tiles. Matches `ReceptionSchedule.dc.html`. Refreshes every 30 seconds.
 - [ ] **M5-2** Booking panel with timeline (appointment, checked in, started, finished) and actions: check in, start/finish as backup, move, cancel, no-show, undo check-in.
 - [ ] **M5-3** Check-in: one tap, with "arrived 5 or 10 minutes ago" correction; search by name, phone or service. Matches `ReceptionCheckIn.dc.html` and `CheckedInOnTime.dc.html`.
 - [ ] **M5-4** New booking for walk-ins and phone calls: returning customer found by phone, soonest-free stylist first, walk-ins served now are checked in automatically. Matches `ReceptionNew.dc.html`.

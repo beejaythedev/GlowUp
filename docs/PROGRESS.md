@@ -330,8 +330,45 @@ and writes a handoff note before every session ends.
 > supervisor checkpoint in `docs/ROADMAP.md`: sign in as each seeded role. Demo password for
 > every seeded staff account is `password1` (phones listed in `prisma/seed.ts`, e.g. Ada the
 > Lekki receptionist is `0802 000 0002`).
-> **Next task:** none — waiting on the M4 checkpoint before M5 (Reception) starts, per
-> `CLAUDE.md` rule 6.
+> M4 checkpoint: supervisor approved M4 and moved straight to starting M5, pushed to the
+> remote `m4` branch. M5 started on a new `m5` branch (off `m4`).
+> M5-1: `src/server/schedule.ts` — pure layout/display logic for the schedule grid, kept
+> separate from the page so the pixel math and status-line wording are unit tested without
+> a browser: `layoutStylistBookings` (positions each booking's block by minutes-since-open,
+> plus a separate prep block when the service has prep time; a minimum block height so very
+> short services stay readable; cancelled bookings are left out entirely — the slot is just
+> free again), `getStylistStatusLine` ("Busy until…", "Customer waiting", "Free at…" during
+> a mid-prep gap, "Next: Name at…", or "Free for the rest of today" — in that priority
+> order), `getNowLineTopPx`/`getHourMarks`/`getGridHeightPx` (time-axis math), and
+> `summarizeDay` (the four summary tiles, including the longest current wait among waiting
+> customers).
+> `/staff/reception` (`page.tsx` + `ReceptionScheduleView.tsx`) replaces the M4-1/M4-2
+> placeholder with the real thing, matching `ReceptionSchedule.dc.html`: nav bar, summary
+> tiles, one column per stylist with colour-coded blocks and striped prep blocks (new
+> `.schedule-prep` CSS pattern in `globals.css`, token-driven, not raw hex), the "now" line
+> and dot, and a status/colour legend. New `src/components/staff/AutoRefresh.tsx` calls
+> `router.refresh()` every 30 seconds so the grid stays live without a manual reload —
+> App Router's own re-fetch, not a custom polling endpoint.
+> Deliberately left out of this task, staying inside M5-1's actual scope: the search box and
+> "New booking" button from the design (M5-3 and M5-4 build those — a dead search field or a
+> button linking to a page that doesn't exist yet would be a half-finished feature, not a
+> faithful placeholder), and the right-hand booking detail panel with its timeline and
+> Start/Move/Undo actions (M5-2's job entirely) — booking blocks are plain, non-interactive
+> display for now rather than buttons that do nothing when clicked.
+> Verified live against the seeded Lekki data as Ada (receptionist): all 10 bookings render
+> in the right columns with correct colours, prep stripes show after services that have
+> them, the now-line/dot sit at the right time, and the summary tiles match. Had to re-run
+> `npx prisma db seed` first since the seed's "today" bookings were dated 27 Oct and the
+> system date has since moved to 2 Nov — not a bug, just stale sample data; re-seeding is
+> the documented way to refresh it (`README`/`CLAUDE.md` commands).
+> One Windows-only flake noted, not fixed (same class seen earlier this session with a
+> vitest worker): `npx prisma db seed` crashed once with exit code 3221226505 (a Windows
+> access violation) then succeeded immediately on retry. Not reproducible on demand, not
+> something `npm run check` or the app code can detect or correct — just worth remembering
+> if a command fails with that exact exit code: retry before assuming a real bug.
+> **Next task:** M5-2 — booking panel with timeline and actions (check in, start/finish as
+> backup, move, cancel, no-show, undo check-in). This is where clicking a schedule block
+> finally does something.
 > **Blockers or questions:** none open.
 
 ## Milestones
@@ -342,8 +379,8 @@ and writes a handoff note before every session ends.
 | M1 Data model and seed | Approved | 2026-10-27 |
 | M2 Availability engine | Approved | 2026-10-27 |
 | M3 Customer booking | Approved | 2026-10-27 |
-| M4 Staff sign-in and roles | Ready for review | |
-| M5 Reception | Not started | |
+| M4 Staff sign-in and roles | Approved | 2026-11-02 |
+| M5 Reception | In progress | |
 | M6 Stylist | Not started | |
 | M7 Manager and owner | Not started | |
 | M8 Payments and messages | Not started | |
@@ -357,6 +394,7 @@ Newest first. One line per finished task.
 
 | Date | Task | What changed | Tests |
 |---|---|---|---|
+| 2026-11-02 | M5-1 | `/staff/reception` real schedule grid, `src/server/schedule.ts`, `src/components/staff/AutoRefresh.tsx`, `.schedule-prep` CSS pattern | `npm run check` (124 tests total), `npm run build`, screenshot-verified against seeded Lekki data |
 | 2026-10-27 | M4-3 | `src/server/permissions.ts` (`canViewBooking`, `canViewBranch`, `canAccessStaffSection`), `requireStaffSection` guard wired into all 4 staff section placeholder pages | `npm run check` (108 tests total), `npm run build`, scripted Playwright check (stylist bounced from every other section, owner can open all 4, signed-out redirects) |
 | 2026-10-27 | M4-2 | `roleHomePath`, `getCurrentStaff`, role-based sign-in redirect, placeholder `/staff/{reception,stylist,manager,owner}`, `/staff` now a dispatcher | `npm run check` (96 tests total), `npm run build`, scripted Playwright check (all 4 seeded roles land on their own section, already-signed-in redirects) |
 | 2026-10-27 | M4-1 | `/staff/sign-in` (phone + password, lockout), `src/server/auth/` (`password`, `lockout`, `session`), placeholder `/staff`, migration for `Staff` lockout fields | `npm run check` (92 tests total), `npm run build`, scripted Playwright end-to-end check (sign in, sign out, 5-attempt lockout, show/hide toggle) against a throwaway staff account |
