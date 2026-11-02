@@ -4,8 +4,7 @@ import { db } from "@/lib/db";
 import { formatLagosClockTime, formatLagosDateLabel, lagosDateParts, lagosInstant } from "@/lib/lagosTime";
 import { requireStaffSection } from "@/server/auth/requireStaffSection";
 import { roleHomePath } from "@/server/auth/roleHome";
-import { balanceDueKobo } from "@/server/money";
-import { getDisplayStatus, getWaitMinutes, isActionAllowed, type DisplayStatus } from "@/server/status";
+import type { DisplayStatus } from "@/server/status";
 import {
   getGridHeightPx,
   getHourMarks,
@@ -15,7 +14,8 @@ import {
   summarizeDay,
   type ScheduleBooking,
 } from "@/server/schedule";
-import { ReceptionScheduleView, type SelectedBooking, type StylistColumn } from "./ReceptionScheduleView";
+import { ReceptionScheduleView, type StylistColumn } from "./ReceptionScheduleView";
+import { buildSelectedBooking, fetchTodaysBookings } from "./receptionData";
 
 export const metadata: Metadata = {
   title: "Today's schedule — GlowUp Salons",
@@ -124,72 +124,6 @@ export default async function ReceptionPage({ searchParams }: PageProps) {
       selectedBooking={selectedBooking}
     />
   );
-}
-
-type TodaysBookingRow = NonNullable<Awaited<ReturnType<typeof fetchTodaysBookings>>>[number];
-
-async function fetchTodaysBookings(stylistIds: string[], dayStart: Date, dayEnd: Date) {
-  return db.booking.findMany({
-    where: { stylistId: { in: stylistIds }, startsAt: { gte: dayStart, lt: dayEnd } },
-    include: { service: true, customer: true },
-    orderBy: { startsAt: "asc" },
-  });
-}
-
-async function buildSelectedBooking(
-  booking: TodaysBookingRow,
-  stylists: { id: string; name: string }[],
-  now: Date,
-): Promise<SelectedBooking> {
-  const stylistName = stylists.find((s) => s.id === booking.stylistId)?.name ?? "—";
-  const otherBookingsCount = await db.booking.count({
-    where: { customerId: booking.customerId, id: { not: booking.id } },
-  });
-
-  const sourceLabel: Record<typeof booking.source, string> = {
-    ONLINE: "Booked online",
-    PHONE: "Booked by phone",
-    WALK_IN: "Walk-in",
-  };
-
-  const lateMinutes =
-    booking.checkedInAt && booking.checkedInAt > booking.startsAt
-      ? Math.round((booking.checkedInAt.getTime() - booking.startsAt.getTime()) / 60_000)
-      : null;
-
-  return {
-    bookingId: booking.id,
-    customerName: booking.customer.name,
-    sourceLabel: sourceLabel[booking.source],
-    isFirstVisit: otherBookingsCount === 0,
-    displayStatus: getDisplayStatus(booking, now),
-    waitMinutes: booking.checkedInAt
-      ? getWaitMinutes({ checkedInAt: booking.checkedInAt, appointmentStart: booking.startsAt, comparedTo: now })
-      : null,
-    serviceName: booking.service.name,
-    stylistName,
-    stylistRequested: booking.stylistRequested,
-    isWalkIn: booking.source === "WALK_IN",
-    depositAmountKobo: booking.depositAmountKobo,
-    depositStatus: booking.depositStatus,
-    balanceDueKobo: balanceDueKobo(booking.service.priceKobo, booking.depositAmountKobo),
-    appointmentLabel: formatLagosClockTime(booking.startsAt),
-    checkedInLabel: booking.checkedInAt ? formatLagosClockTime(booking.checkedInAt) : null,
-    startedLabel: booking.startedAt ? formatLagosClockTime(booking.startedAt) : null,
-    finishedLabel: booking.finishedAt ? formatLagosClockTime(booking.finishedAt) : null,
-    lateNote:
-      lateMinutes !== null
-        ? `${booking.customer.name.split(" ")[0]} arrived ${lateMinutes} min late, so the wait counts from ${formatLagosClockTime(booking.checkedInAt!)}.`
-        : null,
-    canCheckIn: isActionAllowed(booking.status, "CHECK_IN"),
-    canStart: isActionAllowed(booking.status, "START"),
-    canFinish: isActionAllowed(booking.status, "FINISH"),
-    canUndoCheckIn: isActionAllowed(booking.status, "UNDO_CHECK_IN"),
-    canMarkNoShow: isActionAllowed(booking.status, "NO_SHOW"),
-    canCancel: isActionAllowed(booking.status, "CANCEL"),
-    canMove: isActionAllowed(booking.status, "MOVE"),
-    otherStylists: stylists.filter((s) => s.id !== booking.stylistId).map((s) => ({ id: s.id, name: s.name })),
-  };
 }
 
 function formatBlockTimeLabel(

@@ -21,6 +21,9 @@ const bookingActionSchema = z.object({
   bookingId: z.string().min(1),
   action: z.enum(["CHECK_IN", "START", "FINISH", "UNDO_CHECK_IN", "NO_SHOW", "CANCEL", "MOVE"]),
   newStylistId: z.string().optional(),
+  // "Did they arrive earlier?" correction on check-in (docs/ROADMAP.md, M5-3):
+  // backdates checkedInAt so a late tap doesn't inflate the customer's wait.
+  checkedInMinutesAgo: z.coerce.number().int().min(0).max(60).optional(),
 });
 
 export interface BookingActionState {
@@ -35,7 +38,7 @@ export async function performBookingAction(
 ): Promise<BookingActionState> {
   const parsed = bookingActionSchema.safeParse(Object.fromEntries(formData));
   if (!parsed.success) return { error: "Something went wrong. Please try again." };
-  const { bookingId, action, newStylistId } = parsed.data;
+  const { bookingId, action, newStylistId, checkedInMinutesAgo } = parsed.data;
 
   const staff = await getCurrentStaff();
   if (!staff) return { error: "You're signed out. Please sign in again." };
@@ -46,9 +49,11 @@ export async function performBookingAction(
 
   let result: BookingActionResult | MoveBookingResult;
   switch (action) {
-    case "CHECK_IN":
-      result = await checkIn(db, bookingId);
+    case "CHECK_IN": {
+      const now = new Date(Date.now() - (checkedInMinutesAgo ?? 0) * 60_000);
+      result = await checkIn(db, bookingId, now);
       break;
+    }
     case "START":
       result = await startService(db, bookingId);
       break;
@@ -77,5 +82,6 @@ export async function performBookingAction(
   }
 
   revalidatePath("/staff/reception");
+  revalidatePath("/staff/reception/check-in");
   return {};
 }

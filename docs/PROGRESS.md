@@ -408,9 +408,48 @@ and writes a handoff note before every session ends.
 > afterward (`npx prisma db seed`) to restore the dev database's clean baseline, since this
 > task's actions genuinely mutate the seeded bookings rather than just creating throwaway
 > test rows.
-> **Next task:** M5-3 — check-in: one tap, with "arrived 5 or 10 minutes ago" correction;
-> search by name, phone or service. Matches `ReceptionCheckIn.dc.html` and
-> `CheckedInOnTime.dc.html`.
+> M5-3: new `src/server/checkInSearch.ts` — pure `matchesQuery`/`searchBookings` (name, phone
+> ignoring spaces/dashes, or service name, case-insensitive), `highlightMatch` (splits text
+> around the first hit for `<mark>` rendering) and `formatTimeUntil` ("in 10 min", "in 4
+> hrs", "15 min ago", "now").
+> Refactored `buildSelectedBooking`/`fetchTodaysBookings` out of `/staff/reception/page.tsx`
+> into `receptionData.ts` so both the schedule page and the new check-in page share the same
+> booking-detail logic — no behaviour change, just avoiding duplicating it.
+> New `/staff/reception/check-in` (`page.tsx` + `CheckInSearchView.tsx` + `SearchBox.tsx`)
+> matches `ReceptionCheckIn.dc.html`: a debounced live search (`SearchBox` updates the `q`
+> URL param as the receptionist types, so results and the selected panel are still server-
+> rendered and shareable, not client state) over today's not-yet-checked-in bookings,
+> showing time/relative-time, the matched name highlighted, service/stylist/masked phone,
+> and a deposit badge. Selecting a result (or the soonest one, selected by default) reuses
+> M5-2's `BookingPanel` for the detail side — including the lateness correction added to it
+> this task — rather than a second, parallel detail component.
+> The "arrived 5/10 min ago" correction (`CheckedInOnTime.dc.html`'s "Did they arrive
+> earlier?") lives directly in `BookingPanel`, shown next to the Check In button whenever
+> `canCheckIn` is true — so it's available both from this search page and from clicking a
+> `BOOKED` block on the main schedule, one implementation instead of two. The schedule page
+> also gained a "Check in a customer" header button linking here, closing the gap M5-1
+> deliberately left open.
+> Deliberate simplification: unlike the design's inline per-row "Check in" button, a result
+> row here only selects — actually checking in happens through the (now lateness-aware)
+> panel. One check-in code path, not two, at the cost of one extra click for the common
+> case. Also skipped the toast-banner confirmation `CheckedInOnTime.dc.html` shows after
+> checking in — once checked in, `BookingPanel` itself already shows the updated badge,
+> timeline and Start button, which reads as confirmation enough without a second component.
+> Verified live against seeded Lekki data as Ada: searching "Ngozi" correctly narrowed the
+> list to her booking with the match highlighted; picked "5 min ago" and checked her in,
+> then confirmed directly in the database that `checkedInAt` landed ~5 minutes before the
+> actual click time and `status` was `CHECKED_IN`.
+> One real bug caught and fixed during this: the dev server had a second, stale
+> `next dev` process still listening on port 3000 since M5-2's checks (`pkill -f "next dev"`
+> doesn't match Next 16's persistent Turbopack dev daemon on Windows) — it kept serving
+> pre-refactor compiled code, which is why an early check showed unfiltered search results
+> and a dev-overlay "1 Issue" badge. Found via `netstat -ano | find ":3000"` plus the PID in
+> the "Another next dev server is already running" message, killed by PID
+> (`taskkill /PID <id> /F`), confirmed fixed on a truly fresh server. Not a code bug — a
+> repeat-visit trap in this Windows dev environment worth remembering for future sessions.
+> **Next task:** M5-4 — new booking for walk-ins and phone calls: returning customer found
+> by phone, soonest-free stylist first, walk-ins served now are checked in automatically.
+> Matches `ReceptionNew.dc.html`.
 > **Blockers or questions:** none open.
 
 ## Milestones
@@ -436,6 +475,7 @@ Newest first. One line per finished task.
 
 | Date | Task | What changed | Tests |
 |---|---|---|---|
+| 2026-11-02 | M5-3 | `/staff/reception/check-in` (search + panel reuse), `src/server/checkInSearch.ts`, "arrived X min ago" correction added to `BookingPanel`, extracted `receptionData.ts` | `npm run check` (159 tests total), `npm run build`, screenshot-verified search/highlight/check-in against seeded Lekki data, confirmed backdated `checkedInAt` in the database |
 | 2026-11-02 | M5-2 | Booking panel (`BookingPanel.tsx`, `actions.ts`), `isActionAllowed`/`allowedFromStatuses` in `status.ts`, 7 action functions in `bookings.ts` (check in, start, finish, undo, no-show, cancel, move) | `npm run check` (145 tests total), `npm run build`, screenshot-verified full check-in→start→finish flow and a stylist move against seeded Lekki data |
 | 2026-11-02 | M5-1 | `/staff/reception` real schedule grid, `src/server/schedule.ts`, `src/components/staff/AutoRefresh.tsx`, `.schedule-prep` CSS pattern | `npm run check` (124 tests total), `npm run build`, screenshot-verified against seeded Lekki data |
 | 2026-10-27 | M4-3 | `src/server/permissions.ts` (`canViewBooking`, `canViewBranch`, `canAccessStaffSection`), `requireStaffSection` guard wired into all 4 staff section placeholder pages | `npm run check` (108 tests total), `npm run build`, scripted Playwright check (stylist bounced from every other section, owner can open all 4, signed-out redirects) |

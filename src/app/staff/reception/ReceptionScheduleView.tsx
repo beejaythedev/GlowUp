@@ -78,11 +78,23 @@ export function ReceptionScheduleView(props: ReceptionScheduleViewProps) {
       </nav>
 
       <main className="mx-auto flex max-w-[1360px] flex-col gap-5 p-6">
-        <header className="flex flex-col gap-1.5">
-          <h1 className="text-[28px] font-extrabold tracking-tight">Today&apos;s schedule</h1>
-          <p className="text-sm text-text-muted">
-            {dateLabel} · Now {nowLabel}
-          </p>
+        <header className="flex flex-wrap items-end justify-between gap-4">
+          <div className="flex flex-col gap-1.5">
+            <h1 className="text-[28px] font-extrabold tracking-tight">Today&apos;s schedule</h1>
+            <p className="text-sm text-text-muted">
+              {dateLabel} · Now {nowLabel}
+            </p>
+          </div>
+          <Link
+            href="/staff/reception/check-in"
+            className="inline-flex min-h-12 items-center gap-2 rounded-full bg-primary px-5 text-sm font-bold text-white"
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" aria-hidden="true">
+              <circle cx="11" cy="11" r="7" />
+              <path d="M20 20l-3.5-3.5" />
+            </svg>
+            Check in a customer
+          </Link>
         </header>
 
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">

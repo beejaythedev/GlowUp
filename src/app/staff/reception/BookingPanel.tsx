@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, type ReactNode } from "react";
+import { useActionState, useState, type ReactNode } from "react";
 import { StatusBadge, type StatusBadgeStatus } from "@/components/ui/StatusBadge";
 import { formatNaira } from "@/lib/money";
 import type { DepositStatus } from "@/generated/prisma/enums";
@@ -58,8 +58,15 @@ const statusLabelFor: Record<DisplayStatus, string> = {
 
 const initialState: BookingActionState = {};
 
+const ARRIVAL_OPTIONS = [
+  { label: "Just now", minutesAgo: 0 },
+  { label: "5 min ago", minutesAgo: 5 },
+  { label: "10 min ago", minutesAgo: 10 },
+] as const;
+
 export function BookingPanel({ booking }: { booking: SelectedBooking }) {
   const [state, formAction, pending] = useActionState(performBookingAction, initialState);
+  const [arrivedMinutesAgo, setArrivedMinutesAgo] = useState(0);
   const badgeStatus = statusBadgeFor[booking.displayStatus];
   const badgeLabel =
     booking.displayStatus === "waiting" && booking.waitMinutes !== null
@@ -117,9 +124,32 @@ export function BookingPanel({ booking }: { booking: SelectedBooking }) {
         )}
 
         {booking.canCheckIn && (
-          <ActionButton name="action" value="CHECK_IN" pending={pending} primary>
-            Check in
-          </ActionButton>
+          <>
+            <div className="flex flex-col gap-1.5">
+              <div className="text-xs font-semibold text-text-muted">Did they arrive earlier?</div>
+              <div className="grid grid-cols-3 gap-1.5">
+                {ARRIVAL_OPTIONS.map((option) => (
+                  <button
+                    key={option.minutesAgo}
+                    type="button"
+                    aria-pressed={arrivedMinutesAgo === option.minutesAgo}
+                    onClick={() => setArrivedMinutesAgo(option.minutesAgo)}
+                    className={`flex min-h-10 items-center justify-center rounded-full border text-[13px] font-semibold ${
+                      arrivedMinutesAgo === option.minutesAgo
+                        ? "border-2 border-primary bg-primary-tint text-primary-dark"
+                        : "border-border-strong text-text"
+                    }`}
+                  >
+                    {option.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <input type="hidden" name="checkedInMinutesAgo" value={arrivedMinutesAgo} />
+            <ActionButton name="action" value="CHECK_IN" pending={pending} primary>
+              Check in
+            </ActionButton>
+          </>
         )}
         {booking.canStart && (
           <ActionButton name="action" value="START" pending={pending} primary>
