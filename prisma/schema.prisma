@@ -86,19 +86,25 @@ enum StaffStatus {
 }
 
 model Staff {
-  id           String      @id @default(cuid())
-  name         String
+  id                   String      @id @default(cuid())
+  name                 String
   /// Login identifier for staff sign-in (M4). Unique across all branches.
-  phone        String      @unique
-  role         StaffRole
+  phone                String      @unique
+  role                 StaffRole
   /// Null only for OWNER, who is not scoped to a single branch.
-  branch       Branch?     @relation(fields: [branchId], references: [id])
-  branchId     String?
-  passwordHash String
-  status       StaffStatus @default(ACTIVE)
-  bookings     Booking[]
-  createdAt    DateTime    @default(now())
-  updatedAt    DateTime    @updatedAt
+  branch               Branch?     @relation(fields: [branchId], references: [id])
+  branchId             String?
+  passwordHash         String
+  /// Consecutive wrong-password attempts since the last success. Reset to 0
+  /// on a successful sign-in. M4-1: locks the account once this reaches 5.
+  failedSignInAttempts Int         @default(0)
+  /// Set once failedSignInAttempts reaches 5; sign-in is refused until this
+  /// passes, even with the correct password.
+  lockedUntil          DateTime?
+  status               StaffStatus @default(ACTIVE)
+  bookings             Booking[]
+  createdAt            DateTime    @default(now())
+  updatedAt            DateTime    @updatedAt
 }
 
 model Customer {

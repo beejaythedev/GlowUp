@@ -96,9 +96,9 @@ The schedule is tight. If a week slips, move "Later" items out, never the checks
 
 **Goal:** staff sign in and land on the right home screen, seeing only what they're allowed to (S18).
 
-- [ ] **M4-1** Sign-in page matching `StaffSignIn.dc.html`: phone + password, "keep me signed in", clear error on wrong details, lock after repeated failures.
-- [ ] **M4-2** Role-based redirect after sign-in: receptionist → reception, stylist → stylist today, manager → manager today, owner → owner overview.
-- [ ] **M4-3** Server-side permission checks on every staff page and API route.
+- [x] **M4-1** Sign-in page matching `StaffSignIn.dc.html`: phone + password, "keep me signed in", clear error on wrong details, lock after repeated failures.
+- [x] **M4-2** Role-based redirect after sign-in: receptionist → reception, stylist → stylist today, manager → manager today, owner → owner overview.
+- [x] **M4-3** Server-side permission checks on every staff page and API route.
   *Done when:* tests prove a stylist can't read another stylist's bookings and a manager can't read another branch.
 
 **Supervisor checkpoint:** sign in as each seeded role.
