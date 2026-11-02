@@ -191,6 +191,80 @@ export async function moveBooking(
   }
 }
 
+const SLOT_STEP_MINUTES = 10;
+
+/**
+ * A walk-in whose slot starts right now (within one availability slot step)
+ * is being served immediately — checked in automatically, no separate tap
+ * (docs/ROADMAP.md, M5-4). A walk-in booked for later today, or a phone
+ * booking (the customer isn't here), still needs a real check-in later.
+ */
+export function shouldAutoCheckIn(source: BookingSource, startsAt: Date, now: Date): boolean {
+  if (source !== "WALK_IN") return false;
+  return startsAt.getTime() - now.getTime() < SLOT_STEP_MINUTES * 60_000;
+}
+
+export interface CreateReceptionBookingParams {
+  branchId: string;
+  serviceId: string;
+  stylistId: string;
+  customerId: string;
+  bookerPhone: string;
+  startsAt: Date;
+  endsAt: Date;
+  blockedUntil: Date;
+  depositAmountKobo: number;
+  source: BookingSource;
+  now?: Date;
+}
+
+export type CreateReceptionBookingResult =
+  | { ok: true; bookingId: string }
+  | { ok: false; reason: "SLOT_TAKEN" };
+
+/**
+ * Reception's own "new booking" (walk-in or phone call) — no 10-minute hold
+ * like `holdSlot` (that's for a customer actively paying online right now;
+ * a phone booking's deposit link, sent by SMS in M8-3, has no such rush).
+ * Reception always picks one specific stylist here, so `stylistRequested` is
+ * always true. A walk-in served right away is checked in on creation
+ * (`shouldAutoCheckIn`); a phone booking gets the normal deposit, pending
+ * until that M8-3 link is paid. Still protected by the same no-double-
+ * booking exclusion constraint `holdSlot` relies on.
+ */
+export async function createReceptionBooking(
+  db: BookingDb,
+  params: CreateReceptionBookingParams,
+): Promise<CreateReceptionBookingResult> {
+  const now = params.now ?? new Date();
+  const autoCheckIn = shouldAutoCheckIn(params.source, params.startsAt, now);
+
+  try {
+    const booking = await db.booking.create({
+      data: {
+        branchId: params.branchId,
+        serviceId: params.serviceId,
+        stylistId: params.stylistId,
+        stylistRequested: true,
+        customerId: params.customerId,
+        bookerPhone: params.bookerPhone,
+        startsAt: params.startsAt,
+        endsAt: params.endsAt,
+        blockedUntil: params.blockedUntil,
+        status: autoCheckIn ? "CHECKED_IN" : "BOOKED",
+        checkedInAt: autoCheckIn ? now : null,
+        source: params.source,
+        depositAmountKobo: params.depositAmountKobo,
+        depositStatus: params.source === "WALK_IN" ? "NONE" : "PENDING",
+      },
+    });
+    return { ok: true, bookingId: booking.id };
+  } catch (error) {
+    if (isSlotConflict(error)) return { ok: false, reason: "SLOT_TAKEN" };
+    throw error;
+  }
+}
+
 /**
  * True if `error` is the no-double-booking exclusion constraint (Postgres
  * SQLSTATE 23P01). Prisma's driver-level errors don't surface the raw

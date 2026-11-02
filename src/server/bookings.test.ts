@@ -6,10 +6,12 @@ import {
   cancelBooking,
   checkIn,
   confirmDeposit,
+  createReceptionBooking,
   finishService,
   holdSlot,
   markNoShow,
   moveBooking,
+  shouldAutoCheckIn,
   startService,
   undoCheckIn,
 } from "./bookings";
@@ -400,5 +402,104 @@ describe("reception actions", () => {
     const booking = await createBooking({ ...slot(10), status: "IN_SERVICE", startedAt: new Date() });
     const result = await moveBooking(db, booking.id, stylistId);
     expect(result).toEqual({ ok: false, reason: "NOT_ALLOWED" });
+  });
+});
+
+describe("shouldAutoCheckIn", () => {
+  const now = new Date("2026-11-12T10:00:00Z");
+
+  it("is true for a walk-in starting right now", () => {
+    expect(shouldAutoCheckIn("WALK_IN", now, now)).toBe(true);
+  });
+
+  it("is true for a walk-in starting within the next slot step", () => {
+    expect(shouldAutoCheckIn("WALK_IN", new Date("2026-11-12T10:05:00Z"), now)).toBe(true);
+  });
+
+  it("is false for a walk-in booked later today", () => {
+    expect(shouldAutoCheckIn("WALK_IN", new Date("2026-11-12T15:00:00Z"), now)).toBe(false);
+  });
+
+  it("is always false for a phone booking, even one starting now", () => {
+    expect(shouldAutoCheckIn("PHONE", now, now)).toBe(false);
+  });
+});
+
+describe("createReceptionBooking", () => {
+  function receptionParams(overrides: Partial<Parameters<typeof createReceptionBooking>[1]> = {}) {
+    return {
+      branchId,
+      serviceId,
+      stylistId,
+      customerId,
+      bookerPhone: "07000000002",
+      startsAt: new Date("2026-11-12T10:00:00Z"),
+      endsAt: new Date("2026-11-12T11:00:00Z"),
+      blockedUntil: new Date("2026-11-12T11:10:00Z"),
+      depositAmountKobo: 0,
+      source: "WALK_IN" as const,
+      ...overrides,
+    };
+  }
+
+  it("checks a walk-in in automatically when served right away", async () => {
+    const now = new Date("2026-11-12T10:00:00Z");
+    const result = await createReceptionBooking(db, receptionParams({ now }));
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+
+    const booking = await db.booking.findUniqueOrThrow({ where: { id: result.bookingId } });
+    expect(booking.status).toBe("CHECKED_IN");
+    expect(booking.checkedInAt).toEqual(now);
+    expect(booking.depositStatus).toBe("NONE");
+    expect(booking.stylistRequested).toBe(true);
+  });
+
+  it("leaves a walk-in booked for later today as a plain booking", async () => {
+    const now = new Date("2026-11-12T09:00:00Z");
+    const result = await createReceptionBooking(
+      db,
+      receptionParams({ startsAt: new Date("2026-11-12T15:00:00Z"), endsAt: new Date("2026-11-12T16:00:00Z"), blockedUntil: new Date("2026-11-12T16:10:00Z"), now }),
+    );
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+
+    const booking = await db.booking.findUniqueOrThrow({ where: { id: result.bookingId } });
+    expect(booking.status).toBe("BOOKED");
+    expect(booking.checkedInAt).toBeNull();
+  });
+
+  it("gives a phone booking a pending deposit instead of checking in", async () => {
+    const now = new Date("2026-11-12T20:00:00Z");
+    const result = await createReceptionBooking(
+      db,
+      receptionParams({
+        startsAt: new Date("2026-11-12T20:00:00Z"),
+        endsAt: new Date("2026-11-12T21:00:00Z"),
+        blockedUntil: new Date("2026-11-12T21:10:00Z"),
+        depositAmountKobo: 160_000,
+        source: "PHONE",
+        now,
+      }),
+    );
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+
+    const booking = await db.booking.findUniqueOrThrow({ where: { id: result.bookingId } });
+    expect(booking.status).toBe("BOOKED");
+    expect(booking.depositStatus).toBe("PENDING");
+    expect(booking.depositAmountKobo).toBe(160_000);
+  });
+
+  it("refuses an overlapping slot for the same stylist", async () => {
+    const startsAt = new Date("2026-11-12T22:00:00Z");
+    const endsAt = new Date("2026-11-12T23:00:00Z");
+    const blockedUntil = new Date("2026-11-12T23:10:00Z");
+
+    const first = await createReceptionBooking(db, receptionParams({ startsAt, endsAt, blockedUntil, now: startsAt }));
+    expect(first.ok).toBe(true);
+
+    const second = await createReceptionBooking(db, receptionParams({ startsAt, endsAt, blockedUntil, now: startsAt }));
+    expect(second).toEqual({ ok: false, reason: "SLOT_TAKEN" });
   });
 });

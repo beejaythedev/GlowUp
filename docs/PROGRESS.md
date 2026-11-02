@@ -447,9 +447,43 @@ and writes a handoff note before every session ends.
 > the "Another next dev server is already running" message, killed by PID
 > (`taskkill /PID <id> /F`), confirmed fixed on a truly fresh server. Not a code bug — a
 > repeat-visit trap in this Windows dev environment worth remembering for future sessions.
-> **Next task:** M5-4 — new booking for walk-ins and phone calls: returning customer found
-> by phone, soonest-free stylist first, walk-ins served now are checked in automatically.
-> Matches `ReceptionNew.dc.html`.
+> M5-4: `src/server/bookings.ts` gained `shouldAutoCheckIn` (pure — true only for a `WALK_IN`
+> whose chosen time starts within one availability slot step of now, i.e. "right away"; a
+> walk-in booked for later today, or any phone booking, still needs a real check-in) and
+> `createReceptionBooking`, reception's own booking-creation path — deliberately not
+> `holdSlot`: that function's 10-minute hold exists for a customer actively paying online
+> right now, which doesn't apply here (a phone booking's deposit link, sent by SMS once
+> M8-3 exists, has no such rush). Reception always picks one specific stylist on this
+> screen, so `stylistRequested` is always true. Still protected by the same no-double-
+> booking exclusion constraint `holdSlot` relies on, reusing its `isSlotConflict` pattern.
+> `/staff/reception/new` (`page.tsx` + `NewBookingForm.tsx` + `actions.ts`) matches
+> `ReceptionNew.dc.html`: Walk-in/Phone call toggle, a phone field that looks up a returning
+> customer as reception types (`lookupCustomer` Server Action, debounced, pre-fills the name
+> field only if the receptionist hasn't already typed one), service chips, "Stylist, soonest
+> free first" (reusing M2-4's `getSoonestFreePerStylist`, built for exactly this screen and
+> not called from anywhere until now), and up to 3 concrete times from `getAvailableSlots`
+> for the chosen stylist, computed client-side with no round trip — the same
+> fetch-once-compute-in-the-browser architecture as the customer booking flow's step 2.
+> The schedule page gained the "New booking" header button to match, alongside M5-3's
+> "Check in a customer" — the header is now what `ReceptionSchedule.dc.html` always showed.
+> Deliberate scoping: "Another day" links to the customer-facing `/book` flow instead of
+> building a second multi-day picker inside the reception tool — this screen is for
+> same-day walk-ins and phone calls, matching the design's own same-day focus.
+> One real bug caught before it shipped: the submit button lives in the summary sidebar,
+> outside the `<form>` element (matching the design's layout) — the first attempt used
+> `document.querySelector("form")`, which actually grabbed the nav's sign-out form instead
+> (it comes first in the DOM). Fixed with the standard HTML `form="id"` attribute, which
+> associates a button with a form anywhere in the document regardless of DOM position.
+> Verified live against seeded Lekki data as Ada: a new walk-in customer, submitted with
+> the default "first free" slot selected, landed on the schedule already `CHECKED_IN`
+> (green block, Start-service button ready) exactly as the copy promises; a phone booking
+> for a different new customer landed as a plain `BOOKED` row with `depositStatus: PENDING`
+> and a visible balance-due figure, not checked in. Checked the dev server wasn't a stale
+> leftover first (`netstat`), per the M5-3 lesson. Deleted the two test customer rows
+> afterward (the reseed already clears Lekki's bookings, but not arbitrary customers).
+> **Half-done:** M5 milestone — M5-1 through M5-4 done; M5-5 through M5-8 not started.
+> **Next task:** M5-5 — 15-minute prompt for bookings not checked in or started, matching
+> `CheckInPrompt.dc.html`.
 > **Blockers or questions:** none open.
 
 ## Milestones
@@ -475,6 +509,7 @@ Newest first. One line per finished task.
 
 | Date | Task | What changed | Tests |
 |---|---|---|---|
+| 2026-11-02 | M5-4 | `/staff/reception/new` (walk-in/phone form, soonest-free stylist, client-side slot picker), `createReceptionBooking`/`shouldAutoCheckIn` in `bookings.ts` | `npm run check` (167 tests total), `npm run build`, screenshot-verified a walk-in auto-checked-in and a phone booking left pending against seeded Lekki data |
 | 2026-11-02 | M5-3 | `/staff/reception/check-in` (search + panel reuse), `src/server/checkInSearch.ts`, "arrived X min ago" correction added to `BookingPanel`, extracted `receptionData.ts` | `npm run check` (159 tests total), `npm run build`, screenshot-verified search/highlight/check-in against seeded Lekki data, confirmed backdated `checkedInAt` in the database |
 | 2026-11-02 | M5-2 | Booking panel (`BookingPanel.tsx`, `actions.ts`), `isActionAllowed`/`allowedFromStatuses` in `status.ts`, 7 action functions in `bookings.ts` (check in, start, finish, undo, no-show, cancel, move) | `npm run check` (145 tests total), `npm run build`, screenshot-verified full check-in→start→finish flow and a stylist move against seeded Lekki data |
 | 2026-11-02 | M5-1 | `/staff/reception` real schedule grid, `src/server/schedule.ts`, `src/components/staff/AutoRefresh.tsx`, `.schedule-prep` CSS pattern | `npm run check` (124 tests total), `npm run build`, screenshot-verified against seeded Lekki data |
