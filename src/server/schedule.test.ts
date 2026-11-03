@@ -1,11 +1,13 @@
 import { describe, expect, it } from "vitest";
 import {
   findOverdueBookings,
+  getFlaggedBookingId,
   getGridHeightPx,
   getHourMarks,
   getNowLineTopPx,
   getStylistStatusLine,
   isOverdueForCheckIn,
+  isRunningOver,
   layoutStylistBookings,
   summarizeDay,
   type ScheduleBooking,
@@ -72,6 +74,24 @@ describe("layoutStylistBookings", () => {
     const now = new Date("2026-10-31T07:00:00Z");
     const { blocks } = layoutStylistBookings([booking({ stylistRequested: true })], OPENS_AT, PX_PER_HOUR, now);
     expect(blocks[0].stylistRequested).toBe(true);
+  });
+
+  it("marks a block running over and flags the next one for this stylist", () => {
+    const now = new Date("2026-10-31T09:50:00Z");
+    const runningOver = booking({ id: "a", status: "IN_SERVICE" }); // ends 10:00
+    const next = booking({
+      id: "b",
+      status: "BOOKED",
+      startsAt: new Date("2026-10-31T10:00:00Z"),
+      endsAt: new Date("2026-10-31T11:00:00Z"),
+    });
+    const { blocks } = layoutStylistBookings([runningOver, next], OPENS_AT, PX_PER_HOUR, now);
+    const blockA = blocks.find((b) => b.bookingId === "a")!;
+    const blockB = blocks.find((b) => b.bookingId === "b")!;
+    expect(blockA.runningOver).toBe(true);
+    expect(blockA.flaggedForDelay).toBe(false);
+    expect(blockB.runningOver).toBe(false);
+    expect(blockB.flaggedForDelay).toBe(true);
   });
 
   it("adds a separate prep block after the appointment", () => {
@@ -217,5 +237,68 @@ describe("findOverdueBookings", () => {
       "later",
       "soon",
     ]);
+  });
+});
+
+describe("isRunningOver", () => {
+  // booking()'s default endsAt is 2026-10-31T10:00:00Z.
+
+  it("is false while more than 15 minutes remain", () => {
+    const b = booking({ status: "IN_SERVICE" });
+    expect(isRunningOver(b, new Date("2026-10-31T09:44:00Z"))).toBe(false);
+  });
+
+  it("is true once within 15 minutes of the booked end", () => {
+    const b = booking({ status: "IN_SERVICE" });
+    expect(isRunningOver(b, new Date("2026-10-31T09:45:00Z"))).toBe(true);
+  });
+
+  it("stays true past the booked end until Finish is tapped", () => {
+    const b = booking({ status: "IN_SERVICE" });
+    expect(isRunningOver(b, new Date("2026-10-31T10:30:00Z"))).toBe(true);
+  });
+
+  it("is false once finished, even past the booked end", () => {
+    const b = booking({ status: "DONE" });
+    expect(isRunningOver(b, new Date("2026-10-31T10:30:00Z"))).toBe(false);
+  });
+
+  it("is false for a booking that isn't in service yet", () => {
+    const b = booking({ status: "CHECKED_IN", checkedInAt: new Date() });
+    expect(isRunningOver(b, new Date("2026-10-31T10:30:00Z"))).toBe(false);
+  });
+});
+
+describe("getFlaggedBookingId", () => {
+  it("flags the stylist's next booking when a prior one is running over", () => {
+    const now = new Date("2026-10-31T09:50:00Z");
+    const runningOver = booking({ id: "a", status: "IN_SERVICE" }); // ends 10:00, running over by now
+    const next = booking({
+      id: "b",
+      status: "BOOKED",
+      startsAt: new Date("2026-10-31T10:00:00Z"),
+      endsAt: new Date("2026-10-31T11:00:00Z"),
+    });
+    expect(getFlaggedBookingId([runningOver, next], now)).toBe("b");
+  });
+
+  it("flags the soonest upcoming booking when there are several", () => {
+    const now = new Date("2026-10-31T09:50:00Z");
+    const runningOver = booking({ id: "a", status: "IN_SERVICE" });
+    const later = booking({ id: "later", status: "BOOKED", startsAt: new Date("2026-10-31T11:00:00Z") });
+    const soonest = booking({ id: "soonest", status: "BOOKED", startsAt: new Date("2026-10-31T10:00:00Z") });
+    expect(getFlaggedBookingId([runningOver, later, soonest], now)).toBe("soonest");
+  });
+
+  it("is null when nothing is running over", () => {
+    const now = new Date("2026-10-31T07:00:00Z");
+    const a = booking({ id: "a", status: "BOOKED" });
+    expect(getFlaggedBookingId([a], now)).toBeNull();
+  });
+
+  it("is null when there's no later booking to flag", () => {
+    const now = new Date("2026-10-31T09:50:00Z");
+    const runningOver = booking({ id: "a", status: "IN_SERVICE" });
+    expect(getFlaggedBookingId([runningOver], now)).toBeNull();
   });
 });

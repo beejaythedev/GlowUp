@@ -179,9 +179,11 @@ export function ReceptionScheduleView(props: ReceptionScheduleViewProps) {
                           href={`/staff/reception?bookingId=${block.bookingId}`}
                           scroll={false}
                           aria-current={block.bookingId === selectedBookingId}
-                          className={`absolute left-1.5 right-1.5 flex flex-col gap-0.5 overflow-hidden rounded-xl p-2.5 text-xs ${blockStyles[block.displayStatus]} ${
+                          className={`absolute left-1.5 right-1.5 flex flex-col gap-0.5 overflow-hidden rounded-xl p-2.5 text-xs ${
+                            block.runningOver ? blockStyles.waiting : blockStyles[block.displayStatus]
+                          } ${
                             block.bookingId === selectedBookingId ? "ring-2 ring-text ring-offset-1" : ""
-                          }`}
+                          } ${block.flaggedForDelay ? "ring-2 ring-warning-border" : ""}`}
                           style={{ top: `${block.topPx}px`, height: `${block.heightPx}px` }}
                         >
                           <span className="opacity-85">{block.timeLabel}</span>
@@ -195,6 +197,11 @@ export function ReceptionScheduleView(props: ReceptionScheduleViewProps) {
                                 className="rounded-full border border-current px-1.5 py-0.5 text-[9px] leading-none font-extrabold tracking-wide opacity-90"
                               >
                                 R
+                              </span>
+                            )}
+                            {block.flaggedForDelay && (
+                              <span title="May start late — the stylist is running over" aria-label="May start late">
+                                ⚠
                               </span>
                             )}
                           </span>
@@ -243,7 +250,7 @@ export function ReceptionScheduleView(props: ReceptionScheduleViewProps) {
 
             <div className="grid grid-cols-2 gap-2.5 rounded-card border border-border bg-surface p-5 text-[13px]">
               <LegendSwatch className="border border-primary/20 bg-primary-tint" label="Booked" />
-              <LegendSwatch className="border border-warning-border bg-warning-tint" label="Checked in, waiting" />
+              <LegendSwatch className="border border-warning-border bg-warning-tint" label="Checked in, waiting · running over" />
               <LegendSwatch className="bg-primary" label="In service" />
               <LegendSwatch className="bg-disabled-bg" label="Done" />
               <LegendSwatch className="border border-dashed border-danger-border" label="No-show" />
@@ -253,6 +260,10 @@ export function ReceptionScheduleView(props: ReceptionScheduleViewProps) {
                   R
                 </span>
                 Requested stylist
+              </span>
+              <span className="flex items-center gap-2">
+                <span aria-hidden="true">⚠</span>
+                May start late
               </span>
             </div>
           </aside>

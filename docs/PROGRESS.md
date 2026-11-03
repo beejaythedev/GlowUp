@@ -521,11 +521,44 @@ and writes a handoff note before every session ends.
 > `stylistRequested: true`, requesting Zainab) shows the "R" badge on her schedule block and
 > "Zainab · Requested" in the panel once selected. Had to dismiss M5-5's overdue prompts
 > first to reach the schedule underneath — expected, not a bug.
-> **Half-done:** M5 milestone — M5-1 through M5-6 done; M5-7 and M5-8 remain.
-> **Next task:** M5-7 — running over: if Finish isn't tapped 15 minutes before the booked
-> end, show "running over" (amber) and flag the next booking. Offer "move to a free
-> stylist" only for "any stylist" bookings; for requested ones, offer "send delay message"
-> (sent in M8).
+> M5-7: `src/server/schedule.ts` gained `isRunningOver` (true once an `IN_SERVICE` booking
+> is within 15 minutes of — or past — its booked end, Finish not yet tapped;
+> `docs/PRD.md` rule 9) and `getFlaggedBookingId` (the same stylist's next `BOOKED`/
+> `CHECKED_IN` booking after a running-over one, soonest first). Both take just the handful
+> of fields they need (`Pick<ScheduleBooking, "id" | "startsAt" | "endsAt" | "status">`)
+> rather than the full type, so `receptionData.ts` can reuse them against raw Prisma rows
+> without an unsafe cast. `layoutStylistBookings` now carries `runningOver`/
+> `flaggedForDelay` onto every `ScheduleBlock`, computed per stylist from that stylist's own
+> bookings — no cross-stylist lookup needed, since rule 9 is explicitly about one stylist
+> running over on their own schedule.
+> On the schedule grid: a running-over block switches from solid blue to the same amber
+> used for "checked in, waiting" (same underlying meaning — the customer, or in this case
+> the next customer, is left waiting), with its time label changed to "Running over"; the
+> flagged next booking gets a small ⚠ marker next to the customer name, plus a matching
+> legend row. `BookingPanel` shows the same "Running over" badge when a selected booking
+> hits that state, and a new amber note on a flagged booking: for an "any stylist" booking,
+> points at the existing Move control already built in M5-2 rather than adding a second way
+> to do the same thing; for a requested one, a disabled "Send delay message" button with a
+> tooltip explaining the actual SMS send arrives in M8 — matching the scoping precedent set
+> in M5-4 for the phone-deposit-link placeholder.
+> `buildSelectedBooking`'s signature grew an `allTodaysBookings` parameter (both
+> `/staff/reception` and `/staff/reception/check-in` already had this data fetched; just
+> needed to pass it through) so it can filter to the selected booking's own stylist and
+> reuse the same two schedule.ts functions, rather than duplicating the running-over logic
+> for the panel.
+> Verified live against a deliberately constructed scenario (a stylist mid-service, 50
+> minutes in on a 1-hour booking, plus a next booking 20 minutes after it ends) — and, as a
+> bonus, against the seed data itself: by 5pm several seeded in-service bookings had
+> genuinely run past their booked end, so the amber styling, "Running over" label, and ⚠
+> markers all appeared correctly without needing the constructed scenario at all. Checked
+> both panels: the running-over booking's own panel shows the amber badge and Finish
+> button; the flagged next booking's panel shows the delay note and, since it was an
+> any-stylist booking, the "move to a free stylist" guidance pointing at the Move control.
+> Deleted the two constructed test customers afterward; the reseed already cleared the
+> bookings.
+> **Half-done:** M5 milestone — M5-1 through M5-7 done; M5-8 remains.
+> **Next task:** M5-8 — speed test: a walk-in booking takes 5 taps or fewer; check-in takes
+> 2 taps from search.
 > **Blockers or questions:** none open.
 
 ## Milestones
@@ -551,6 +584,7 @@ Newest first. One line per finished task.
 
 | Date | Task | What changed | Tests |
 |---|---|---|---|
+| 2026-11-03 | M5-7 | "Running over"/flagged-next-booking (`isRunningOver`, `getFlaggedBookingId` in `schedule.ts`), amber block styling + ⚠ marker, `BookingPanel` move/delay-message guidance | `npm run check` (184 tests total), `npm run build`, screenshot-verified a constructed scenario and the seed data's own genuinely-overdue bookings |
 | 2026-11-03 | M5-6 | "Requested" (R) marker on schedule blocks + legend, `stylistRequested` added to `schedule.ts` | `npm run check` (174 tests total), `npm run build`, screenshot-verified against a seeded requested-stylist booking |
 | 2026-11-03 | M5-5 | `CheckInPromptModal.tsx`, `isOverdueForCheckIn`/`findOverdueBookings` in `schedule.ts` | `npm run check` (173 tests total), `npm run build`, screenshot-verified the prompt, snooze and "On time" check-in against a throwaway overdue booking |
 | 2026-11-02 | M5-4 | `/staff/reception/new` (walk-in/phone form, soonest-free stylist, client-side slot picker), `createReceptionBooking`/`shouldAutoCheckIn` in `bookings.ts` | `npm run check` (167 tests total), `npm run build`, screenshot-verified a walk-in auto-checked-in and a phone booking left pending against seeded Lekki data |

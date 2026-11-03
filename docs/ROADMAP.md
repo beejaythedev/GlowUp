@@ -115,7 +115,7 @@ The schedule is tight. If a week slips, move "Later" items out, never the checks
 - [x] **M5-4** New booking for walk-ins and phone calls: returning customer found by phone, soonest-free stylist first, walk-ins served now are checked in automatically. Matches `ReceptionNew.dc.html`.
 - [x] **M5-5** 15-minute prompt for bookings not checked in or started, matching `CheckInPrompt.dc.html`.
 - [x] **M5-6** "Requested" marker on schedule blocks and in the booking panel.
-- [ ] **M5-7** Running over: if Finish isn't tapped 15 minutes before the booked end, show "running over" (amber) and flag the next booking. Offer "move to a free stylist" only for "any stylist" bookings; for requested ones, offer "send delay message" (sent in M8).
+- [x] **M5-7** Running over: if Finish isn't tapped 15 minutes before the booked end, show "running over" (amber) and flag the next booking. Offer "move to a free stylist" only for "any stylist" bookings; for requested ones, offer "send delay message" (sent in M8).
 - [ ] **M5-8** Speed test: a walk-in booking takes 5 taps or fewer; check-in takes 2 taps from search.
 
 **Supervisor checkpoint:** run a pretend busy morning with 10 bookings. This is the screen Ada will test first.

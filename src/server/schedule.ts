@@ -25,6 +25,10 @@ export interface ScheduleBlock {
   isWalkIn: boolean;
   waitMinutes: number | null;
   stylistRequested: boolean;
+  /** In service, 15+ minutes from its booked end, not finished yet. */
+  runningOver: boolean;
+  /** The stylist's prior booking is running over, so this one may start late. */
+  flaggedForDelay: boolean;
 }
 
 export interface SchedulePrepBlock {
@@ -39,6 +43,40 @@ export interface ScheduleHourMark {
 }
 
 const MIN_BLOCK_HEIGHT_PX = 24;
+const RUNNING_OVER_MINUTES = 15;
+
+/** Only the fields `isRunningOver`/`getFlaggedBookingId` actually need. */
+type TimingBooking = Pick<ScheduleBooking, "id" | "startsAt" | "endsAt" | "status">;
+
+/**
+ * True once a booking is in service and within 15 minutes of (or past) its
+ * booked end with Finish not yet tapped (docs/PRD.md, Check-in and timing,
+ * rule 9).
+ */
+export function isRunningOver(booking: TimingBooking, now: Date): boolean {
+  if (booking.status !== "IN_SERVICE") return false;
+  return booking.endsAt.getTime() - now.getTime() <= RUNNING_OVER_MINUTES * 60_000;
+}
+
+/**
+ * The id of this stylist's next booking after a running-over one, if any —
+ * flagged as possibly starting late (docs/PRD.md rule 9's "the next booking
+ * is flagged"). `bookings` must already be one stylist's own bookings.
+ */
+export function getFlaggedBookingId(bookings: TimingBooking[], now: Date): string | null {
+  const runningOver = bookings.find((b) => isRunningOver(b, now));
+  if (!runningOver) return null;
+
+  const next = bookings
+    .filter(
+      (b) =>
+        (b.status === "BOOKED" || b.status === "CHECKED_IN") &&
+        b.startsAt.getTime() > runningOver.startsAt.getTime(),
+    )
+    .sort((a, b) => a.startsAt.getTime() - b.startsAt.getTime())[0];
+
+  return next?.id ?? null;
+}
 
 function minutesFrom(windowStart: Date, instant: Date): number {
   return (instant.getTime() - windowStart.getTime()) / 60_000;
@@ -94,6 +132,7 @@ export function layoutStylistBookings(
 ): { blocks: ScheduleBlock[]; prepBlocks: SchedulePrepBlock[] } {
   const blocks: ScheduleBlock[] = [];
   const prepBlocks: SchedulePrepBlock[] = [];
+  const flaggedBookingId = getFlaggedBookingId(bookings, now);
 
   for (const booking of bookings) {
     if (booking.status === "CANCELLED") continue;
@@ -123,6 +162,8 @@ export function layoutStylistBookings(
       isWalkIn: booking.source === "WALK_IN",
       waitMinutes,
       stylistRequested: booking.stylistRequested,
+      runningOver: isRunningOver(booking, now),
+      flaggedForDelay: booking.id === flaggedBookingId,
     });
 
     if (booking.blockedUntil > booking.endsAt) {

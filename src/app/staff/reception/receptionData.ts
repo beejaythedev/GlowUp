@@ -1,6 +1,7 @@
 import { db } from "@/lib/db";
 import { formatLagosClockTime } from "@/lib/lagosTime";
 import { balanceDueKobo } from "@/server/money";
+import { getFlaggedBookingId, isRunningOver } from "@/server/schedule";
 import { getDisplayStatus, getWaitMinutes, isActionAllowed } from "@/server/status";
 import type { SelectedBooking } from "./BookingPanel";
 
@@ -18,6 +19,7 @@ export async function fetchTodaysBookings(stylistIds: string[], dayStart: Date, 
 /** Everything the booking panel needs to display and act on one booking. */
 export async function buildSelectedBooking(
   booking: TodaysBookingRow,
+  allTodaysBookings: TodaysBookingRow[],
   stylists: { id: string; name: string }[],
   now: Date,
 ): Promise<SelectedBooking> {
@@ -25,6 +27,13 @@ export async function buildSelectedBooking(
   const otherBookingsCount = await db.booking.count({
     where: { customerId: booking.customerId, id: { not: booking.id } },
   });
+
+  // Same-stylist bookings only — rule 9's running-over/flagging logic
+  // (docs/PRD.md, Check-in and timing) only needs id/startsAt/endsAt/status.
+  const stylistBookings = allTodaysBookings.filter(
+    (b) => b.stylistId === booking.stylistId && b.status !== "CANCELLED",
+  );
+  const flaggedForDelay = getFlaggedBookingId(stylistBookings, now) === booking.id;
 
   const sourceLabel: Record<typeof booking.source, string> = {
     ONLINE: "Booked online",
@@ -69,5 +78,7 @@ export async function buildSelectedBooking(
     canCancel: isActionAllowed(booking.status, "CANCEL"),
     canMove: isActionAllowed(booking.status, "MOVE"),
     otherStylists: stylists.filter((s) => s.id !== booking.stylistId).map((s) => ({ id: s.id, name: s.name })),
+    runningOver: isRunningOver(booking, now),
+    flaggedForDelay,
   };
 }

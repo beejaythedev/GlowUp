@@ -75,7 +75,7 @@ export default async function CheckInPage({ searchParams }: PageProps) {
 
   const selectedBookingId = bookingId ?? results[0]?.bookingId ?? null;
   const selectedRow = selectedBookingId ? todaysBookings.find((b) => b.id === selectedBookingId) : undefined;
-  const selectedBooking = selectedRow ? await buildSelectedBooking(selectedRow, stylists, now) : null;
+  const selectedBooking = selectedRow ? await buildSelectedBooking(selectedRow, todaysBookings, stylists, now) : null;
 
   return (
     <CheckInSearchView

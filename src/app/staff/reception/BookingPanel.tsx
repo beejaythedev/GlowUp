@@ -34,6 +34,10 @@ export interface SelectedBooking {
   canCancel: boolean;
   canMove: boolean;
   otherStylists: { id: string; name: string }[];
+  /** In service, 15+ minutes from its booked end, not finished yet (docs/PRD.md rule 9). */
+  runningOver: boolean;
+  /** A prior booking for this stylist is running over, so this one may start late. */
+  flaggedForDelay: boolean;
 }
 
 const statusBadgeFor: Record<DisplayStatus, StatusBadgeStatus | null> = {
@@ -67,9 +71,10 @@ const ARRIVAL_OPTIONS = [
 export function BookingPanel({ booking }: { booking: SelectedBooking }) {
   const [state, formAction, pending] = useActionState(performBookingAction, initialState);
   const [arrivedMinutesAgo, setArrivedMinutesAgo] = useState(0);
-  const badgeStatus = statusBadgeFor[booking.displayStatus];
-  const badgeLabel =
-    booking.displayStatus === "waiting" && booking.waitMinutes !== null
+  const badgeStatus = booking.runningOver ? "waiting" : statusBadgeFor[booking.displayStatus];
+  const badgeLabel = booking.runningOver
+    ? "Running over"
+    : booking.displayStatus === "waiting" && booking.waitMinutes !== null
       ? `Waiting ${booking.waitMinutes} min`
       : statusLabelFor[booking.displayStatus];
 
@@ -85,6 +90,27 @@ export function BookingPanel({ booking }: { booking: SelectedBooking }) {
         </div>
         {badgeStatus && <StatusBadge status={badgeStatus}>{badgeLabel}</StatusBadge>}
       </div>
+
+      {booking.flaggedForDelay && (
+        <div className="flex flex-col gap-2 rounded-xl border border-warning-border bg-warning-tint p-3 text-[13px] text-warning-text">
+          <span>
+            {booking.stylistName} is running over on the appointment before this one — it may
+            start late.
+          </span>
+          {booking.stylistRequested ? (
+            <button
+              type="button"
+              disabled
+              title="Sends an SMS offering a later time with the same stylist or this time with another — arrives in M8"
+              className="flex min-h-9 w-fit items-center rounded-full border border-warning-border bg-surface px-3 text-xs font-bold text-warning-text opacity-60"
+            >
+              Send delay message
+            </button>
+          ) : (
+            <span className="text-xs">This was &quot;any available&quot; — move it to a free stylist below.</span>
+          )}
+        </div>
+      )}
 
       <div className="flex flex-col gap-2 text-sm">
         <Row label="Service" value={booking.serviceName} />

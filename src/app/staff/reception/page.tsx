@@ -97,6 +97,7 @@ export default async function ReceptionPage({ searchParams }: PageProps) {
           scheduleBookings.find((b) => b.id === block.bookingId)!,
           block.displayStatus,
           block.waitMinutes,
+          block.runningOver,
         ),
       })),
       prepBlocks,
@@ -109,7 +110,7 @@ export default async function ReceptionPage({ searchParams }: PageProps) {
 
   const selectedBookingRow = bookingId ? todaysBookings.find((b) => b.id === bookingId) : undefined;
   const selectedBooking = selectedBookingRow
-    ? await buildSelectedBooking(selectedBookingRow, stylists, now)
+    ? await buildSelectedBooking(selectedBookingRow, todaysBookings, stylists, now)
     : null;
 
   const overduePrompts: OverduePrompt[] = findOverdueBookings(scheduleBookings, now).map((b) => ({
@@ -144,13 +145,14 @@ function formatBlockTimeLabel(
   booking: ScheduleBooking,
   displayStatus: DisplayStatus,
   waitMinutes: number | null,
+  runningOver: boolean,
 ): string {
   const range = `${formatLagosClockTime(booking.startsAt)} – ${formatLagosClockTime(booking.endsAt)}`;
   const statusLabel: Record<DisplayStatus, string> = {
     booked: "Booked",
     checkedInEarly: "Checked in",
     waiting: waitMinutes !== null ? `Waiting ${waitMinutes} min` : "Waiting",
-    inService: "In service",
+    inService: runningOver ? "Running over" : "In service",
     done: "Done",
     noShow: "No-show",
     cancelled: "Cancelled",
