@@ -189,3 +189,22 @@ export function summarizeDay(bookings: ScheduleBooking[], now: Date): DaySummary
     noShowCount: active.filter((b) => b.status === "NO_SHOW").length,
   };
 }
+
+const CHECK_IN_PROMPT_MINUTES = 15;
+
+/**
+ * True once a booking is 15+ minutes past its appointment time with nobody
+ * having checked it in or started it yet (docs/PRD.md, Check-in and timing,
+ * rule 5 — the "Has [name] arrived?" safety net).
+ */
+export function isOverdueForCheckIn(booking: ScheduleBooking, now: Date): boolean {
+  if (booking.status !== "BOOKED") return false;
+  return now.getTime() - booking.startsAt.getTime() >= CHECK_IN_PROMPT_MINUTES * 60_000;
+}
+
+/** Every overdue booking, soonest-due first — the reception schedule prompts for these one at a time. */
+export function findOverdueBookings(bookings: ScheduleBooking[], now: Date): ScheduleBooking[] {
+  return bookings
+    .filter((b) => isOverdueForCheckIn(b, now))
+    .sort((a, b) => a.startsAt.getTime() - b.startsAt.getTime());
+}

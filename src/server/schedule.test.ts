@@ -1,9 +1,11 @@
 import { describe, expect, it } from "vitest";
 import {
+  findOverdueBookings,
   getGridHeightPx,
   getHourMarks,
   getNowLineTopPx,
   getStylistStatusLine,
+  isOverdueForCheckIn,
   layoutStylistBookings,
   summarizeDay,
   type ScheduleBooking,
@@ -167,5 +169,46 @@ describe("summarizeDay", () => {
   it("has a null longest wait when nobody is waiting", () => {
     const now = new Date("2026-10-31T07:00:00Z");
     expect(summarizeDay([booking()], now).longestWaitMinutes).toBeNull();
+  });
+});
+
+describe("isOverdueForCheckIn", () => {
+  // booking()'s default startsAt is 2026-10-31T09:00:00Z.
+
+  it("is false before the appointment time has passed", () => {
+    expect(isOverdueForCheckIn(booking(), new Date("2026-10-31T08:50:00Z"))).toBe(false);
+  });
+
+  it("is false up to 15 minutes after the appointment time", () => {
+    expect(isOverdueForCheckIn(booking(), new Date("2026-10-31T09:14:00Z"))).toBe(false);
+  });
+
+  it("is true once 15 minutes have passed, still BOOKED", () => {
+    expect(isOverdueForCheckIn(booking(), new Date("2026-10-31T09:15:00Z"))).toBe(true);
+  });
+
+  it("is false once checked in, even if 15+ minutes late", () => {
+    const checkedIn = booking({ status: "CHECKED_IN", checkedInAt: new Date("2026-10-31T09:20:00Z") });
+    expect(isOverdueForCheckIn(checkedIn, new Date("2026-10-31T09:30:00Z"))).toBe(false);
+  });
+
+  it("is false for a no-show or cancelled booking", () => {
+    expect(isOverdueForCheckIn(booking({ status: "NO_SHOW" }), new Date("2026-10-31T09:30:00Z"))).toBe(false);
+    expect(isOverdueForCheckIn(booking({ status: "CANCELLED" }), new Date("2026-10-31T09:30:00Z"))).toBe(false);
+  });
+});
+
+describe("findOverdueBookings", () => {
+  it("returns only overdue bookings, soonest-due first", () => {
+    const now = new Date("2026-10-31T09:30:00Z");
+    const soon = booking({ id: "soon", startsAt: new Date("2026-10-31T09:10:00Z") }); // 20 min late
+    const later = booking({ id: "later", startsAt: new Date("2026-10-31T09:00:00Z") }); // 30 min late
+    const notYet = booking({ id: "not-yet", startsAt: new Date("2026-10-31T09:20:00Z") }); // 10 min late
+    const checkedIn = booking({ id: "checked-in", status: "CHECKED_IN", checkedInAt: now });
+
+    expect(findOverdueBookings([soon, later, notYet, checkedIn], now).map((b) => b.id)).toEqual([
+      "later",
+      "soon",
+    ]);
   });
 });

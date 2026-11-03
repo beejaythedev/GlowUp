@@ -5,7 +5,9 @@ import { formatLagosClockTime, formatLagosDateLabel, lagosDateParts, lagosInstan
 import { requireStaffSection } from "@/server/auth/requireStaffSection";
 import { roleHomePath } from "@/server/auth/roleHome";
 import type { DisplayStatus } from "@/server/status";
+import { formatTimeUntil } from "@/server/checkInSearch";
 import {
+  findOverdueBookings,
   getGridHeightPx,
   getHourMarks,
   getNowLineTopPx,
@@ -14,6 +16,7 @@ import {
   summarizeDay,
   type ScheduleBooking,
 } from "@/server/schedule";
+import type { OverduePrompt } from "./CheckInPromptModal";
 import { ReceptionScheduleView, type StylistColumn } from "./ReceptionScheduleView";
 import { buildSelectedBooking, fetchTodaysBookings } from "./receptionData";
 
@@ -108,6 +111,15 @@ export default async function ReceptionPage({ searchParams }: PageProps) {
     ? await buildSelectedBooking(selectedBookingRow, stylists, now)
     : null;
 
+  const overduePrompts: OverduePrompt[] = findOverdueBookings(scheduleBookings, now).map((b) => ({
+    bookingId: b.id,
+    customerName: b.customerName,
+    stylistName: stylists.find((s) => s.id === b.stylistId)?.name ?? "—",
+    appointmentLabel: formatLagosClockTime(b.startsAt),
+    overdueLabel: formatTimeUntil(b.startsAt, now),
+    minutesLate: Math.round((now.getTime() - b.startsAt.getTime()) / 60_000),
+  }));
+
   return (
     <ReceptionScheduleView
       staffName={staff.name}
@@ -122,6 +134,7 @@ export default async function ReceptionPage({ searchParams }: PageProps) {
       isOpenToday={opensAt !== null && closesAt !== null}
       selectedBookingId={bookingId ?? null}
       selectedBooking={selectedBooking}
+      overduePrompts={overduePrompts}
     />
   );
 }

@@ -481,9 +481,36 @@ and writes a handoff note before every session ends.
 > and a visible balance-due figure, not checked in. Checked the dev server wasn't a stale
 > leftover first (`netstat`), per the M5-3 lesson. Deleted the two test customer rows
 > afterward (the reseed already clears Lekki's bookings, but not arbitrary customers).
-> **Half-done:** M5 milestone — M5-1 through M5-4 done; M5-5 through M5-8 not started.
-> **Next task:** M5-5 — 15-minute prompt for bookings not checked in or started, matching
-> `CheckInPrompt.dc.html`.
+> M5-5: `src/server/schedule.ts` gained `isOverdueForCheckIn` (pure — true only for a
+> `BOOKED` booking 15+ minutes past its appointment time; already checked in, started, or
+> otherwise resolved stops counting) and `findOverdueBookings` (sorts the overdue ones
+> soonest-due first, matching `docs/PRD.md`'s safety-net rule 5).
+> New `CheckInPromptModal.tsx` on `/staff/reception` shows one at a time, matching
+> `CheckInPrompt.dc.html`: "Has [name] arrived?", due time/stylist/how-overdue, four arrival
+> options (Just now/5/10 min ago/**On time** — a fourth option beyond M5-3's three, computed
+> as exactly the booking's own minutes-late so "on time" means "arrived when she was due",
+> not "just now"), Check in / No-show, and "Not yet, ask again in 5 min". It reuses M5-2's
+> `performBookingAction` directly — no new server action needed, since check-in and no-show
+> were already generic.
+> Snoozing is deliberately client-state-only, not persisted: a `setTimeout` clears it after
+> 5 minutes, matching "ask again in 5 min" as a request to be left alone briefly, not a
+> stored preference that should survive a reload. The next overdue booking (if several are
+> waiting) shows as soon as the current one is dismissed, checked in, marked no-show, or its
+> snooze expires.
+> One React purity rule caught at lint time, not by hand: the first version read
+> `Date.now()` directly during render to compare against snooze expiry timestamps, which
+> React's new purity lint flags (render must be deterministic). Fixed by snoozing with a
+> boolean flag cleared by a scheduled timeout instead of a stored expiry time compared
+> against the clock on every render — simpler, and avoids the impurity entirely.
+> Verified live against seeded Lekki data as Ada: no bookings were actually overdue at the
+> real "now" this session (seed times are fixed clock times, not relative to when seed
+> runs), so created one throwaway booking 20 minutes in the past to exercise the path —
+> confirmed the prompt appeared with the right "20 min ago" text, that snoozing made it
+> disappear, and that picking "On time" and checking in landed `checkedInAt` within seconds
+> of the booking's actual `startsAt` in the database. Deleted the test booking and customer
+> afterward.
+> **Half-done:** M5 milestone — M5-1 through M5-5 done; M5-6 through M5-8 not started.
+> **Next task:** M5-6 — "Requested" marker on schedule blocks and in the booking panel.
 > **Blockers or questions:** none open.
 
 ## Milestones
@@ -509,6 +536,7 @@ Newest first. One line per finished task.
 
 | Date | Task | What changed | Tests |
 |---|---|---|---|
+| 2026-11-03 | M5-5 | `CheckInPromptModal.tsx`, `isOverdueForCheckIn`/`findOverdueBookings` in `schedule.ts` | `npm run check` (173 tests total), `npm run build`, screenshot-verified the prompt, snooze and "On time" check-in against a throwaway overdue booking |
 | 2026-11-02 | M5-4 | `/staff/reception/new` (walk-in/phone form, soonest-free stylist, client-side slot picker), `createReceptionBooking`/`shouldAutoCheckIn` in `bookings.ts` | `npm run check` (167 tests total), `npm run build`, screenshot-verified a walk-in auto-checked-in and a phone booking left pending against seeded Lekki data |
 | 2026-11-02 | M5-3 | `/staff/reception/check-in` (search + panel reuse), `src/server/checkInSearch.ts`, "arrived X min ago" correction added to `BookingPanel`, extracted `receptionData.ts` | `npm run check` (159 tests total), `npm run build`, screenshot-verified search/highlight/check-in against seeded Lekki data, confirmed backdated `checkedInAt` in the database |
 | 2026-11-02 | M5-2 | Booking panel (`BookingPanel.tsx`, `actions.ts`), `isActionAllowed`/`allowedFromStatuses` in `status.ts`, 7 action functions in `bookings.ts` (check in, start, finish, undo, no-show, cancel, move) | `npm run check` (145 tests total), `npm run build`, screenshot-verified full check-in→start→finish flow and a stylist move against seeded Lekki data |

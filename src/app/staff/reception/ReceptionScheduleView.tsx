@@ -9,6 +9,7 @@ import type {
   ScheduleHourMark,
 } from "@/server/schedule";
 import { BookingPanel, type SelectedBooking } from "./BookingPanel";
+import { CheckInPromptModal, type OverduePrompt } from "./CheckInPromptModal";
 
 export type { SelectedBooking };
 
@@ -33,6 +34,7 @@ export interface ReceptionScheduleViewProps {
   isOpenToday: boolean;
   selectedBookingId: string | null;
   selectedBooking: SelectedBooking | null;
+  overduePrompts: OverduePrompt[];
 }
 
 const REFRESH_INTERVAL_MS = 30_000;
@@ -51,12 +53,13 @@ export function ReceptionScheduleView(props: ReceptionScheduleViewProps) {
   const {
     staffName, branchName, dateLabel, nowLabel, summary,
     columns, gridHeightPx, hourMarks, nowLineTopPx, isOpenToday,
-    selectedBookingId, selectedBooking,
+    selectedBookingId, selectedBooking, overduePrompts,
   } = props;
 
   return (
     <div className="min-h-screen bg-bg text-text">
       <AutoRefresh intervalMs={REFRESH_INTERVAL_MS} />
+      <CheckInPromptModal prompts={overduePrompts} />
 
       <nav className="flex flex-wrap items-center justify-between gap-3 bg-brand-navy px-6 py-3 text-white">
         <div className="flex flex-wrap items-center gap-3.5">
