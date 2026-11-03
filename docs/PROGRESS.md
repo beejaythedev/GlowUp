@@ -556,9 +556,26 @@ and writes a handoff note before every session ends.
 > any-stylist booking, the "move to a free stylist" guidance pointing at the Move control.
 > Deleted the two constructed test customers afterward; the reseed already cleared the
 > bookings.
-> **Half-done:** M5 milestone — M5-1 through M5-7 done; M5-8 remains.
-> **Next task:** M5-8 — speed test: a walk-in booking takes 5 taps or fewer; check-in takes
-> 2 taps from search.
+> M5-8: no code change — this is a verification task against screens M5-3 and M5-4 already
+> built, so I ran it for real rather than reasoning about it. Scripted a Playwright pass
+> counting only genuine UI interactions (typing a phone number or name doesn't count as a
+> "tap"; navigating to the screen and the final submit do):
+> - **Walk-in booking, from the schedule:** tap "New booking", type phone + name, tap "Add
+>   to schedule" — **2 taps**, against a target of 5 or fewer. The defaults do the work:
+>   Walk-in is already selected, the first service is pre-selected, `getSoonestFreePerStylist`
+>   (M5-4) auto-picks the soonest-free stylist, and the first available time is
+>   auto-selected.
+> - **Check-in from search:** type a name, tap "Check in" — **1 tap**, against a target of 2
+>   or fewer. The matching result is already the default-selected one (soonest match), and
+>   "Just now" is the default arrival option, so no selection tap is needed before Check in.
+> Verified both actually completed, not just navigated: queried the database directly
+> afterward and confirmed the walk-in landed `CHECKED_IN` and Ngozi's booking did too.
+> Deleted the test booking/customer and re-seeded.
+> **M5 milestone is now fully done** — all of M5-1 through M5-8 complete. Ready for the
+> supervisor checkpoint in `docs/ROADMAP.md`: run a pretend busy morning with 10 bookings —
+> this is the screen Ada will test first.
+> **Next task:** none — waiting on the M5 checkpoint before M6 (Stylist) starts, per
+> `CLAUDE.md` rule 6.
 > **Blockers or questions:** none open.
 
 ## Milestones
@@ -570,7 +587,7 @@ and writes a handoff note before every session ends.
 | M2 Availability engine | Approved | 2026-10-27 |
 | M3 Customer booking | Approved | 2026-10-27 |
 | M4 Staff sign-in and roles | Approved | 2026-11-02 |
-| M5 Reception | In progress | |
+| M5 Reception | Ready for review | |
 | M6 Stylist | Not started | |
 | M7 Manager and owner | Not started | |
 | M8 Payments and messages | Not started | |
@@ -584,6 +601,7 @@ Newest first. One line per finished task.
 
 | Date | Task | What changed | Tests |
 |---|---|---|---|
+| 2026-11-03 | M5-8 | No code change — speed test against M5-3/M5-4's screens | Scripted Playwright tap-count: walk-in booking 2 taps (target 5), check-in from search 1 tap (target 2); confirmed both actions genuinely completed in the database |
 | 2026-11-03 | M5-7 | "Running over"/flagged-next-booking (`isRunningOver`, `getFlaggedBookingId` in `schedule.ts`), amber block styling + ⚠ marker, `BookingPanel` move/delay-message guidance | `npm run check` (184 tests total), `npm run build`, screenshot-verified a constructed scenario and the seed data's own genuinely-overdue bookings |
 | 2026-11-03 | M5-6 | "Requested" (R) marker on schedule blocks + legend, `stylistRequested` added to `schedule.ts` | `npm run check` (174 tests total), `npm run build`, screenshot-verified against a seeded requested-stylist booking |
 | 2026-11-03 | M5-5 | `CheckInPromptModal.tsx`, `isOverdueForCheckIn`/`findOverdueBookings` in `schedule.ts` | `npm run check` (173 tests total), `npm run build`, screenshot-verified the prompt, snooze and "On time" check-in against a throwaway overdue booking |
