@@ -509,8 +509,23 @@ and writes a handoff note before every session ends.
 > disappear, and that picking "On time" and checking in landed `checkedInAt` within seconds
 > of the booking's actual `startsAt` in the database. Deleted the test booking and customer
 > afterward.
-> **Half-done:** M5 milestone — M5-1 through M5-5 done; M5-6 through M5-8 not started.
-> **Next task:** M5-6 — "Requested" marker on schedule blocks and in the booking panel.
+> M5-6: turned out to be mostly already done — M5-2's `BookingPanel` already showed
+> "Blessing · Requested" next to the stylist name, since `stylistRequested` was already
+> part of `SelectedBooking`. The only real gap was the schedule grid itself: added
+> `stylistRequested` to `ScheduleBooking`/`ScheduleBlock` in `schedule.ts` (plain
+> passthrough, carried onto the block by `layoutStylistBookings`) and a small round "R"
+> badge next to the customer name on the block, plus a matching legend entry — compact by
+> design, since blocks can be as short as 24px tall and a full `StatusBadge` pill wouldn't
+> fit.
+> Verified live against seeded Lekki data: Amaka Chukwu's booking (seeded with
+> `stylistRequested: true`, requesting Zainab) shows the "R" badge on her schedule block and
+> "Zainab · Requested" in the panel once selected. Had to dismiss M5-5's overdue prompts
+> first to reach the schedule underneath — expected, not a bug.
+> **Half-done:** M5 milestone — M5-1 through M5-6 done; M5-7 and M5-8 remain.
+> **Next task:** M5-7 — running over: if Finish isn't tapped 15 minutes before the booked
+> end, show "running over" (amber) and flag the next booking. Offer "move to a free
+> stylist" only for "any stylist" bookings; for requested ones, offer "send delay message"
+> (sent in M8).
 > **Blockers or questions:** none open.
 
 ## Milestones
@@ -536,6 +551,7 @@ Newest first. One line per finished task.
 
 | Date | Task | What changed | Tests |
 |---|---|---|---|
+| 2026-11-03 | M5-6 | "Requested" (R) marker on schedule blocks + legend, `stylistRequested` added to `schedule.ts` | `npm run check` (174 tests total), `npm run build`, screenshot-verified against a seeded requested-stylist booking |
 | 2026-11-03 | M5-5 | `CheckInPromptModal.tsx`, `isOverdueForCheckIn`/`findOverdueBookings` in `schedule.ts` | `npm run check` (173 tests total), `npm run build`, screenshot-verified the prompt, snooze and "On time" check-in against a throwaway overdue booking |
 | 2026-11-02 | M5-4 | `/staff/reception/new` (walk-in/phone form, soonest-free stylist, client-side slot picker), `createReceptionBooking`/`shouldAutoCheckIn` in `bookings.ts` | `npm run check` (167 tests total), `npm run build`, screenshot-verified a walk-in auto-checked-in and a phone booking left pending against seeded Lekki data |
 | 2026-11-02 | M5-3 | `/staff/reception/check-in` (search + panel reuse), `src/server/checkInSearch.ts`, "arrived X min ago" correction added to `BookingPanel`, extracted `receptionData.ts` | `npm run check` (159 tests total), `npm run build`, screenshot-verified search/highlight/check-in against seeded Lekki data, confirmed backdated `checkedInAt` in the database |

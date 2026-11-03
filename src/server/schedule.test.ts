@@ -27,6 +27,7 @@ function booking(overrides: Partial<ScheduleBooking> = {}): ScheduleBooking {
     source: "ONLINE",
     customerName: "Amaka",
     serviceName: "Knotless braids",
+    stylistRequested: false,
     ...overrides,
   };
 }
@@ -65,6 +66,12 @@ describe("layoutStylistBookings", () => {
     const { blocks } = layoutStylistBookings([booking()], OPENS_AT, PX_PER_HOUR, now);
     expect(blocks).toHaveLength(1);
     expect(blocks[0]).toMatchObject({ topPx: 100, heightPx: 100, displayStatus: "booked" });
+  });
+
+  it("carries the stylistRequested flag onto the block", () => {
+    const now = new Date("2026-10-31T07:00:00Z");
+    const { blocks } = layoutStylistBookings([booking({ stylistRequested: true })], OPENS_AT, PX_PER_HOUR, now);
+    expect(blocks[0].stylistRequested).toBe(true);
   });
 
   it("adds a separate prep block after the appointment", () => {

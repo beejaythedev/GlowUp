@@ -12,6 +12,7 @@ export interface ScheduleBooking {
   source: BookingSource;
   customerName: string;
   serviceName: string;
+  stylistRequested: boolean;
 }
 
 export interface ScheduleBlock {
@@ -23,6 +24,7 @@ export interface ScheduleBlock {
   serviceName: string;
   isWalkIn: boolean;
   waitMinutes: number | null;
+  stylistRequested: boolean;
 }
 
 export interface SchedulePrepBlock {
@@ -120,6 +122,7 @@ export function layoutStylistBookings(
       serviceName: booking.serviceName,
       isWalkIn: booking.source === "WALK_IN",
       waitMinutes,
+      stylistRequested: booking.stylistRequested,
     });
 
     if (booking.blockedUntil > booking.endsAt) {

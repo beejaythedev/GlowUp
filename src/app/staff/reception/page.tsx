@@ -77,6 +77,7 @@ export default async function ReceptionPage({ searchParams }: PageProps) {
     source: b.source,
     customerName: b.customer.name,
     serviceName: b.service.name,
+    stylistRequested: b.stylistRequested,
   }));
 
   const summary = summarizeDay(scheduleBookings, now);

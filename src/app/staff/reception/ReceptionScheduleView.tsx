@@ -185,9 +185,18 @@ export function ReceptionScheduleView(props: ReceptionScheduleViewProps) {
                           style={{ top: `${block.topPx}px`, height: `${block.heightPx}px` }}
                         >
                           <span className="opacity-85">{block.timeLabel}</span>
-                          <span className="font-bold">
+                          <span className="flex items-center gap-1 font-bold">
                             {block.customerName}
                             {block.isWalkIn ? <span className="font-medium"> (walk-in)</span> : null}
+                            {block.stylistRequested && (
+                              <span
+                                title="Requested this stylist"
+                                aria-label="Requested this stylist"
+                                className="rounded-full border border-current px-1.5 py-0.5 text-[9px] leading-none font-extrabold tracking-wide opacity-90"
+                              >
+                                R
+                              </span>
+                            )}
                           </span>
                           <span>{block.serviceName}</span>
                         </Link>
@@ -239,6 +248,12 @@ export function ReceptionScheduleView(props: ReceptionScheduleViewProps) {
               <LegendSwatch className="bg-disabled-bg" label="Done" />
               <LegendSwatch className="border border-dashed border-danger-border" label="No-show" />
               <LegendSwatch className="schedule-prep" label="Prep time" />
+              <span className="flex items-center gap-2">
+                <span className="flex h-3.5 w-3.5 flex-none items-center justify-center rounded-full border border-current text-[8px] font-extrabold">
+                  R
+                </span>
+                Requested stylist
+              </span>
             </div>
           </aside>
         </div>
