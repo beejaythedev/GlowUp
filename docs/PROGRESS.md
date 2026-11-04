@@ -330,7 +330,251 @@ and writes a handoff note before every session ends.
 > supervisor checkpoint in `docs/ROADMAP.md`: sign in as each seeded role. Demo password for
 > every seeded staff account is `password1` (phones listed in `prisma/seed.ts`, e.g. Ada the
 > Lekki receptionist is `0802 000 0002`).
-> **Next task:** none — waiting on the M4 checkpoint before M5 (Reception) starts, per
+> M4 checkpoint: supervisor approved M4 and moved straight to starting M5, pushed to the
+> remote `m4` branch. M5 started on a new `m5` branch (off `m4`).
+> M5-1: `src/server/schedule.ts` — pure layout/display logic for the schedule grid, kept
+> separate from the page so the pixel math and status-line wording are unit tested without
+> a browser: `layoutStylistBookings` (positions each booking's block by minutes-since-open,
+> plus a separate prep block when the service has prep time; a minimum block height so very
+> short services stay readable; cancelled bookings are left out entirely — the slot is just
+> free again), `getStylistStatusLine` ("Busy until…", "Customer waiting", "Free at…" during
+> a mid-prep gap, "Next: Name at…", or "Free for the rest of today" — in that priority
+> order), `getNowLineTopPx`/`getHourMarks`/`getGridHeightPx` (time-axis math), and
+> `summarizeDay` (the four summary tiles, including the longest current wait among waiting
+> customers).
+> `/staff/reception` (`page.tsx` + `ReceptionScheduleView.tsx`) replaces the M4-1/M4-2
+> placeholder with the real thing, matching `ReceptionSchedule.dc.html`: nav bar, summary
+> tiles, one column per stylist with colour-coded blocks and striped prep blocks (new
+> `.schedule-prep` CSS pattern in `globals.css`, token-driven, not raw hex), the "now" line
+> and dot, and a status/colour legend. New `src/components/staff/AutoRefresh.tsx` calls
+> `router.refresh()` every 30 seconds so the grid stays live without a manual reload —
+> App Router's own re-fetch, not a custom polling endpoint.
+> Deliberately left out of this task, staying inside M5-1's actual scope: the search box and
+> "New booking" button from the design (M5-3 and M5-4 build those — a dead search field or a
+> button linking to a page that doesn't exist yet would be a half-finished feature, not a
+> faithful placeholder), and the right-hand booking detail panel with its timeline and
+> Start/Move/Undo actions (M5-2's job entirely) — booking blocks are plain, non-interactive
+> display for now rather than buttons that do nothing when clicked.
+> Verified live against the seeded Lekki data as Ada (receptionist): all 10 bookings render
+> in the right columns with correct colours, prep stripes show after services that have
+> them, the now-line/dot sit at the right time, and the summary tiles match. Had to re-run
+> `npx prisma db seed` first since the seed's "today" bookings were dated 27 Oct and the
+> system date has since moved to 2 Nov — not a bug, just stale sample data; re-seeding is
+> the documented way to refresh it (`README`/`CLAUDE.md` commands).
+> One Windows-only flake noted, not fixed (same class seen earlier this session with a
+> vitest worker): `npx prisma db seed` crashed once with exit code 3221226505 (a Windows
+> access violation) then succeeded immediately on retry. Not reproducible on demand, not
+> something `npm run check` or the app code can detect or correct — just worth remembering
+> if a command fails with that exact exit code: retry before assuming a real bug.
+> M5-2: `src/server/status.ts` gained the other half of what `docs/ARCHITECTURE.md` always
+> said belonged there — `isActionAllowed`/`allowedFromStatuses`, one `ALLOWED_FROM` map that
+> is the single source of truth for which stored `BookingStatus` each of the seven actions
+> may start from (check in only from `BOOKED`; start only from `CHECKED_IN`; finish only
+> from `IN_SERVICE`; undo-check-in only from `CHECKED_IN`; no-show only from `BOOKED`
+> — a checked-in customer showed up, so they can't retroactively be a no-show; cancel and
+> move both only before service starts). `src/server/bookings.ts` gained the seven DB
+> functions (`checkIn`, `startService`, `finishService`, `undoCheckIn`, `markNoShow`,
+> `cancelBooking`, `moveBooking`), each a single `updateMany` guarded by that same allowed-
+> status list, so the status check and the write happen atomically — two staff members
+> tapping the same button at once can't both succeed, the same safety property `holdSlot`
+> already had for double-booking. `moveBooking` reuses `holdSlot`'s `isSlotConflict` pattern:
+> reassigning to a stylist who's already booked then fails the DB's own exclusion constraint
+> and reports `SLOT_TAKEN` instead of throwing.
+> `/staff/reception` now has a real booking panel: clicking a schedule block (a `Link` to
+> `?bookingId=...`, so selection is server-rendered and shareable, not client state) opens
+> `BookingPanel.tsx` — customer, service, stylist, deposit, a timeline (appointment/checked-
+> in/started/finished, pending rows shown as "–"), a late-arrival note when relevant, and
+> only the action buttons that `isActionAllowed` says are valid for the booking's current
+> status. One server action (`performBookingAction` in `actions.ts`) handles all seven
+> actions — `action` is a hidden form field each button sets, matching the pattern from
+> M3-5's pay/simulate-failure buttons — and re-checks `canViewBooking` (M4-3) before doing
+> anything, so this is also where that permission check gets its first real caller.
+> Two scoping decisions, deliberately kept narrow: "Move booking" reassigns to a different
+> stylist at the *same* time only (a dropdown of the branch's other active stylists, no new
+> time-and-stylist picker UI) — covers the common case ("that stylist's out today, move to
+> someone else") without building a second availability widget; and plain check-in has no
+> "arrived 5/10 min ago" correction — that's M5-3's dedicated check-in flow with search, a
+> different entry point from this panel's one-tap check-in.
+> Also fixed in passing: `/staff/reception` 404'd for the owner, even though `canAccess-
+> StaffSection` (M4-3) explicitly lets the owner into every section — there's no branch-
+> switcher, so an owner has no branch to show a schedule for. Now redirects to `/staff/owner`
+> instead of a dead end.
+> Verified live against seeded Lekki data as Ada: selected a `BOOKED` slot and walked it
+> through check in → start (backup) → finish (backup), watching the schedule block's colour,
+> the panel's badge/timeline, and the summary tiles update correctly at each step (including
+> the late-arrival note, since the seeded appointment time had long passed); moved a
+> different booking to another stylist and confirmed it reappeared in the right column; and
+> confirmed a `DONE` booking's panel shows the timeline with no action buttons. Re-seeded
+> afterward (`npx prisma db seed`) to restore the dev database's clean baseline, since this
+> task's actions genuinely mutate the seeded bookings rather than just creating throwaway
+> test rows.
+> M5-3: new `src/server/checkInSearch.ts` — pure `matchesQuery`/`searchBookings` (name, phone
+> ignoring spaces/dashes, or service name, case-insensitive), `highlightMatch` (splits text
+> around the first hit for `<mark>` rendering) and `formatTimeUntil` ("in 10 min", "in 4
+> hrs", "15 min ago", "now").
+> Refactored `buildSelectedBooking`/`fetchTodaysBookings` out of `/staff/reception/page.tsx`
+> into `receptionData.ts` so both the schedule page and the new check-in page share the same
+> booking-detail logic — no behaviour change, just avoiding duplicating it.
+> New `/staff/reception/check-in` (`page.tsx` + `CheckInSearchView.tsx` + `SearchBox.tsx`)
+> matches `ReceptionCheckIn.dc.html`: a debounced live search (`SearchBox` updates the `q`
+> URL param as the receptionist types, so results and the selected panel are still server-
+> rendered and shareable, not client state) over today's not-yet-checked-in bookings,
+> showing time/relative-time, the matched name highlighted, service/stylist/masked phone,
+> and a deposit badge. Selecting a result (or the soonest one, selected by default) reuses
+> M5-2's `BookingPanel` for the detail side — including the lateness correction added to it
+> this task — rather than a second, parallel detail component.
+> The "arrived 5/10 min ago" correction (`CheckedInOnTime.dc.html`'s "Did they arrive
+> earlier?") lives directly in `BookingPanel`, shown next to the Check In button whenever
+> `canCheckIn` is true — so it's available both from this search page and from clicking a
+> `BOOKED` block on the main schedule, one implementation instead of two. The schedule page
+> also gained a "Check in a customer" header button linking here, closing the gap M5-1
+> deliberately left open.
+> Deliberate simplification: unlike the design's inline per-row "Check in" button, a result
+> row here only selects — actually checking in happens through the (now lateness-aware)
+> panel. One check-in code path, not two, at the cost of one extra click for the common
+> case. Also skipped the toast-banner confirmation `CheckedInOnTime.dc.html` shows after
+> checking in — once checked in, `BookingPanel` itself already shows the updated badge,
+> timeline and Start button, which reads as confirmation enough without a second component.
+> Verified live against seeded Lekki data as Ada: searching "Ngozi" correctly narrowed the
+> list to her booking with the match highlighted; picked "5 min ago" and checked her in,
+> then confirmed directly in the database that `checkedInAt` landed ~5 minutes before the
+> actual click time and `status` was `CHECKED_IN`.
+> One real bug caught and fixed during this: the dev server had a second, stale
+> `next dev` process still listening on port 3000 since M5-2's checks (`pkill -f "next dev"`
+> doesn't match Next 16's persistent Turbopack dev daemon on Windows) — it kept serving
+> pre-refactor compiled code, which is why an early check showed unfiltered search results
+> and a dev-overlay "1 Issue" badge. Found via `netstat -ano | find ":3000"` plus the PID in
+> the "Another next dev server is already running" message, killed by PID
+> (`taskkill /PID <id> /F`), confirmed fixed on a truly fresh server. Not a code bug — a
+> repeat-visit trap in this Windows dev environment worth remembering for future sessions.
+> M5-4: `src/server/bookings.ts` gained `shouldAutoCheckIn` (pure — true only for a `WALK_IN`
+> whose chosen time starts within one availability slot step of now, i.e. "right away"; a
+> walk-in booked for later today, or any phone booking, still needs a real check-in) and
+> `createReceptionBooking`, reception's own booking-creation path — deliberately not
+> `holdSlot`: that function's 10-minute hold exists for a customer actively paying online
+> right now, which doesn't apply here (a phone booking's deposit link, sent by SMS once
+> M8-3 exists, has no such rush). Reception always picks one specific stylist on this
+> screen, so `stylistRequested` is always true. Still protected by the same no-double-
+> booking exclusion constraint `holdSlot` relies on, reusing its `isSlotConflict` pattern.
+> `/staff/reception/new` (`page.tsx` + `NewBookingForm.tsx` + `actions.ts`) matches
+> `ReceptionNew.dc.html`: Walk-in/Phone call toggle, a phone field that looks up a returning
+> customer as reception types (`lookupCustomer` Server Action, debounced, pre-fills the name
+> field only if the receptionist hasn't already typed one), service chips, "Stylist, soonest
+> free first" (reusing M2-4's `getSoonestFreePerStylist`, built for exactly this screen and
+> not called from anywhere until now), and up to 3 concrete times from `getAvailableSlots`
+> for the chosen stylist, computed client-side with no round trip — the same
+> fetch-once-compute-in-the-browser architecture as the customer booking flow's step 2.
+> The schedule page gained the "New booking" header button to match, alongside M5-3's
+> "Check in a customer" — the header is now what `ReceptionSchedule.dc.html` always showed.
+> Deliberate scoping: "Another day" links to the customer-facing `/book` flow instead of
+> building a second multi-day picker inside the reception tool — this screen is for
+> same-day walk-ins and phone calls, matching the design's own same-day focus.
+> One real bug caught before it shipped: the submit button lives in the summary sidebar,
+> outside the `<form>` element (matching the design's layout) — the first attempt used
+> `document.querySelector("form")`, which actually grabbed the nav's sign-out form instead
+> (it comes first in the DOM). Fixed with the standard HTML `form="id"` attribute, which
+> associates a button with a form anywhere in the document regardless of DOM position.
+> Verified live against seeded Lekki data as Ada: a new walk-in customer, submitted with
+> the default "first free" slot selected, landed on the schedule already `CHECKED_IN`
+> (green block, Start-service button ready) exactly as the copy promises; a phone booking
+> for a different new customer landed as a plain `BOOKED` row with `depositStatus: PENDING`
+> and a visible balance-due figure, not checked in. Checked the dev server wasn't a stale
+> leftover first (`netstat`), per the M5-3 lesson. Deleted the two test customer rows
+> afterward (the reseed already clears Lekki's bookings, but not arbitrary customers).
+> M5-5: `src/server/schedule.ts` gained `isOverdueForCheckIn` (pure — true only for a
+> `BOOKED` booking 15+ minutes past its appointment time; already checked in, started, or
+> otherwise resolved stops counting) and `findOverdueBookings` (sorts the overdue ones
+> soonest-due first, matching `docs/PRD.md`'s safety-net rule 5).
+> New `CheckInPromptModal.tsx` on `/staff/reception` shows one at a time, matching
+> `CheckInPrompt.dc.html`: "Has [name] arrived?", due time/stylist/how-overdue, four arrival
+> options (Just now/5/10 min ago/**On time** — a fourth option beyond M5-3's three, computed
+> as exactly the booking's own minutes-late so "on time" means "arrived when she was due",
+> not "just now"), Check in / No-show, and "Not yet, ask again in 5 min". It reuses M5-2's
+> `performBookingAction` directly — no new server action needed, since check-in and no-show
+> were already generic.
+> Snoozing is deliberately client-state-only, not persisted: a `setTimeout` clears it after
+> 5 minutes, matching "ask again in 5 min" as a request to be left alone briefly, not a
+> stored preference that should survive a reload. The next overdue booking (if several are
+> waiting) shows as soon as the current one is dismissed, checked in, marked no-show, or its
+> snooze expires.
+> One React purity rule caught at lint time, not by hand: the first version read
+> `Date.now()` directly during render to compare against snooze expiry timestamps, which
+> React's new purity lint flags (render must be deterministic). Fixed by snoozing with a
+> boolean flag cleared by a scheduled timeout instead of a stored expiry time compared
+> against the clock on every render — simpler, and avoids the impurity entirely.
+> Verified live against seeded Lekki data as Ada: no bookings were actually overdue at the
+> real "now" this session (seed times are fixed clock times, not relative to when seed
+> runs), so created one throwaway booking 20 minutes in the past to exercise the path —
+> confirmed the prompt appeared with the right "20 min ago" text, that snoozing made it
+> disappear, and that picking "On time" and checking in landed `checkedInAt` within seconds
+> of the booking's actual `startsAt` in the database. Deleted the test booking and customer
+> afterward.
+> M5-6: turned out to be mostly already done — M5-2's `BookingPanel` already showed
+> "Blessing · Requested" next to the stylist name, since `stylistRequested` was already
+> part of `SelectedBooking`. The only real gap was the schedule grid itself: added
+> `stylistRequested` to `ScheduleBooking`/`ScheduleBlock` in `schedule.ts` (plain
+> passthrough, carried onto the block by `layoutStylistBookings`) and a small round "R"
+> badge next to the customer name on the block, plus a matching legend entry — compact by
+> design, since blocks can be as short as 24px tall and a full `StatusBadge` pill wouldn't
+> fit.
+> Verified live against seeded Lekki data: Amaka Chukwu's booking (seeded with
+> `stylistRequested: true`, requesting Zainab) shows the "R" badge on her schedule block and
+> "Zainab · Requested" in the panel once selected. Had to dismiss M5-5's overdue prompts
+> first to reach the schedule underneath — expected, not a bug.
+> M5-7: `src/server/schedule.ts` gained `isRunningOver` (true once an `IN_SERVICE` booking
+> is within 15 minutes of — or past — its booked end, Finish not yet tapped;
+> `docs/PRD.md` rule 9) and `getFlaggedBookingId` (the same stylist's next `BOOKED`/
+> `CHECKED_IN` booking after a running-over one, soonest first). Both take just the handful
+> of fields they need (`Pick<ScheduleBooking, "id" | "startsAt" | "endsAt" | "status">`)
+> rather than the full type, so `receptionData.ts` can reuse them against raw Prisma rows
+> without an unsafe cast. `layoutStylistBookings` now carries `runningOver`/
+> `flaggedForDelay` onto every `ScheduleBlock`, computed per stylist from that stylist's own
+> bookings — no cross-stylist lookup needed, since rule 9 is explicitly about one stylist
+> running over on their own schedule.
+> On the schedule grid: a running-over block switches from solid blue to the same amber
+> used for "checked in, waiting" (same underlying meaning — the customer, or in this case
+> the next customer, is left waiting), with its time label changed to "Running over"; the
+> flagged next booking gets a small ⚠ marker next to the customer name, plus a matching
+> legend row. `BookingPanel` shows the same "Running over" badge when a selected booking
+> hits that state, and a new amber note on a flagged booking: for an "any stylist" booking,
+> points at the existing Move control already built in M5-2 rather than adding a second way
+> to do the same thing; for a requested one, a disabled "Send delay message" button with a
+> tooltip explaining the actual SMS send arrives in M8 — matching the scoping precedent set
+> in M5-4 for the phone-deposit-link placeholder.
+> `buildSelectedBooking`'s signature grew an `allTodaysBookings` parameter (both
+> `/staff/reception` and `/staff/reception/check-in` already had this data fetched; just
+> needed to pass it through) so it can filter to the selected booking's own stylist and
+> reuse the same two schedule.ts functions, rather than duplicating the running-over logic
+> for the panel.
+> Verified live against a deliberately constructed scenario (a stylist mid-service, 50
+> minutes in on a 1-hour booking, plus a next booking 20 minutes after it ends) — and, as a
+> bonus, against the seed data itself: by 5pm several seeded in-service bookings had
+> genuinely run past their booked end, so the amber styling, "Running over" label, and ⚠
+> markers all appeared correctly without needing the constructed scenario at all. Checked
+> both panels: the running-over booking's own panel shows the amber badge and Finish
+> button; the flagged next booking's panel shows the delay note and, since it was an
+> any-stylist booking, the "move to a free stylist" guidance pointing at the Move control.
+> Deleted the two constructed test customers afterward; the reseed already cleared the
+> bookings.
+> M5-8: no code change — this is a verification task against screens M5-3 and M5-4 already
+> built, so I ran it for real rather than reasoning about it. Scripted a Playwright pass
+> counting only genuine UI interactions (typing a phone number or name doesn't count as a
+> "tap"; navigating to the screen and the final submit do):
+> - **Walk-in booking, from the schedule:** tap "New booking", type phone + name, tap "Add
+>   to schedule" — **2 taps**, against a target of 5 or fewer. The defaults do the work:
+>   Walk-in is already selected, the first service is pre-selected, `getSoonestFreePerStylist`
+>   (M5-4) auto-picks the soonest-free stylist, and the first available time is
+>   auto-selected.
+> - **Check-in from search:** type a name, tap "Check in" — **1 tap**, against a target of 2
+>   or fewer. The matching result is already the default-selected one (soonest match), and
+>   "Just now" is the default arrival option, so no selection tap is needed before Check in.
+> Verified both actually completed, not just navigated: queried the database directly
+> afterward and confirmed the walk-in landed `CHECKED_IN` and Ngozi's booking did too.
+> Deleted the test booking/customer and re-seeded.
+> **M5 milestone is now fully done** — all of M5-1 through M5-8 complete. Ready for the
+> supervisor checkpoint in `docs/ROADMAP.md`: run a pretend busy morning with 10 bookings —
+> this is the screen Ada will test first.
+> **Next task:** none — waiting on the M5 checkpoint before M6 (Stylist) starts, per
 > `CLAUDE.md` rule 6.
 > **Blockers or questions:** none open.
 
@@ -342,8 +586,8 @@ and writes a handoff note before every session ends.
 | M1 Data model and seed | Approved | 2026-10-27 |
 | M2 Availability engine | Approved | 2026-10-27 |
 | M3 Customer booking | Approved | 2026-10-27 |
-| M4 Staff sign-in and roles | Ready for review | |
-| M5 Reception | Not started | |
+| M4 Staff sign-in and roles | Approved | 2026-11-02 |
+| M5 Reception | Ready for review | |
 | M6 Stylist | Not started | |
 | M7 Manager and owner | Not started | |
 | M8 Payments and messages | Not started | |
@@ -357,6 +601,14 @@ Newest first. One line per finished task.
 
 | Date | Task | What changed | Tests |
 |---|---|---|---|
+| 2026-11-03 | M5-8 | No code change — speed test against M5-3/M5-4's screens | Scripted Playwright tap-count: walk-in booking 2 taps (target 5), check-in from search 1 tap (target 2); confirmed both actions genuinely completed in the database |
+| 2026-11-03 | M5-7 | "Running over"/flagged-next-booking (`isRunningOver`, `getFlaggedBookingId` in `schedule.ts`), amber block styling + ⚠ marker, `BookingPanel` move/delay-message guidance | `npm run check` (184 tests total), `npm run build`, screenshot-verified a constructed scenario and the seed data's own genuinely-overdue bookings |
+| 2026-11-03 | M5-6 | "Requested" (R) marker on schedule blocks + legend, `stylistRequested` added to `schedule.ts` | `npm run check` (174 tests total), `npm run build`, screenshot-verified against a seeded requested-stylist booking |
+| 2026-11-03 | M5-5 | `CheckInPromptModal.tsx`, `isOverdueForCheckIn`/`findOverdueBookings` in `schedule.ts` | `npm run check` (173 tests total), `npm run build`, screenshot-verified the prompt, snooze and "On time" check-in against a throwaway overdue booking |
+| 2026-11-02 | M5-4 | `/staff/reception/new` (walk-in/phone form, soonest-free stylist, client-side slot picker), `createReceptionBooking`/`shouldAutoCheckIn` in `bookings.ts` | `npm run check` (167 tests total), `npm run build`, screenshot-verified a walk-in auto-checked-in and a phone booking left pending against seeded Lekki data |
+| 2026-11-02 | M5-3 | `/staff/reception/check-in` (search + panel reuse), `src/server/checkInSearch.ts`, "arrived X min ago" correction added to `BookingPanel`, extracted `receptionData.ts` | `npm run check` (159 tests total), `npm run build`, screenshot-verified search/highlight/check-in against seeded Lekki data, confirmed backdated `checkedInAt` in the database |
+| 2026-11-02 | M5-2 | Booking panel (`BookingPanel.tsx`, `actions.ts`), `isActionAllowed`/`allowedFromStatuses` in `status.ts`, 7 action functions in `bookings.ts` (check in, start, finish, undo, no-show, cancel, move) | `npm run check` (145 tests total), `npm run build`, screenshot-verified full check-in→start→finish flow and a stylist move against seeded Lekki data |
+| 2026-11-02 | M5-1 | `/staff/reception` real schedule grid, `src/server/schedule.ts`, `src/components/staff/AutoRefresh.tsx`, `.schedule-prep` CSS pattern | `npm run check` (124 tests total), `npm run build`, screenshot-verified against seeded Lekki data |
 | 2026-10-27 | M4-3 | `src/server/permissions.ts` (`canViewBooking`, `canViewBranch`, `canAccessStaffSection`), `requireStaffSection` guard wired into all 4 staff section placeholder pages | `npm run check` (108 tests total), `npm run build`, scripted Playwright check (stylist bounced from every other section, owner can open all 4, signed-out redirects) |
 | 2026-10-27 | M4-2 | `roleHomePath`, `getCurrentStaff`, role-based sign-in redirect, placeholder `/staff/{reception,stylist,manager,owner}`, `/staff` now a dispatcher | `npm run check` (96 tests total), `npm run build`, scripted Playwright check (all 4 seeded roles land on their own section, already-signed-in redirects) |
 | 2026-10-27 | M4-1 | `/staff/sign-in` (phone + password, lockout), `src/server/auth/` (`password`, `lockout`, `session`), placeholder `/staff`, migration for `Staff` lockout fields | `npm run check` (92 tests total), `npm run build`, scripted Playwright end-to-end check (sign in, sign out, 5-attempt lockout, show/hide toggle) against a throwaway staff account |

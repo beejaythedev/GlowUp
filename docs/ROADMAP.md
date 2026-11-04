@@ -109,14 +109,14 @@ The schedule is tight. If a week slips, move "Later" items out, never the checks
 
 **Goal:** Ada can run a Saturday from the schedule (S7, S8, S9, S22).
 
-- [ ] **M5-1** Today's schedule grid: one column per stylist, bookings coloured by status, striped prep blocks, the "now" line, summary tiles. Matches `ReceptionSchedule.dc.html`. Refreshes every 30 seconds.
-- [ ] **M5-2** Booking panel with timeline (appointment, checked in, started, finished) and actions: check in, start/finish as backup, move, cancel, no-show, undo check-in.
-- [ ] **M5-3** Check-in: one tap, with "arrived 5 or 10 minutes ago" correction; search by name, phone or service. Matches `ReceptionCheckIn.dc.html` and `CheckedInOnTime.dc.html`.
-- [ ] **M5-4** New booking for walk-ins and phone calls: returning customer found by phone, soonest-free stylist first, walk-ins served now are checked in automatically. Matches `ReceptionNew.dc.html`.
-- [ ] **M5-5** 15-minute prompt for bookings not checked in or started, matching `CheckInPrompt.dc.html`.
-- [ ] **M5-6** "Requested" marker on schedule blocks and in the booking panel.
-- [ ] **M5-7** Running over: if Finish isn't tapped 15 minutes before the booked end, show "running over" (amber) and flag the next booking. Offer "move to a free stylist" only for "any stylist" bookings; for requested ones, offer "send delay message" (sent in M8).
-- [ ] **M5-8** Speed test: a walk-in booking takes 5 taps or fewer; check-in takes 2 taps from search.
+- [x] **M5-1** Today's schedule grid: one column per stylist, bookings coloured by status, striped prep blocks, the "now" line, summary tiles. Matches `ReceptionSchedule.dc.html`. Refreshes every 30 seconds.
+- [x] **M5-2** Booking panel with timeline (appointment, checked in, started, finished) and actions: check in, start/finish as backup, move, cancel, no-show, undo check-in.
+- [x] **M5-3** Check-in: one tap, with "arrived 5 or 10 minutes ago" correction; search by name, phone or service. Matches `ReceptionCheckIn.dc.html` and `CheckedInOnTime.dc.html`.
+- [x] **M5-4** New booking for walk-ins and phone calls: returning customer found by phone, soonest-free stylist first, walk-ins served now are checked in automatically. Matches `ReceptionNew.dc.html`.
+- [x] **M5-5** 15-minute prompt for bookings not checked in or started, matching `CheckInPrompt.dc.html`.
+- [x] **M5-6** "Requested" marker on schedule blocks and in the booking panel.
+- [x] **M5-7** Running over: if Finish isn't tapped 15 minutes before the booked end, show "running over" (amber) and flag the next booking. Offer "move to a free stylist" only for "any stylist" bookings; for requested ones, offer "send delay message" (sent in M8).
+- [x] **M5-8** Speed test: a walk-in booking takes 5 taps or fewer; check-in takes 2 taps from search.
 
 **Supervisor checkpoint:** run a pretend busy morning with 10 bookings. This is the screen Ada will test first.
 

@@ -34,6 +34,39 @@ export function getDisplayStatus(
   }
 }
 
+export type BookingAction =
+  | "CHECK_IN"
+  | "START"
+  | "FINISH"
+  | "UNDO_CHECK_IN"
+  | "NO_SHOW"
+  | "CANCEL"
+  | "MOVE";
+
+/**
+ * Which stored `BookingStatus` values an action may start from. The single
+ * source of truth for both the allowed-transition check below and the
+ * DB-level guard in `src/server/bookings.ts` (M5-2) — a status not listed
+ * here refuses the action.
+ */
+const ALLOWED_FROM: Record<BookingAction, BookingStatus[]> = {
+  CHECK_IN: ["BOOKED"],
+  START: ["CHECKED_IN"],
+  FINISH: ["IN_SERVICE"],
+  UNDO_CHECK_IN: ["CHECKED_IN"],
+  NO_SHOW: ["BOOKED"],
+  CANCEL: ["BOOKED", "CHECKED_IN"],
+  MOVE: ["BOOKED", "CHECKED_IN"],
+};
+
+export function allowedFromStatuses(action: BookingAction): BookingStatus[] {
+  return ALLOWED_FROM[action];
+}
+
+export function isActionAllowed(status: BookingStatus, action: BookingAction): boolean {
+  return ALLOWED_FROM[action].includes(status);
+}
+
 /**
  * Wait time = start minus the later of check-in and appointment time
  * (docs/PRD.md, Check-in and timing, rule 3) — early arrivals don't count.
