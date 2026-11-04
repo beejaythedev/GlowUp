@@ -577,6 +577,44 @@ and writes a handoff note before every session ends.
 > **Next task:** none — waiting on the M5 checkpoint before M6 (Stylist) starts, per
 > `CLAUDE.md` rule 6.
 > **Blockers or questions:** none open.
+>
+> **Out-of-roadmap fixes, requested directly during M5 checkpoint review (new `m3-fixes`
+> branch off `m5`, since these are customer-booking (M3) issues, not reception ones):**
+> 1. **"No time to pick" dead end, root-caused:** Ikeja, Yaba and Surulere have zero
+>    `STYLIST`-role staff seeded (only Lekki has stylists; `docs/OPEN_QUESTIONS.md` Q5 —
+>    real staff lists for those three branches — is still open, Tolu hasn't sent them). A
+>    branch with no stylists always showed "No times left" on every single date, for every
+>    service, with no indication of why — not a bug in the availability engine itself
+>    (verified: `getAvailableSlots` is correctly returning empty when there's nothing to
+>    iterate over), but a real dead end for a customer who picked one of those branches.
+>    Fixed in `src/app/book/page.tsx`: branches with no active stylists are no longer
+>    offered in step 1 at all (only `GlowUp Lekki` shows today), with a plain "no branches
+>    are taking online bookings yet" fallback if that ever became zero. Deliberately did
+>    **not** fabricate stylist names for the other three branches — that data belongs to
+>    Q5, not to me.
+> 2. **No way back to the customer home page during booking:** every step's "GlowUp"
+>    wordmark (step 1, pay, confirmed) is now a `Link` to `/`; steps 2 and 3, which only had
+>    a back-to-previous-step chevron and no room for the wordmark, gained a small home-icon
+>    link next to it. Same pattern repeated in three files rather than a shared component,
+>    since each header's layout is already slightly different.
+> 3. **Responsive design — the whole customer flow (and staff sign-in, which shares
+>    `CustomerShell`) was a fixed `max-w-md` mobile frame even on desktop.** `CustomerShell`
+>    now stays exactly as before on phones, but from the `sm` breakpoint up it stops growing
+>    past a comfortable `max-w-xl` and sits as a centred card (shadow, rounded corners,
+>    subtle background) instead of a narrow mobile strip floating in empty space. No
+>    per-page grid rework needed — widening the shared shell was enough, since the existing
+>    `flex-wrap` chip/grid layouts already breathe better with more room. Welcome's
+>    navy-header decorative circles (anchored to corners, not fixed centre positions)
+>    held up fine at the wider width too.
+> Verified live at 390px (phone), 820px (tablet) and 1440px (desktop) across the whole
+> booking funnel (home → step 1 → step 2 → step 3 → pay → confirmed), screenshotting each;
+> confirmed the branch picker now shows only Lekki; completed a real booking end to end at
+> desktop width and checked it landed correctly in the database before cleaning it up.
+> **Next task:** none further requested; still waiting on the M5 checkpoint (and now also
+> this fix branch) before M6 starts.
+> **Blockers or questions:** whether Q5's real Ikeja/Yaba/Surulere staff lists are likely
+> soon — until they land, those three branches stay invisible to customers rather than
+> showing a dead end, which seems like the right trade-off but is worth confirming.
 
 ## Milestones
 

@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useActionState, useEffect, useState } from "react";
 import { CustomerShell } from "@/components/layout/CustomerShell";
 import { Button } from "@/components/ui/Button";
@@ -26,7 +27,9 @@ export function PayForm(props: PayFormProps) {
   return (
     <CustomerShell>
       <header className="flex items-center justify-between px-5 pt-5 pb-3">
-        <div className="text-xl font-extrabold tracking-tight text-primary">GlowUp</div>
+        <Link href="/" className="text-xl font-extrabold tracking-tight text-primary">
+          GlowUp
+        </Link>
         {!expired && secondsLeft !== null && (
           <div className="rounded-full bg-primary-tint px-3 py-1 text-[13px] font-semibold text-primary-dark">
             Reserved for {formatCountdown(secondsLeft)}

@@ -44,15 +44,23 @@ export function BookingStep3Form(props: BookingStep3FormProps) {
     <CustomerShell>
       <header className="flex flex-col gap-4 px-5 pt-5 pb-3">
         <div className="flex items-center justify-between">
-          <Link
-            href="/book/time"
-            aria-label="Back"
-            className="-ml-3 flex h-11 w-11 items-center justify-center text-text"
-          >
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-              <path d="M15 6l-6 6 6 6" />
-            </svg>
-          </Link>
+          <div className="-ml-3 flex items-center">
+            <Link
+              href="/book/time"
+              aria-label="Back"
+              className="flex h-11 w-11 items-center justify-center text-text"
+            >
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <path d="M15 6l-6 6 6 6" />
+              </svg>
+            </Link>
+            <Link href="/" aria-label="Home" className="flex h-11 w-11 items-center justify-center text-text">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <path d="M4 11.5 12 4l8 7.5" />
+                <path d="M6 10v9a1 1 0 0 0 1 1h3v-6h4v6h3a1 1 0 0 0 1-1v-9" />
+              </svg>
+            </Link>
+          </div>
           <div className="text-[13px] text-text-muted">Step 3 of 3</div>
         </div>
         <div className="grid grid-cols-3 gap-1.5">
