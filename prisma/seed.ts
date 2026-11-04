@@ -2,8 +2,10 @@
  * Sample data matching design/screens/*.dc.html, run with `npx prisma db seed`
  * (or directly: `node --env-file=.env prisma/seed.ts`).
  *
- * Addresses for Ikeja, Yaba and Surulere are placeholders pending Open
- * Question Q5 (docs/OPEN_QUESTIONS.md) — Tolu hasn't sent them yet.
+ * Addresses and stylists for Ikeja, Yaba and Surulere are placeholders pending
+ * Open Question Q5 (docs/OPEN_QUESTIONS.md) — Tolu hasn't sent the real staff
+ * lists yet. The placeholder stylists exist only so all 4 branches are
+ * bookable online for testing/demo; replace them once Q5 is answered.
  */
 import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "../src/generated/prisma/client";
@@ -90,6 +92,8 @@ async function main() {
   );
   const lekki = branches.find((b) => b.name === "GlowUp Lekki")!;
   const ikeja = branches.find((b) => b.name === "GlowUp Ikeja")!;
+  const yaba = branches.find((b) => b.name === "GlowUp Yaba")!;
+  const surulere = branches.find((b) => b.name === "GlowUp Surulere")!;
 
   // ---------------------------------------------------------------------
   // Services
@@ -127,6 +131,15 @@ async function main() {
     { name: "Ronke", phone: "08020000006", role: "STYLIST" as const, branchId: lekki.id },
     { name: "Ifeoma", phone: "08020000007", role: "STYLIST" as const, branchId: lekki.id },
     { name: "Kelechi", phone: "08020000008", role: "RECEPTIONIST" as const, branchId: ikeja.id },
+    // Placeholder stylists so Ikeja, Yaba and Surulere are bookable online
+    // before Tolu sends real staff lists (Open Question Q5). Swap these for
+    // the real names and phone numbers once that answer lands.
+    { name: "Chioma", phone: "08020000009", role: "STYLIST" as const, branchId: ikeja.id },
+    { name: "Tunde", phone: "08020000010", role: "STYLIST" as const, branchId: ikeja.id },
+    { name: "Amara", phone: "08020000011", role: "STYLIST" as const, branchId: yaba.id },
+    { name: "Seun", phone: "08020000012", role: "STYLIST" as const, branchId: yaba.id },
+    { name: "Ebele", phone: "08020000013", role: "STYLIST" as const, branchId: surulere.id },
+    { name: "Dapo", phone: "08020000014", role: "STYLIST" as const, branchId: surulere.id },
   ];
   const staff = await Promise.all(
     staffData.map((member) =>

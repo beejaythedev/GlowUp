@@ -610,6 +610,17 @@ and writes a handoff note before every session ends.
 > booking funnel (home → step 1 → step 2 → step 3 → pay → confirmed), screenshotting each;
 > confirmed the branch picker now shows only Lekki; completed a real booking end to end at
 > desktop width and checked it landed correctly in the database before cleaning it up.
+>
+> **Follow-up same session (still `m3-fixes`):** supervisor asked why Ikeja/Yaba/Surulere
+> and their services weren't showing — that was fix 1 above working as designed (hiding
+> unstaffed branches), but the supervisor preferred all 4 branches to be bookable now
+> rather than wait on Q5. Added placeholder `STYLIST` staff for Ikeja (Chioma, Tunde), Yaba
+> (Amara, Seun) and Surulere (Ebele, Dapo) in `prisma/seed.ts`, clearly commented as
+> placeholders to replace once Tolu's real staff list lands (Q5 is still open — only the
+> "hide the branch" workaround from fix 1 is no longer needed in practice, not removed from
+> the code). Re-seeded and verified live with Playwright: Ikeja now shows "Any available"
+> plus the two named stylists, and a full grid of real time slots for Knotless braids with
+> no "No times left" anywhere.
 > **Next task:** none further requested; still waiting on the M5 checkpoint (and now also
 > this fix branch) before M6 starts.
 > **Blockers or questions:** whether Q5's real Ikeja/Yaba/Surulere staff lists are likely
