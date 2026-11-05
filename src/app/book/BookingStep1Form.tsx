@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useMemo, useState } from "react";
 import { CustomerShell } from "@/components/layout/CustomerShell";
 import { Button } from "@/components/ui/Button";
@@ -50,9 +51,9 @@ export function BookingStep1Form({ branches, services }: BookingStep1FormProps) 
     <CustomerShell>
       <header className="flex flex-col gap-4 px-5 pt-5 pb-3">
         <div className="flex items-center justify-between">
-          <div className="text-xl font-bold tracking-tight text-primary">
+          <Link href="/" className="text-xl font-bold tracking-tight text-primary">
             GlowUp
-          </div>
+          </Link>
           <div className="text-sm text-text-muted">Step 1 of 3</div>
         </div>
         <div className="grid grid-cols-3 gap-1.5">

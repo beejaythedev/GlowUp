@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { CustomerShell } from "@/components/layout/CustomerShell";
 
 export interface ConfirmedScreenProps {
@@ -24,7 +25,9 @@ export function ConfirmedScreen(props: ConfirmedScreenProps) {
   return (
     <CustomerShell>
       <header className="flex items-center px-5 pt-5">
-        <div className="text-xl font-extrabold tracking-tight text-primary">GlowUp</div>
+        <Link href="/" className="text-xl font-extrabold tracking-tight text-primary">
+          GlowUp
+        </Link>
       </header>
 
       <div className="flex flex-col items-center gap-3.5 px-5 pt-8 text-center">
