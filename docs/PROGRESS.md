@@ -626,6 +626,33 @@ and writes a handoff note before every session ends.
 > **Blockers or questions:** whether Q5's real Ikeja/Yaba/Surulere staff lists are likely
 > soon — until they land, those three branches stay invisible to customers rather than
 > showing a dead end, which seems like the right trade-off but is worth confirming.
+>
+> **M6 Stylist started (new `m6` branch off `m3-fixes`)** — supervisor confirmed M5 and the
+> `m3-fixes` fixes were pushed and asked to carry on, which stood in for the M5 checkpoint
+> review (CLAUDE.md rule 6).
+> **M6-1 done:** stylist "Today" view at `/staff/stylist`, matching `StylistToday.dc.html`.
+> Pure logic in `src/server/stylistToday.ts` (23 new unit tests): `selectCurrentCard` picks
+> the one booking to show — in-service beats checked-in-and-waiting beats the soonest still-
+> booked appointment beats none, cancelled bookings ignored; `getEarlierBookings` (done/
+> no-show, oldest first); `getPrepWindow` (the prep time still blocking the stylist after an
+> in-service booking ends — never shown to customers per rule 7, but useful on the stylist's
+> own screen); `getHeadline`/`getNowChipLabel`/`getFooterNote` for the copy. Data layer
+> `src/app/staff/stylist/stylistData.ts` fetches one stylist's bookings for the day (reusing
+> the `isFirstVisit` lookup pattern from `receptionData.ts`). `actions.ts` adds a stylist-
+> scoped `performStylistAction` (START/FINISH only) on top of the existing `startService`/
+> `finishService`/`canViewBooking` from M5-2/M4-3 — a stylist can only act on their own
+> booking, enforced server-side, not just by hiding the button. View auto-refreshes every
+> 30 seconds like reception's schedule (M5-1). No new design tokens added — the mockup's
+> lighter-navy tab-switcher background is approximated with `bg-white/10` over
+> `bg-brand-navy` rather than introducing a new hex value.
+> Verified live with Playwright, twice: once against stale seeded bookings (correctly showed
+> the "Nothing booked for you today" empty state, since the seed's "today" had drifted to a
+> past date), then again after re-seeding — signed in as Blessing, confirmed the NOW card
+> (in service, Funke Lawal, tags, prep-time row, "Finish service" button), tapped Finish, and
+> confirmed the page correctly moved to "Next up: Ngozi" (her booking is BOOKED but not yet
+> checked in, so no action button — just a "waiting for reception to check in" note) with
+> Funke's booking now under "Earlier today" as Done.
+> **Next task:** M6-2 (Tomorrow view, matching `StylistDay.dc.html`).
 
 ## Milestones
 
