@@ -689,6 +689,32 @@ and writes a handoff note before every session ends.
 > per `CLAUDE.md` rule 6.
 > **Blockers or questions:** the Next.js prerendering warning above, and whether it's worth
 > a quick fix now or can wait until it's actually load-bearing.
+>
+> **M7 Manager and owner started (new `m7` branch off `m6`)** — supervisor said carry on,
+> standing in for the M6 checkpoint review per the pattern established at M4→M5 and M5→M6.
+> **M7-1 done:** branch manager "Today" view at `/staff/manager`, matching
+> `ManagerToday.dc.html`. Four summary tiles (bookings today with a booked-ahead/walk-in
+> split, waiting now with longest wait, no-shows, deposits received), a bookings table
+> (time/customer/service/stylist/status/deposit, reusing the same status-badge styling as
+> reception), a money card (deposits paid, kept from no-shows, refunded, expected at the
+> till), and a CSV day-report download at `/staff/manager/day-report`.
+> Pure logic in `src/server/managerToday.ts` (9 new unit tests): `splitBySource` (booked-
+> ahead vs walk-in — deliberately merges ONLINE and PHONE into one "booked ahead" bucket
+> rather than literally matching the mockup's "online" label, since phone bookings are
+> booked ahead of time just like online ones, and the mockup's sample data simply happens to
+> have none to show the difference); `summarizeManagerMoney` (deposits received counts
+> KEPT and REFUNDED alongside PAID, since the money was still collected either way; expected
+> at the till excludes no-shows and cancellations); `buildDayReportCsv`. Reused M5-1's
+> `summarizeDay` from `schedule.ts` as-is for the bookings-today/waiting/no-show tiles,
+> rather than re-deriving the same thing. Refunded is always ₦0 for now — `cancelBooking`
+> doesn't touch `depositStatus` yet, that's M8-2's refund rule.
+> Verified live (signed in as Grace, branch manager at Lekki): all four tiles showed
+> plausible numbers against the real seeded data, the bookings table's 10 rows matched the
+> schedule exactly with correct status-badge colours, the money card's math checked out
+> (expected-at-till = sum of balances for everything except the no-show), and the CSV
+> download returned the right `Content-Disposition`/`Content-Type` with rows matching the
+> on-screen table exactly, including correct quoting of a deposit value containing a comma.
+> **Next task:** M7-2 (Owner overview, matching `OwnerOverview.dc.html`).
 
 ## Milestones
 
