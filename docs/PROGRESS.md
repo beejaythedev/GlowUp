@@ -652,7 +652,24 @@ and writes a handoff note before every session ends.
 > confirmed the page correctly moved to "Next up: Ngozi" (her booking is BOOKED but not yet
 > checked in, so no action button — just a "waiting for reception to check in" note) with
 > Funke's booking now under "Earlier today" as Done.
-> **Next task:** M6-2 (Tomorrow view, matching `StylistDay.dc.html`).
+> **M6-2 done:** stylist "Tomorrow" view at `/staff/stylist/tomorrow`, matching
+> `StylistDay.dc.html`. Pure logic in `src/server/stylistTomorrow.ts` (10 new unit tests):
+> `summarizeTomorrow` (client count, earliest start, latest finish — cancelled bookings
+> excluded), `getTomorrowHeadline` (client-count based rather than the mockup's literal
+> "fully booked" wording, since knowing a branch is "full" would need capacity data this
+> milestone doesn't have), `formatDurationLabel` ("2 hrs" / "1 hr" / "1.5 hrs" / "45 min").
+> Reused `stylistData.ts`'s `fetchStylistDayBookings`/`toStylistBookings` from M6-1 as-is —
+> only the day-range passed in differs (`addLagosDays(today, 1)`). No action buttons on this
+> view, by design: tomorrow's bookings aren't checked in yet, so there's nothing for the
+> stylist to tap.
+> Verified live with Playwright: signed in as Blessing, navigated Today → Tomorrow and back,
+> confirmed the empty state ("Nothing booked for you tomorrow", no summary tiles, the
+> "check back closer to tomorrow" message, the overnight-changes footer note) since the seed
+> only creates bookings for today. The populated-row rendering (summary tiles, per-row
+> duration/tags) is covered by the same components and tags already verified live in M6-1
+> plus the 10 new unit tests, rather than re-seeding fake tomorrow data to screenshot it too.
+> **Next task:** M6-3 (Start and Finish update the schedule, timestamps and wait time
+> everywhere).
 
 ## Milestones
 
