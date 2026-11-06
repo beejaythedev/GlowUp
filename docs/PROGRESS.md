@@ -714,7 +714,32 @@ and writes a handoff note before every session ends.
 > (expected-at-till = sum of balances for everything except the no-show), and the CSV
 > download returned the right `Content-Disposition`/`Content-Type` with rows matching the
 > on-screen table exactly, including correct quoting of a deposit value containing a comma.
-> **Next task:** M7-2 (Owner overview, matching `OwnerOverview.dc.html`).
+> **M7-2 done:** owner "Overview" at `/staff/owner`, matching `OwnerOverview.dc.html`. Four
+> company-wide tiles (bookings this week, booked-online share, no-show rate, deposits
+> received), a four-branch comparison table, a bookings-by-branch bar chart, and a "needs
+> your attention" list. Skipped the mockup's "All branches / Lekki / Ikeja / Yaba / Surulere"
+> filter buttons — not called for by this task's roadmap bullet, and the tiles are already
+> company-wide, so a per-branch filter would mostly just highlight a row already visible in
+> the table.
+> New `lagosWeekRange` in `src/lib/lagosTime.ts` (3 new unit tests) — the Monday-Saturday
+> business week used for "this week" figures; a Sunday stays attached to the week that just
+> finished rather than rolling into the next one, since Sunday isn't a business day for 3 of
+> 4 branches. Pure logic in `src/server/ownerOverview.ts` (13 new unit tests):
+> `summarizeBranchWeek`/`getBranchStatus` (amber "Wait over 15 min" once a branch's longest
+> live wait passes the same 15-minute goal as reception's check-in prompt, M5-5),
+> `summarizeCompanyWeek` (rolls up the branch rows), `buildWaitingAttentionItems`,
+> `buildUnpaidPhoneDepositAttentionItem` (phone bookings don't collect a deposit at booking
+> time — M8-3 sends that link later — so any still unpaid ahead of their appointment get
+> flagged here). Refunded/no-show-rate etc. all read correctly as zero where there's
+> genuinely nothing to show, rather than erroring.
+> Verified live (signed in as Tolu): all four tiles and the branch table rendered correctly
+> against real data across all 4 branches (Lekki with real bookings, Ikeja/Yaba/Surulere each
+> near-zero), the bar chart's widths were proportionally correct, and "Needs your attention"
+> correctly showed its empty state. Separately noticed two real, non-seed bookings under the
+> supervisor's own name at Yaba and Surulere (`BOOKED`, Knotless braids and Wig installation)
+> — flagged to the supervisor rather than deleted, since they look like manual testing of the
+> live customer flow, not leftover scratch data from a verification pass.
+> **Next task:** M7-3 (Staff and access, matching `OwnerStaff.dc.html`).
 
 ## Milestones
 

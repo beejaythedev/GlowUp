@@ -6,6 +6,7 @@ import {
   lagosDateParts,
   lagosInstant,
   lagosWeekdayLabel,
+  lagosWeekRange,
 } from "./lagosTime";
 
 describe("lagosDateParts", () => {
@@ -53,5 +54,30 @@ describe("lagosWeekdayLabel", () => {
   it("returns the three-letter label for a weekday number", () => {
     expect(lagosWeekdayLabel(0)).toBe("Sun");
     expect(lagosWeekdayLabel(6)).toBe("Sat");
+  });
+});
+
+describe("lagosWeekRange", () => {
+  it("spans Monday through Saturday when today is mid-week", () => {
+    // Wed 28 Oct 2026, 11:00 Lagos.
+    const range = lagosWeekRange(lagosInstant(2026, 10, 28, 11, 0));
+    expect(range.start).toEqual(lagosInstant(2026, 10, 26, 0, 0)); // Monday
+    expect(range.end).toEqual(lagosInstant(2026, 11, 1, 0, 0)); // Sunday, exclusive
+    expect(range.startLabel).toBe("Mon 26 Oct");
+    expect(range.endLabel).toBe("Sat 31 Oct");
+  });
+
+  it("still anchors to the same week when today is Saturday", () => {
+    const range = lagosWeekRange(lagosInstant(2026, 10, 31, 18, 0));
+    expect(range.start).toEqual(lagosInstant(2026, 10, 26, 0, 0));
+    expect(range.end).toEqual(lagosInstant(2026, 11, 1, 0, 0));
+  });
+
+  it("treats Sunday as still belonging to the week that just finished", () => {
+    // Sun 1 Nov 2026 — Lekki's open, but it's not a Mon-Sat business day, so
+    // it reports against the week that just ended rather than the next one.
+    const range = lagosWeekRange(lagosInstant(2026, 11, 1, 10, 0));
+    expect(range.start).toEqual(lagosInstant(2026, 10, 26, 0, 0)); // the preceding Monday
+    expect(range.endLabel).toBe("Sat 31 Oct");
   });
 });
