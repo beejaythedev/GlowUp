@@ -128,7 +128,7 @@ The schedule is tight. If a week slips, move "Later" items out, never the checks
 
 - [x] **M6-1** Today view with the current or next client and a large Start / Finish button, matching `StylistToday.dc.html`.
 - [x] **M6-2** Tomorrow view, matching `StylistDay.dc.html`.
-- [ ] **M6-3** Start and Finish update the schedule, timestamps and wait time everywhere.
+- [x] **M6-3** Start and Finish update the schedule, timestamps and wait time everywhere.
 
 **Supervisor checkpoint:** use it on a phone with one hand.
 

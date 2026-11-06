@@ -668,8 +668,27 @@ and writes a handoff note before every session ends.
 > only creates bookings for today. The populated-row rendering (summary tiles, per-row
 > duration/tags) is covered by the same components and tags already verified live in M6-1
 > plus the 10 new unit tests, rather than re-seeding fake tomorrow data to screenshot it too.
-> **Next task:** M6-3 (Start and Finish update the schedule, timestamps and wait time
-> everywhere).
+> **M6-3 done — verification only, no new code.** `performStylistAction` (M6-1) calls the
+> exact same `startService`/`finishService` from `src/server/bookings.ts` that reception's
+> `BookingPanel` already uses (M5-2), and both `/staff/reception` and `/staff/stylist` read
+> the DB live on every request (`export const instant = false`), so there's no second code
+> path or cache that could drift. Proved this with a real cross-view trace instead of just
+> asserting it: signed in as Ada (reception) and Zainab (stylist) in parallel, had Zainab tap
+> Start then Finish on Amaka Chukwu's booking from her own stylist screen, and reloaded
+> Ada's reception schedule after each tap with no action on Ada's side — the schedule block,
+> booking panel timeline and status all updated correctly every time (checked-in → in
+> service → done), with matching timestamps and wait time in both views.
+> Flagged, not fixed (pre-existing, predates M6, not something this milestone introduced):
+> a Next.js 16 dev-console warning that `getCurrentStaff`/`verifySessionToken` (M4 auth)
+> calls `new Date()` during prerendering without a dynamic-data wrapper. Appears on both
+> `/staff/reception` and `/staff/stylist`; doesn't affect either page's behaviour. Worth a
+> look if it starts failing a build rather than just warning.
+> **M6 milestone is now fully done** — M6-1 through M6-3 complete. Ready for the
+> supervisor checkpoint in `docs/ROADMAP.md`: use it on a phone with one hand.
+> **Next task:** none — waiting on the M6 checkpoint before M7 (Manager and owner) starts,
+> per `CLAUDE.md` rule 6.
+> **Blockers or questions:** the Next.js prerendering warning above, and whether it's worth
+> a quick fix now or can wait until it's actually load-bearing.
 
 ## Milestones
 
@@ -681,7 +700,7 @@ and writes a handoff note before every session ends.
 | M3 Customer booking | Approved | 2026-10-27 |
 | M4 Staff sign-in and roles | Approved | 2026-11-02 |
 | M5 Reception | Ready for review | |
-| M6 Stylist | Not started | |
+| M6 Stylist | Ready for review | |
 | M7 Manager and owner | Not started | |
 | M8 Payments and messages | Not started | |
 | M9 Testing, launch and training | Not started | |
@@ -694,6 +713,9 @@ Newest first. One line per finished task.
 
 | Date | Task | What changed | Tests |
 |---|---|---|---|
+| 2026-11-06 | M6-3 | No code change — verification that Start/Finish already update everywhere, by reuse of M5-2's `startService`/`finishService` | Cross-view Playwright trace: Zainab (stylist) tapped Start then Finish, Ada (reception) reloaded and saw the schedule/panel update each time with no action on her side |
+| 2026-11-06 | M6-2 | `/staff/stylist/tomorrow` (`StylistTomorrowView.tsx`), `src/server/stylistTomorrow.ts` (`summarizeTomorrow`, `getTomorrowHeadline`, `formatDurationLabel`) | `npm run check` (217 tests total), screenshot-verified Today↔Tomorrow navigation and the empty-day state |
+| 2026-11-06 | M6-1 | `/staff/stylist` real Today view (`StylistTodayView.tsx`, `actions.ts`, `stylistData.ts`), `src/server/stylistToday.ts` (`selectCurrentCard`, `getEarlierBookings`, `getPrepWindow`, `getHeadline`, `getNowChipLabel`, `getFooterNote`) | `npm run check` (207 tests total), screenshot-verified the empty-day fallback and a full Start→Finish flow against seeded Lekki data |
 | 2026-11-03 | M5-8 | No code change — speed test against M5-3/M5-4's screens | Scripted Playwright tap-count: walk-in booking 2 taps (target 5), check-in from search 1 tap (target 2); confirmed both actions genuinely completed in the database |
 | 2026-11-03 | M5-7 | "Running over"/flagged-next-booking (`isRunningOver`, `getFlaggedBookingId` in `schedule.ts`), amber block styling + ⚠ marker, `BookingPanel` move/delay-message guidance | `npm run check` (184 tests total), `npm run build`, screenshot-verified a constructed scenario and the seed data's own genuinely-overdue bookings |
 | 2026-11-03 | M5-6 | "Requested" (R) marker on schedule blocks + legend, `stylistRequested` added to `schedule.ts` | `npm run check` (174 tests total), `npm run build`, screenshot-verified against a seeded requested-stylist booking |
