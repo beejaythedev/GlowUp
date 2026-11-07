@@ -62,6 +62,9 @@ export function StaffAccessView({ ownerName, ownerId, staff, branches }: StaffAc
             Overview
           </Link>
           <span className="text-sm font-bold text-white">Staff and access</span>
+          <Link href="/staff/owner/settings" className="text-sm text-nav-muted hover:text-white">
+            Settings
+          </Link>
         </div>
         <div className="flex items-center gap-3">
           <span className="text-sm">{ownerName}</span>

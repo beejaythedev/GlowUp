@@ -141,7 +141,7 @@ The schedule is tight. If a week slips, move "Later" items out, never the checks
 - [x] **M7-1** Manager today: summary tiles, bookings table, money card (deposits, kept, refunded, expected at till), CSV day report. Matches `ManagerToday.dc.html`.
 - [x] **M7-2** Owner overview: four-branch comparison, bookings-by-branch bars, "needs your attention" list. Matches `OwnerOverview.dc.html`.
 - [x] **M7-3** Staff and access: add staff, change role or branch, reset password, remove and restore access, invite status. Matches `OwnerStaff.dc.html`.
-- [ ] **M7-4** Settings: prep time per service, deposit %, free-cancellation hours, arrive-early minutes, prompt timing. Changes apply to new bookings only. Matches `OwnerSettings.dc.html`.
+- [x] **M7-4** Settings: prep time per service, deposit %, free-cancellation hours, arrive-early minutes, prompt timing. Changes apply to new bookings only. Matches `OwnerSettings.dc.html`.
 
 **Supervisor checkpoint:** change a prep time and confirm the customer site's available times change.
 

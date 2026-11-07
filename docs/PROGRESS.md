@@ -771,9 +771,41 @@ and writes a handoff note before every session ends.
 > Surulere order, since `Promise.all`-based branch creation in `prisma/seed.ts` doesn't
 > guarantee `createdAt` ordering — harmless here (every branch still appears, just not
 > necessarily in that exact order), not worth fixing for a filter row.
-> **Next task:** M7-4 (Settings, matching `OwnerSettings.dc.html`) — the last M7 task; its
-> supervisor checkpoint is "change a prep time and confirm the customer site's available
-> times change."
+> **M7-4 done:** "Services and booking rules" at `/staff/owner/settings`, matching
+> `OwnerSettings.dc.html` — the last M7 task. One page, one "Save changes" button: a
+> services table (duration, price, live-computed deposit, a prep-time select per service,
+> and how many branches actually offer it) plus a "Booking rules" sidebar (deposit %,
+> free-cancellation hours, arrive-early minutes, check-in prompt timing) backed by the
+> single global `Settings` row from M1-1.
+> Pure logic in `src/server/ownerSettings.ts` (9 new unit tests): `countOfferedBranches`/
+> `formatOfferedAtLabel` (reuses the same `nailsOnly && !offersNails` rule the customer
+> booking flow and reception's new-booking form already enforce, so Pedicure/Manicure
+> correctly show "2 branches" against the other services' "All branches"), plus the label
+> helpers for the prep-time and arrive-early selects. Reused `formatDurationLabel` from
+> `src/lib/duration.ts` (M1) for the ranged-duration column ("4–5 hrs") and
+> `calculateDepositKobo` from `src/server/money.ts` (M1-3) for the live deposit column, which
+> recalculates immediately in the browser as the Deposit % select changes, before saving.
+> `saveOwnerSettings` validates every value against the same fixed option lists the `<select>`
+> elements offer (no arbitrary numbers), then updates the `Settings` row and every service's
+> `prepMinutes` in one transaction. "Changes apply to new bookings only" needs no extra code:
+> `Booking.blockedUntil` is already a stored snapshot computed once at creation (M1-1), never
+> recalculated from the service's current `prepMinutes`, so existing bookings are naturally
+> unaffected — confirmed live.
+> Verified the actual supervisor checkpoint live and deterministically: inserted a controlled
+> "Wash and set" booking for Zainab at 2–3pm on a day with no other bookings, confirmed the
+> 12:50pm slot was available with the seeded 10-minute prep (12:50 + 60 + 10 = exactly 2:00,
+> no overlap), changed the prep time to 20 minutes via Settings, confirmed 12:50pm correctly
+> disappeared (12:50 + 60 + 20 = 2:10, now overlapping), reverted to 10 minutes, confirmed it
+> reappeared, and cleaned up the test booking. Two earlier live-check attempts against
+> wide-open stylist afternoons found no visible difference — not a bug, just the wrong test
+> scenario: prep time only ever excludes a slot when a new booking's prep window would
+> overlap an *upcoming* booking, which an open afternoon doesn't have.
+> **M7 milestone is now fully done** — M7-1 through M7-4 complete. Ready for the supervisor
+> checkpoint in `docs/ROADMAP.md`: change a prep time and confirm the customer site's
+> available times change (already verified above).
+> **Next task:** none — waiting on the M7 checkpoint before M8 (Payments and messages)
+> starts, per `CLAUDE.md` rule 6.
+> **Blockers or questions:** none open.
 
 ## Milestones
 
@@ -786,7 +818,7 @@ and writes a handoff note before every session ends.
 | M4 Staff sign-in and roles | Approved | 2026-11-02 |
 | M5 Reception | Ready for review | |
 | M6 Stylist | Ready for review | |
-| M7 Manager and owner | Not started | |
+| M7 Manager and owner | Ready for review | |
 | M8 Payments and messages | Not started | |
 | M9 Testing, launch and training | Not started | |
 
@@ -798,6 +830,10 @@ Newest first. One line per finished task.
 
 | Date | Task | What changed | Tests |
 |---|---|---|---|
+| 2026-11-07 | M7-4 | `/staff/owner/settings` (`OwnerSettingsView.tsx`, `settingsActions.ts`), `src/server/ownerSettings.ts` (`countOfferedBranches`, `formatOfferedAtLabel`, `formatPrepTimeLabel`, `formatArriveEarlyLabel`) | `npm run check` (259 tests total), deterministic live check: a controlled booking's blocking slot appeared/disappeared/reappeared exactly as the prep-time setting changed |
+| 2026-11-07 | M7-3 | `/staff/owner/staff` (`StaffAccessView.tsx`, `staffActions.ts`), `src/server/staffAccess.ts`, `src/server/auth/tempPassword.ts`, M4 sign-in action now flips `INVITED`→`ACTIVE` | `npm run check` (250 tests total), live end-to-end add/filter/edit/resend-invite/remove/restore, including a direct DB check |
+| 2026-11-07 | M7-2 | `/staff/owner` (`OwnerOverviewView.tsx`, `ownerData.ts`), `src/server/ownerOverview.ts`, `lagosWeekRange` in `src/lib/lagosTime.ts` | `npm run check` (242 tests total), live-verified against real data across all 4 branches as Tolu |
+| 2026-11-07 | M7-1 | `/staff/manager` (`ManagerTodayView.tsx`, `managerData.ts`), `/staff/manager/day-report` CSV route, `src/server/managerToday.ts` | `npm run check` (226 tests total), live-verified tiles/table/money math/CSV export against seeded Lekki data as Grace |
 | 2026-11-06 | M6-3 | No code change — verification that Start/Finish already update everywhere, by reuse of M5-2's `startService`/`finishService` | Cross-view Playwright trace: Zainab (stylist) tapped Start then Finish, Ada (reception) reloaded and saw the schedule/panel update each time with no action on her side |
 | 2026-11-06 | M6-2 | `/staff/stylist/tomorrow` (`StylistTomorrowView.tsx`), `src/server/stylistTomorrow.ts` (`summarizeTomorrow`, `getTomorrowHeadline`, `formatDurationLabel`) | `npm run check` (217 tests total), screenshot-verified Today↔Tomorrow navigation and the empty-day state |
 | 2026-11-06 | M6-1 | `/staff/stylist` real Today view (`StylistTodayView.tsx`, `actions.ts`, `stylistData.ts`), `src/server/stylistToday.ts` (`selectCurrentCard`, `getEarlierBookings`, `getPrepWindow`, `getHeadline`, `getNowChipLabel`, `getFooterNote`) | `npm run check` (207 tests total), screenshot-verified the empty-day fallback and a full Start→Finish flow against seeded Lekki data |
