@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { signOut } from "@/app/staff/actions";
 import { formatNaira } from "@/lib/money";
 import type { AttentionItem, BranchWeekStats, CompanySummary } from "@/server/ownerOverview";
@@ -21,7 +22,10 @@ export function OwnerOverviewView(props: OwnerOverviewViewProps) {
         <div className="flex flex-wrap items-center gap-3.5">
           <span className="text-xl font-extrabold tracking-tight">GlowUp</span>
           <span className="rounded-full bg-accent px-2.5 py-1 text-xs font-bold text-brand-navy">Owner</span>
-          <span className="text-sm text-nav-muted">Overview</span>
+          <span className="text-sm font-bold text-white">Overview</span>
+          <Link href="/staff/owner/staff" className="text-sm text-nav-muted hover:text-white">
+            Staff and access
+          </Link>
         </div>
         <div className="flex items-center gap-3">
           <span className="text-sm">{staffName}</span>

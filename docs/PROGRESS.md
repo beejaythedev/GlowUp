@@ -739,7 +739,41 @@ and writes a handoff note before every session ends.
 > supervisor's own name at Yaba and Surulere (`BOOKED`, Knotless braids and Wig installation)
 > — flagged to the supervisor rather than deleted, since they look like manual testing of the
 > live customer flow, not leftover scratch data from a verification pass.
-> **Next task:** M7-3 (Staff and access, matching `OwnerStaff.dc.html`).
+> **M7-3 done:** "Staff and access" at `/staff/owner/staff`, matching `OwnerStaff.dc.html`.
+> Branch filter chips, an "Add staff member" form, a staff table with role/status badges and
+> masked phones, inline per-row editing of role/branch, reset password / resend invite, and
+> remove / restore access.
+> New `src/server/auth/tempPassword.ts` (`generateTempPassword`, 3 new tests) — an 8-char
+> one-time password excluding visually ambiguous characters, sent through the existing
+> console `messageSender` (M1) on both a new invite and a reset, since there's no real SMS
+> provider yet. New `src/server/staffAccess.ts` (`formatRoleLabel`, `formatStaffStatusLabel`,
+> `roleRequiresBranch`, `canManageStaffMember`, 7 new tests) — the last one blocks an owner
+> from editing, removing or restoring their *own* row from this screen, since doing so could
+> lock the business out of owner access with nobody left to undo it (the UI already hides
+> those actions for the owner's own row; the server action checks it again, CLAUDE.md rule 3).
+> Small addition to M4's sign-in action: a status of `INVITED` flips to `ACTIVE` on that
+> staff member's first successful sign-in — otherwise "Invite sent" would never change once
+> someone actually starts using the account.
+> One real lint fix along the way: React's `react-hooks/set-state-in-effect` rule correctly
+> flagged auto-closing the inline edit row from inside a `useEffect` keyed on the action's
+> result. Fixed the idiomatic way — close it optimistically in the form's `onSubmit` handler
+> instead (an event, not an effect), with the save error (if any) still shown below the
+> collapsed row rather than lost.
+> Verified live end-to-end as Tolu: added a test stylist (showed "Invite sent"), filtered the
+> table to one branch and back, edited their branch, resent their invite, removed their
+> access ("Access removed", only Restore offered), and restored it ("Active" again, full
+> actions back) — every transition confirmed correct, including a direct DB check after the
+> edit step. One early verification pass hit confusing, inconsistent-looking results from
+> checking the UI immediately after each action without enough settle time in a
+> memory-constrained dev session; a clean, isolated re-check of the one genuinely suspicious
+> result (the branch filter) showed it working correctly, so that was test flakiness, not a
+> product bug. Noticed the chip order isn't guaranteed to match the seed's Lekki/Ikeja/Yaba/
+> Surulere order, since `Promise.all`-based branch creation in `prisma/seed.ts` doesn't
+> guarantee `createdAt` ordering — harmless here (every branch still appears, just not
+> necessarily in that exact order), not worth fixing for a filter row.
+> **Next task:** M7-4 (Settings, matching `OwnerSettings.dc.html`) — the last M7 task; its
+> supervisor checkpoint is "change a prep time and confirm the customer site's available
+> times change."
 
 ## Milestones
 
