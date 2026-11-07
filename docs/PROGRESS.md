@@ -689,6 +689,91 @@ and writes a handoff note before every session ends.
 > per `CLAUDE.md` rule 6.
 > **Blockers or questions:** the Next.js prerendering warning above, and whether it's worth
 > a quick fix now or can wait until it's actually load-bearing.
+>
+> **M7 Manager and owner started (new `m7` branch off `m6`)** — supervisor said carry on,
+> standing in for the M6 checkpoint review per the pattern established at M4→M5 and M5→M6.
+> **M7-1 done:** branch manager "Today" view at `/staff/manager`, matching
+> `ManagerToday.dc.html`. Four summary tiles (bookings today with a booked-ahead/walk-in
+> split, waiting now with longest wait, no-shows, deposits received), a bookings table
+> (time/customer/service/stylist/status/deposit, reusing the same status-badge styling as
+> reception), a money card (deposits paid, kept from no-shows, refunded, expected at the
+> till), and a CSV day-report download at `/staff/manager/day-report`.
+> Pure logic in `src/server/managerToday.ts` (9 new unit tests): `splitBySource` (booked-
+> ahead vs walk-in — deliberately merges ONLINE and PHONE into one "booked ahead" bucket
+> rather than literally matching the mockup's "online" label, since phone bookings are
+> booked ahead of time just like online ones, and the mockup's sample data simply happens to
+> have none to show the difference); `summarizeManagerMoney` (deposits received counts
+> KEPT and REFUNDED alongside PAID, since the money was still collected either way; expected
+> at the till excludes no-shows and cancellations); `buildDayReportCsv`. Reused M5-1's
+> `summarizeDay` from `schedule.ts` as-is for the bookings-today/waiting/no-show tiles,
+> rather than re-deriving the same thing. Refunded is always ₦0 for now — `cancelBooking`
+> doesn't touch `depositStatus` yet, that's M8-2's refund rule.
+> Verified live (signed in as Grace, branch manager at Lekki): all four tiles showed
+> plausible numbers against the real seeded data, the bookings table's 10 rows matched the
+> schedule exactly with correct status-badge colours, the money card's math checked out
+> (expected-at-till = sum of balances for everything except the no-show), and the CSV
+> download returned the right `Content-Disposition`/`Content-Type` with rows matching the
+> on-screen table exactly, including correct quoting of a deposit value containing a comma.
+> **M7-2 done:** owner "Overview" at `/staff/owner`, matching `OwnerOverview.dc.html`. Four
+> company-wide tiles (bookings this week, booked-online share, no-show rate, deposits
+> received), a four-branch comparison table, a bookings-by-branch bar chart, and a "needs
+> your attention" list. Skipped the mockup's "All branches / Lekki / Ikeja / Yaba / Surulere"
+> filter buttons — not called for by this task's roadmap bullet, and the tiles are already
+> company-wide, so a per-branch filter would mostly just highlight a row already visible in
+> the table.
+> New `lagosWeekRange` in `src/lib/lagosTime.ts` (3 new unit tests) — the Monday-Saturday
+> business week used for "this week" figures; a Sunday stays attached to the week that just
+> finished rather than rolling into the next one, since Sunday isn't a business day for 3 of
+> 4 branches. Pure logic in `src/server/ownerOverview.ts` (13 new unit tests):
+> `summarizeBranchWeek`/`getBranchStatus` (amber "Wait over 15 min" once a branch's longest
+> live wait passes the same 15-minute goal as reception's check-in prompt, M5-5),
+> `summarizeCompanyWeek` (rolls up the branch rows), `buildWaitingAttentionItems`,
+> `buildUnpaidPhoneDepositAttentionItem` (phone bookings don't collect a deposit at booking
+> time — M8-3 sends that link later — so any still unpaid ahead of their appointment get
+> flagged here). Refunded/no-show-rate etc. all read correctly as zero where there's
+> genuinely nothing to show, rather than erroring.
+> Verified live (signed in as Tolu): all four tiles and the branch table rendered correctly
+> against real data across all 4 branches (Lekki with real bookings, Ikeja/Yaba/Surulere each
+> near-zero), the bar chart's widths were proportionally correct, and "Needs your attention"
+> correctly showed its empty state. Separately noticed two real, non-seed bookings under the
+> supervisor's own name at Yaba and Surulere (`BOOKED`, Knotless braids and Wig installation)
+> — flagged to the supervisor rather than deleted, since they look like manual testing of the
+> live customer flow, not leftover scratch data from a verification pass.
+> **M7-3 done:** "Staff and access" at `/staff/owner/staff`, matching `OwnerStaff.dc.html`.
+> Branch filter chips, an "Add staff member" form, a staff table with role/status badges and
+> masked phones, inline per-row editing of role/branch, reset password / resend invite, and
+> remove / restore access.
+> New `src/server/auth/tempPassword.ts` (`generateTempPassword`, 3 new tests) — an 8-char
+> one-time password excluding visually ambiguous characters, sent through the existing
+> console `messageSender` (M1) on both a new invite and a reset, since there's no real SMS
+> provider yet. New `src/server/staffAccess.ts` (`formatRoleLabel`, `formatStaffStatusLabel`,
+> `roleRequiresBranch`, `canManageStaffMember`, 7 new tests) — the last one blocks an owner
+> from editing, removing or restoring their *own* row from this screen, since doing so could
+> lock the business out of owner access with nobody left to undo it (the UI already hides
+> those actions for the owner's own row; the server action checks it again, CLAUDE.md rule 3).
+> Small addition to M4's sign-in action: a status of `INVITED` flips to `ACTIVE` on that
+> staff member's first successful sign-in — otherwise "Invite sent" would never change once
+> someone actually starts using the account.
+> One real lint fix along the way: React's `react-hooks/set-state-in-effect` rule correctly
+> flagged auto-closing the inline edit row from inside a `useEffect` keyed on the action's
+> result. Fixed the idiomatic way — close it optimistically in the form's `onSubmit` handler
+> instead (an event, not an effect), with the save error (if any) still shown below the
+> collapsed row rather than lost.
+> Verified live end-to-end as Tolu: added a test stylist (showed "Invite sent"), filtered the
+> table to one branch and back, edited their branch, resent their invite, removed their
+> access ("Access removed", only Restore offered), and restored it ("Active" again, full
+> actions back) — every transition confirmed correct, including a direct DB check after the
+> edit step. One early verification pass hit confusing, inconsistent-looking results from
+> checking the UI immediately after each action without enough settle time in a
+> memory-constrained dev session; a clean, isolated re-check of the one genuinely suspicious
+> result (the branch filter) showed it working correctly, so that was test flakiness, not a
+> product bug. Noticed the chip order isn't guaranteed to match the seed's Lekki/Ikeja/Yaba/
+> Surulere order, since `Promise.all`-based branch creation in `prisma/seed.ts` doesn't
+> guarantee `createdAt` ordering — harmless here (every branch still appears, just not
+> necessarily in that exact order), not worth fixing for a filter row.
+> **Next task:** M7-4 (Settings, matching `OwnerSettings.dc.html`) — the last M7 task; its
+> supervisor checkpoint is "change a prep time and confirm the customer site's available
+> times change."
 
 ## Milestones
 

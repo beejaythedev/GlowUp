@@ -63,3 +63,28 @@ export function formatLagosDateLabel(instant: Date): string {
 export function lagosWeekdayLabel(weekday: number): string {
   return WEEKDAY_LABELS[weekday];
 }
+
+export interface LagosWeekRange {
+  /** Monday 00:00 Africa/Lagos, as a UTC instant. */
+  start: Date;
+  /** The following Sunday 00:00 — an exclusive upper bound covering Mon–Sat. */
+  end: Date;
+  startLabel: string;
+  endLabel: string;
+}
+
+/** The current business week (Monday–Saturday) for the owner overview's "this week" figures. */
+export function lagosWeekRange(now: Date = new Date()): LagosWeekRange {
+  const today = lagosDateParts(now);
+  const daysSinceMonday = (today.weekday + 6) % 7;
+  const monday = addLagosDays(today, -daysSinceMonday);
+  const saturday = addLagosDays(monday, 5);
+  const sunday = addLagosDays(monday, 6);
+
+  return {
+    start: lagosInstant(monday.year, monday.month, monday.day, 0, 0),
+    end: lagosInstant(sunday.year, sunday.month, sunday.day, 0, 0),
+    startLabel: formatLagosDateLabel(lagosInstant(monday.year, monday.month, monday.day, 12, 0)),
+    endLabel: formatLagosDateLabel(lagosInstant(saturday.year, saturday.month, saturday.day, 12, 0)),
+  };
+}

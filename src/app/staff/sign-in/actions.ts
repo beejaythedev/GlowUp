@@ -79,7 +79,14 @@ export async function signIn(_prevState: SignInState, formData: FormData): Promi
 
   await db.staff.update({
     where: { id: staff.id },
-    data: { failedSignInAttempts: 0, lockedUntil: null },
+    data: {
+      failedSignInAttempts: 0,
+      lockedUntil: null,
+      // First real sign-in with the temp password confirms the invite was
+      // received (docs/ROADMAP.md, M7-3) — otherwise "Invite sent" would
+      // never change even once someone's actually using the account.
+      ...(staff.status === "INVITED" ? { status: "ACTIVE" as const } : {}),
+    },
   });
 
   const token = createSessionToken(staff, { rememberMe });
