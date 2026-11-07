@@ -610,11 +610,85 @@ and writes a handoff note before every session ends.
 > booking funnel (home → step 1 → step 2 → step 3 → pay → confirmed), screenshotting each;
 > confirmed the branch picker now shows only Lekki; completed a real booking end to end at
 > desktop width and checked it landed correctly in the database before cleaning it up.
+>
+> **Follow-up same session (still `m3-fixes`):** supervisor asked why Ikeja/Yaba/Surulere
+> and their services weren't showing — that was fix 1 above working as designed (hiding
+> unstaffed branches), but the supervisor preferred all 4 branches to be bookable now
+> rather than wait on Q5. Added placeholder `STYLIST` staff for Ikeja (Chioma, Tunde), Yaba
+> (Amara, Seun) and Surulere (Ebele, Dapo) in `prisma/seed.ts`, clearly commented as
+> placeholders to replace once Tolu's real staff list lands (Q5 is still open — only the
+> "hide the branch" workaround from fix 1 is no longer needed in practice, not removed from
+> the code). Re-seeded and verified live with Playwright: Ikeja now shows "Any available"
+> plus the two named stylists, and a full grid of real time slots for Knotless braids with
+> no "No times left" anywhere.
 > **Next task:** none further requested; still waiting on the M5 checkpoint (and now also
 > this fix branch) before M6 starts.
 > **Blockers or questions:** whether Q5's real Ikeja/Yaba/Surulere staff lists are likely
 > soon — until they land, those three branches stay invisible to customers rather than
 > showing a dead end, which seems like the right trade-off but is worth confirming.
+>
+> **M6 Stylist started (new `m6` branch off `m3-fixes`)** — supervisor confirmed M5 and the
+> `m3-fixes` fixes were pushed and asked to carry on, which stood in for the M5 checkpoint
+> review (CLAUDE.md rule 6).
+> **M6-1 done:** stylist "Today" view at `/staff/stylist`, matching `StylistToday.dc.html`.
+> Pure logic in `src/server/stylistToday.ts` (23 new unit tests): `selectCurrentCard` picks
+> the one booking to show — in-service beats checked-in-and-waiting beats the soonest still-
+> booked appointment beats none, cancelled bookings ignored; `getEarlierBookings` (done/
+> no-show, oldest first); `getPrepWindow` (the prep time still blocking the stylist after an
+> in-service booking ends — never shown to customers per rule 7, but useful on the stylist's
+> own screen); `getHeadline`/`getNowChipLabel`/`getFooterNote` for the copy. Data layer
+> `src/app/staff/stylist/stylistData.ts` fetches one stylist's bookings for the day (reusing
+> the `isFirstVisit` lookup pattern from `receptionData.ts`). `actions.ts` adds a stylist-
+> scoped `performStylistAction` (START/FINISH only) on top of the existing `startService`/
+> `finishService`/`canViewBooking` from M5-2/M4-3 — a stylist can only act on their own
+> booking, enforced server-side, not just by hiding the button. View auto-refreshes every
+> 30 seconds like reception's schedule (M5-1). No new design tokens added — the mockup's
+> lighter-navy tab-switcher background is approximated with `bg-white/10` over
+> `bg-brand-navy` rather than introducing a new hex value.
+> Verified live with Playwright, twice: once against stale seeded bookings (correctly showed
+> the "Nothing booked for you today" empty state, since the seed's "today" had drifted to a
+> past date), then again after re-seeding — signed in as Blessing, confirmed the NOW card
+> (in service, Funke Lawal, tags, prep-time row, "Finish service" button), tapped Finish, and
+> confirmed the page correctly moved to "Next up: Ngozi" (her booking is BOOKED but not yet
+> checked in, so no action button — just a "waiting for reception to check in" note) with
+> Funke's booking now under "Earlier today" as Done.
+> **M6-2 done:** stylist "Tomorrow" view at `/staff/stylist/tomorrow`, matching
+> `StylistDay.dc.html`. Pure logic in `src/server/stylistTomorrow.ts` (10 new unit tests):
+> `summarizeTomorrow` (client count, earliest start, latest finish — cancelled bookings
+> excluded), `getTomorrowHeadline` (client-count based rather than the mockup's literal
+> "fully booked" wording, since knowing a branch is "full" would need capacity data this
+> milestone doesn't have), `formatDurationLabel` ("2 hrs" / "1 hr" / "1.5 hrs" / "45 min").
+> Reused `stylistData.ts`'s `fetchStylistDayBookings`/`toStylistBookings` from M6-1 as-is —
+> only the day-range passed in differs (`addLagosDays(today, 1)`). No action buttons on this
+> view, by design: tomorrow's bookings aren't checked in yet, so there's nothing for the
+> stylist to tap.
+> Verified live with Playwright: signed in as Blessing, navigated Today → Tomorrow and back,
+> confirmed the empty state ("Nothing booked for you tomorrow", no summary tiles, the
+> "check back closer to tomorrow" message, the overnight-changes footer note) since the seed
+> only creates bookings for today. The populated-row rendering (summary tiles, per-row
+> duration/tags) is covered by the same components and tags already verified live in M6-1
+> plus the 10 new unit tests, rather than re-seeding fake tomorrow data to screenshot it too.
+> **M6-3 done — verification only, no new code.** `performStylistAction` (M6-1) calls the
+> exact same `startService`/`finishService` from `src/server/bookings.ts` that reception's
+> `BookingPanel` already uses (M5-2), and both `/staff/reception` and `/staff/stylist` read
+> the DB live on every request (`export const instant = false`), so there's no second code
+> path or cache that could drift. Proved this with a real cross-view trace instead of just
+> asserting it: signed in as Ada (reception) and Zainab (stylist) in parallel, had Zainab tap
+> Start then Finish on Amaka Chukwu's booking from her own stylist screen, and reloaded
+> Ada's reception schedule after each tap with no action on Ada's side — the schedule block,
+> booking panel timeline and status all updated correctly every time (checked-in → in
+> service → done), with matching timestamps and wait time in both views.
+> Flagged, not fixed (pre-existing, predates M6, not something this milestone introduced):
+> a Next.js 16 dev-console warning that `getCurrentStaff`/`verifySessionToken` (M4 auth)
+> calls `new Date()` during prerendering without a dynamic-data wrapper. Appears on both
+> `/staff/reception` and `/staff/stylist`; doesn't affect either page's behaviour. Worth a
+> look if it starts failing a build rather than just warning.
+> **M6 milestone is now fully done** — M6-1 through M6-3 complete. Ready for the
+> supervisor checkpoint in `docs/ROADMAP.md`: use it on a phone with one hand.
+> **Next task:** none — waiting on the M6 checkpoint before M7 (Manager and owner) starts,
+> per `CLAUDE.md` rule 6.
+> **Blockers or questions:** the Next.js prerendering warning above, and whether it's worth
+> a quick fix now or can wait until it's actually load-bearing.
 
 ## Milestones
 
@@ -626,7 +700,7 @@ and writes a handoff note before every session ends.
 | M3 Customer booking | Approved | 2026-10-27 |
 | M4 Staff sign-in and roles | Approved | 2026-11-02 |
 | M5 Reception | Ready for review | |
-| M6 Stylist | Not started | |
+| M6 Stylist | Ready for review | |
 | M7 Manager and owner | Not started | |
 | M8 Payments and messages | Not started | |
 | M9 Testing, launch and training | Not started | |
@@ -639,6 +713,9 @@ Newest first. One line per finished task.
 
 | Date | Task | What changed | Tests |
 |---|---|---|---|
+| 2026-11-06 | M6-3 | No code change — verification that Start/Finish already update everywhere, by reuse of M5-2's `startService`/`finishService` | Cross-view Playwright trace: Zainab (stylist) tapped Start then Finish, Ada (reception) reloaded and saw the schedule/panel update each time with no action on her side |
+| 2026-11-06 | M6-2 | `/staff/stylist/tomorrow` (`StylistTomorrowView.tsx`), `src/server/stylistTomorrow.ts` (`summarizeTomorrow`, `getTomorrowHeadline`, `formatDurationLabel`) | `npm run check` (217 tests total), screenshot-verified Today↔Tomorrow navigation and the empty-day state |
+| 2026-11-06 | M6-1 | `/staff/stylist` real Today view (`StylistTodayView.tsx`, `actions.ts`, `stylistData.ts`), `src/server/stylistToday.ts` (`selectCurrentCard`, `getEarlierBookings`, `getPrepWindow`, `getHeadline`, `getNowChipLabel`, `getFooterNote`) | `npm run check` (207 tests total), screenshot-verified the empty-day fallback and a full Start→Finish flow against seeded Lekki data |
 | 2026-11-03 | M5-8 | No code change — speed test against M5-3/M5-4's screens | Scripted Playwright tap-count: walk-in booking 2 taps (target 5), check-in from search 1 tap (target 2); confirmed both actions genuinely completed in the database |
 | 2026-11-03 | M5-7 | "Running over"/flagged-next-booking (`isRunningOver`, `getFlaggedBookingId` in `schedule.ts`), amber block styling + ⚠ marker, `BookingPanel` move/delay-message guidance | `npm run check` (184 tests total), `npm run build`, screenshot-verified a constructed scenario and the seed data's own genuinely-overdue bookings |
 | 2026-11-03 | M5-6 | "Requested" (R) marker on schedule blocks + legend, `stylistRequested` added to `schedule.ts` | `npm run check` (174 tests total), `npm run build`, screenshot-verified against a seeded requested-stylist booking |

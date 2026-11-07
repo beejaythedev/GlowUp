@@ -13,8 +13,10 @@ and moves the answer into `docs/DECISIONS.md`.
 | Q6 | Hosting and database provider, and who pays for them | M9 | Answered 22 Oct: Vercel Hobby and Neon Free (practice project, no cost) | Answered |
 | Q7 | Grace period before a no-show can be marked | M5 | Same as the prompt: 15 minutes | Open |
 
-**Note on Q5 (27 Oct 2026):** until real staff lists arrive, `docs/PROGRESS.md`'s `m3-fixes`
-handoff note records that the customer booking flow hides any branch with zero stylists
-(currently only Lekki is bookable) rather than letting a customer pick one and hit a dead
-end with no times to choose from. Worth answering sooner than M9 if Ikeja, Yaba or Surulere
-should be customer-bookable before then.
+**Note on Q5 (27 Oct 2026):** the customer booking flow hides any branch with zero
+stylists rather than letting a customer pick one and hit a dead end with no times to
+choose from (see `docs/PROGRESS.md`'s `m3-fixes` handoff note) — that logic is still in
+place and still correct. To make all 4 branches bookable before Q5 is answered,
+`prisma/seed.ts` now also seeds two placeholder stylists per branch for Ikeja, Yaba and
+Surulere (clearly commented as placeholders). Still answer Q5 with real names before
+launch — swap the placeholders out once Tolu sends the real staff lists.
