@@ -71,29 +71,12 @@ export function PayForm(props: PayFormProps) {
               </p>
             )}
 
-            <Button
-              type="submit"
-              name="forceFailure"
-              value="false"
-              size="lg"
-              disabled={pending}
-              className="w-full"
-            >
-              {pending ? "Paying…" : `Pay ${depositLabel} deposit`}
+            <Button type="submit" size="lg" disabled={pending} className="w-full">
+              {pending ? "Starting payment…" : `Pay ${depositLabel} deposit`}
             </Button>
             <div className="text-center text-xs text-text-muted">
-              Card or bank transfer · secure payment
+              Card or bank transfer · secure payment via Paystack
             </div>
-
-            <button
-              type="submit"
-              name="forceFailure"
-              value="true"
-              disabled={pending}
-              className="mt-2 text-center text-xs text-text-muted underline disabled:opacity-50"
-            >
-              Simulate a failed payment (test mode)
-            </button>
           </form>
         )}
       </div>

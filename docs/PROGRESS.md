@@ -806,6 +806,66 @@ and writes a handoff note before every session ends.
 > **Next task:** none — waiting on the M7 checkpoint before M8 (Payments and messages)
 > starts, per `CLAUDE.md` rule 6.
 > **Blockers or questions:** none open.
+>
+> **M8 Payments and messages started (new `m8` branch off `m7`)** — supervisor said carry
+> on, standing in for the M7 checkpoint. Supervisor also provided real Paystack test-mode
+> API keys (`sk_test_…`/`pk_test_…`, added to `.env`; `.env.example` updated with
+> placeholders and where to get them — CLAUDE.md rule 8).
+> **M8-1 done:** real Paystack test-mode payments. `PaymentProvider` (M3/M8) is now a
+> three-method redirect-based interface matching `docs/ARCHITECTURE.md`'s already-documented
+> flow — `initializeTransaction`, `verifyWebhookSignature`, `verifyTransaction` — replacing
+> the old synchronous `charge()` shape, since Paystack's real flow is "ask for a payment
+> page, customer pays there, webhook confirms," not an instant in-page result.
+> `src/server/payments/paystack.ts`: real HTTP calls to `/transaction/initialize` and
+> `/transaction/verify/:reference`, and HMAC-SHA512 webhook signature verification
+> (`node:crypto`, timing-safe compare), 5 new unit tests. `paymentProvider` (index.ts) now
+> picks Paystack automatically when `PAYSTACK_SECRET_KEY` is set, falling back to
+> `FakePaymentProvider` otherwise (local dev/CI without secrets) — `FakePaymentProvider`
+> rewritten to match the new interface, backed by a new `/dev/fake-pay` page that stands in
+> for Paystack's hosted checkout and posts a correctly fake-signed webhook, exercising the
+> exact same webhook→confirm pipeline a real payment would.
+> New `/api/paystack/webhook` (`src/server/paystackWebhook.ts`'s `decideWebhookAction` is the
+> pure, tested routing logic — 4 tests): rejects a bad signature outright (401), otherwise
+> only acts on `charge.success`, then independently calls Paystack's own verify API and
+> checks the paid amount against the booking's `depositAmountKobo` before trusting it —
+> CLAUDE.md rule 10's "verify the signature AND the transaction" as two real, separate
+> checks, not one. `src/server/depositConfirmation.ts`'s `confirmDepositAndNotify` wraps the
+> existing `confirmDeposit` (M2-3) with the confirmation-message send, moved here from
+> `pay/actions.ts` since the webhook — not the browser — is what actually confirms a payment
+> now; reuses `confirmDeposit`'s existing idempotency (a second confirmation call is a safe
+> no-op) to protect against a duplicate webhook delivery.
+> `pay/actions.ts` now just validates the hold, calls `initializeTransaction`, and redirects
+> to Paystack's real hosted page. New `/book/pay/confirming` page is where Paystack's
+> callback sends the customer back — it never marks anything paid itself (rule 10); it only
+> polls a small read-only `/api/bookings/[bookingId]/status` route reflecting what the
+> webhook has already confirmed, redirecting to `/book/confirmed` once it has, with a
+> 20-second timeout and a manual-refresh fallback for a slow webhook. Removed `PayForm`'s
+> old "simulate a failed payment" link — Paystack's own test cards cover that now.
+> One real decision flagged in `docs/DECISIONS.md`: Paystack requires an email for its
+> receipt, but the booking flow only ever collects a phone number, so a placeholder
+> (`{phone}@customer.glowupsalons.ng`) is synthesized — not verified or emailed to, just used
+> for Paystack's own receipt.
+> Verified against the real Paystack test API directly (not just the fake provider):
+> `initializeTransaction` returned a genuine `https://checkout.paystack.com/…` URL;
+> `verifyTransaction` on an unpaid reference correctly reported `abandoned`; most
+> importantly, a `charge.success` webhook forged with a *valid* signature (signed with the
+> real secret key) was still correctly rejected, because the webhook's own call to
+> Paystack's verify API reported the transaction as unpaid — proving the "verify the
+> transaction, not just the signature" rule actually holds, not just the easier
+> signature-only check. A bad signature was rejected with 401. Separately verified the full
+> success path by calling `confirmDepositAndNotify` directly against a real test booking:
+> correctly marked `PAID`, logged the confirmation message, and a repeated call safely
+> no-opped (`NOT_FOUND`) rather than double-confirming.
+> Could not complete one specific check live: clicking the real "Pay deposit" button in an
+> actual browser and watching it land on Paystack's hosted page. This dev session's
+> Turbopack/HMR connection was independently unstable — reproduced the same reload/reconnect
+> churn on a completely unrelated, idle page with no interaction at all — so it's an
+> environment issue, not evidence of a bug in this code. Confirmed instead via the rendered
+> HTML that the form is wired correctly (one button, correct label, old simulate-failure UI
+> gone) and via the direct-call tests above that every piece the button would trigger
+> already works. Worth a quick manual click-through once this dev session is less flaky.
+> **Next task:** M8-2 (refund rule: cancelling 24+ hours before refunds the deposit; later
+> cancellations and no-shows keep it).
 
 ## Milestones
 
@@ -819,7 +879,7 @@ and writes a handoff note before every session ends.
 | M5 Reception | Ready for review | |
 | M6 Stylist | Ready for review | |
 | M7 Manager and owner | Ready for review | |
-| M8 Payments and messages | Not started | |
+| M8 Payments and messages | In progress | |
 | M9 Testing, launch and training | Not started | |
 
 Statuses: Not started · In progress · Ready for review · Approved.
@@ -830,6 +890,7 @@ Newest first. One line per finished task.
 
 | Date | Task | What changed | Tests |
 |---|---|---|---|
+| 2026-11-11 | M8-1 | `PaymentProvider` redesigned to a redirect-based interface, `src/server/payments/paystack.ts`, `/api/paystack/webhook`, `src/server/paystackWebhook.ts`, `src/server/depositConfirmation.ts`, `/book/pay/confirming`, `/api/bookings/[bookingId]/status`, `/dev/fake-pay` | `npm run check` (270 tests total), verified against the real Paystack test API: genuine checkout URL, a forged-but-validly-signed webhook correctly rejected via Paystack's own verify, bad signature rejected (401), success path (`confirmDepositAndNotify`) correct and idempotent |
 | 2026-11-07 | M7-4 | `/staff/owner/settings` (`OwnerSettingsView.tsx`, `settingsActions.ts`), `src/server/ownerSettings.ts` (`countOfferedBranches`, `formatOfferedAtLabel`, `formatPrepTimeLabel`, `formatArriveEarlyLabel`) | `npm run check` (259 tests total), deterministic live check: a controlled booking's blocking slot appeared/disappeared/reappeared exactly as the prep-time setting changed |
 | 2026-11-07 | M7-3 | `/staff/owner/staff` (`StaffAccessView.tsx`, `staffActions.ts`), `src/server/staffAccess.ts`, `src/server/auth/tempPassword.ts`, M4 sign-in action now flips `INVITED`→`ACTIVE` | `npm run check` (250 tests total), live end-to-end add/filter/edit/resend-invite/remove/restore, including a direct DB check |
 | 2026-11-07 | M7-2 | `/staff/owner` (`OwnerOverviewView.tsx`, `ownerData.ts`), `src/server/ownerOverview.ts`, `lagosWeekRange` in `src/lib/lagosTime.ts` | `npm run check` (242 tests total), live-verified against real data across all 4 branches as Tolu |
