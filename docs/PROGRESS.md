@@ -864,8 +864,33 @@ and writes a handoff note before every session ends.
 > HTML that the form is wired correctly (one button, correct label, old simulate-failure UI
 > gone) and via the direct-call tests above that every piece the button would trigger
 > already works. Worth a quick manual click-through once this dev session is less flaky.
-> **Next task:** M8-2 (refund rule: cancelling 24+ hours before refunds the deposit; later
-> cancellations and no-shows keep it).
+> **M8-2 done:** the 24-hour free-cancellation refund rule. `src/server/cancellation.ts`'s
+> `decideCancellationOutcome` (5 new unit tests) is the pure REFUND-vs-KEEP decision, using
+> the owner-adjustable `freeCancellationHours` from Settings (M7-4) rather than a hardcoded
+> 24 — a no-show never reaches this at all, since it's never cancelled, so it always keeps
+> the deposit by simply never being refunded.
+> Added `refund` to the `PaymentProvider` interface (M8-1) — a real `POST /refund` call in
+> `paystack.ts`, and an always-succeeds version in the fake provider that logs to the
+> console like the other fake providers. New `src/server/bookingCancellation.ts`'s
+> `cancelBookingAndSettleDeposit` wraps the existing `cancelBooking` (M5-2): only touches
+> `depositStatus` if it was actually `PAID` (a booking cancelled before ever finishing
+> payment has nothing to refund or keep, so it's left as `PENDING`); on `REFUND`, calls
+> Paystack and only marks `REFUNDED` if that call actually succeeds — a failed refund call
+> leaves the deposit `PAID` on a cancelled booking rather than lying about a refund that
+> didn't happen; there's no retry queue for that failure case in this practice project, so
+> it would need a human to notice. Reception's existing Cancel action (`BookingPanel`, M5-2)
+> now calls this instead of the bare `cancelBooking` — same button, same permission checks,
+> now with the real consequence attached.
+> Verified live: four scenarios run against real test bookings (far-ahead PAID cancellation
+> → `REFUNDED`; near-term PAID cancellation → `KEPT`; cancelling a never-paid `PENDING`
+> booking → left alone; cancelling an already-cancelled booking → correctly rejected) using
+> the fake provider for the orchestration/decision logic (these were synthetic bookings,
+> never real Paystack transactions, so a real refund call against them would correctly fail
+> with "transaction not found" — tested that exact response separately against the real
+> Paystack API to confirm the refund call itself genuinely reaches and parses their API).
+> `managerToday.ts`'s money-card comment updated — refunds are no longer always ₦0.
+> **Next task:** M8-3 (deposit link for phone bookings, "sent" through the console message
+> sender).
 
 ## Milestones
 
@@ -890,6 +915,7 @@ Newest first. One line per finished task.
 
 | Date | Task | What changed | Tests |
 |---|---|---|---|
+| 2026-11-11 | M8-2 | `src/server/cancellation.ts` (`decideCancellationOutcome`), `refund` added to `PaymentProvider`, `src/server/bookingCancellation.ts` (`cancelBookingAndSettleDeposit`), reception's Cancel action now uses it | `npm run check` (276 tests total), live-verified 4 scenarios (refund/keep/unpaid/double-cancel) plus a real Paystack refund API call |
 | 2026-11-11 | M8-1 | `PaymentProvider` redesigned to a redirect-based interface, `src/server/payments/paystack.ts`, `/api/paystack/webhook`, `src/server/paystackWebhook.ts`, `src/server/depositConfirmation.ts`, `/book/pay/confirming`, `/api/bookings/[bookingId]/status`, `/dev/fake-pay` | `npm run check` (270 tests total), verified against the real Paystack test API: genuine checkout URL, a forged-but-validly-signed webhook correctly rejected via Paystack's own verify, bad signature rejected (401), success path (`confirmDepositAndNotify`) correct and idempotent |
 | 2026-11-07 | M7-4 | `/staff/owner/settings` (`OwnerSettingsView.tsx`, `settingsActions.ts`), `src/server/ownerSettings.ts` (`countOfferedBranches`, `formatOfferedAtLabel`, `formatPrepTimeLabel`, `formatArriveEarlyLabel`) | `npm run check` (259 tests total), deterministic live check: a controlled booking's blocking slot appeared/disappeared/reappeared exactly as the prep-time setting changed |
 | 2026-11-07 | M7-3 | `/staff/owner/staff` (`StaffAccessView.tsx`, `staffActions.ts`), `src/server/staffAccess.ts`, `src/server/auth/tempPassword.ts`, M4 sign-in action now flips `INVITED`→`ACTIVE` | `npm run check` (250 tests total), live end-to-end add/filter/edit/resend-invite/remove/restore, including a direct DB check |

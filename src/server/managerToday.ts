@@ -39,8 +39,8 @@ export interface ManagerMoneySummary {
 
 /**
  * The money card: what's actually been collected today, and what's still
- * expected at the till. Refunds are M8-2's refund rule — always zero until
- * that's built, since `cancelBooking` doesn't touch `depositStatus` yet.
+ * expected at the till. Refunds come from the 24-hour free-cancellation rule
+ * (M8-2, `src/server/bookingCancellation.ts`).
  */
 export function summarizeManagerMoney(bookings: ManagerBooking[]): ManagerMoneySummary {
   const collected = bookings.filter(

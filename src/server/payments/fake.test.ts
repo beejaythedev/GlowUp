@@ -41,4 +41,9 @@ describe("FakePaymentProvider", () => {
     const result = await provider.verifyTransaction("booking_remember");
     expect(result).toEqual({ ok: true, status: "success", amountKobo: 500000, reference: "booking_remember" });
   });
+
+  it("always succeeds a refund", async () => {
+    const result = await new FakePaymentProvider().refund({ reference: "booking_1", amountKobo: 160000 });
+    expect(result).toEqual({ ok: true });
+  });
 });

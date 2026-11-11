@@ -1,5 +1,5 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
-import type { InitializeInput, InitializeResult, PaymentProvider, VerifyResult } from "./types";
+import type { InitializeInput, InitializeResult, PaymentProvider, RefundInput, RefundResult, VerifyResult } from "./types";
 
 const PAYSTACK_BASE_URL = "https://api.paystack.co";
 
@@ -53,5 +53,22 @@ export class PaystackPaymentProvider implements PaymentProvider {
       return { ok: true, status: "success", amountKobo: data.amount, reference: data.reference };
     }
     return { ok: true, status: data.status, reference: data.reference };
+  }
+
+  async refund(input: RefundInput): Promise<RefundResult> {
+    const response = await fetch(`${PAYSTACK_BASE_URL}/refund`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${this.secretKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ transaction: input.reference, amount: input.amountKobo }),
+    });
+
+    const body = await response.json().catch(() => null);
+    if (!response.ok || !body?.status) {
+      return { ok: false, reason: body?.message ?? `Paystack refund failed (${response.status})` };
+    }
+    return { ok: true };
   }
 }

@@ -14,6 +14,8 @@ export interface PaymentProvider {
   verifyWebhookSignature(rawBody: string, signatureHeader: string | null): boolean;
   /** Asks Paystack directly whether a transaction succeeded — never trust the webhook payload or the browser alone. */
   verifyTransaction(reference: string): Promise<VerifyResult>;
+  /** Refunds a previously-paid transaction (docs/PRD.md's 24-hour free-cancellation rule, M8-2). */
+  refund(input: RefundInput): Promise<RefundResult>;
 }
 
 export interface InitializeInput {
@@ -32,3 +34,11 @@ export type VerifyResult =
   | { ok: true; status: "success"; amountKobo: number; reference: string }
   | { ok: true; status: "failed" | "abandoned" | "pending"; reference: string }
   | { ok: false; reason: string };
+
+export interface RefundInput {
+  /** The original transaction reference — the booking id. */
+  reference: string;
+  amountKobo: number;
+}
+
+export type RefundResult = { ok: true } | { ok: false; reason: string };

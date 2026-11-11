@@ -1,4 +1,4 @@
-import type { InitializeInput, InitializeResult, PaymentProvider, VerifyResult } from "./types";
+import type { InitializeInput, InitializeResult, PaymentProvider, RefundInput, RefundResult, VerifyResult } from "./types";
 
 /**
  * Stands in for Paystack when no API keys are configured (local dev without
@@ -30,6 +30,11 @@ export class FakePaymentProvider implements PaymentProvider {
   async verifyTransaction(reference: string): Promise<VerifyResult> {
     const amountKobo = FakePaymentProvider.amountsByReference.get(reference) ?? 0;
     return { ok: true, status: "success", amountKobo, reference };
+  }
+
+  async refund(input: RefundInput): Promise<RefundResult> {
+    console.log(`[fake refund] ${input.reference}: ₦${(input.amountKobo / 100).toLocaleString()}`);
+    return { ok: true };
   }
 
   /** The fake "signature" the dev fake-pay page and this provider agree on — not real crypto, just a shared marker. */
