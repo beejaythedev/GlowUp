@@ -160,9 +160,22 @@ export function undoCheckIn(db: BookingDb, bookingId: string) {
   return applyBookingAction(db, bookingId, "UNDO_CHECK_IN", { status: "BOOKED", checkedInAt: null });
 }
 
-/** Marks a booking that never arrived (docs/PRD.md rule 5's safety-net outcome). */
-export function markNoShow(db: BookingDb, bookingId: string) {
-  return applyBookingAction(db, bookingId, "NO_SHOW", { status: "NO_SHOW" });
+/**
+ * Marks a booking that never arrived (docs/PRD.md rule 5's safety-net
+ * outcome). A deposit that was actually paid is kept, never refunded
+ * (docs/PRD.md, Business rules — "kept for... no-shows"); one that was
+ * never paid (still `PENDING`, e.g. an unpaid phone booking) has nothing to
+ * keep, so it's left alone rather than falsely marked `KEPT`.
+ */
+export async function markNoShow(db: BookingDb, bookingId: string): Promise<BookingActionResult> {
+  const result = await applyBookingAction(db, bookingId, "NO_SHOW", { status: "NO_SHOW" });
+  if (!result.ok) return result;
+
+  await db.booking.updateMany({
+    where: { id: bookingId, depositStatus: "PAID" },
+    data: { depositStatus: "KEPT" },
+  });
+  return result;
 }
 
 /** Cancels before service starts (docs/PRD.md, Business rules — refund handling is M8-2). */

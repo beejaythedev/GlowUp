@@ -156,7 +156,7 @@ The schedule is tight. If a week slips, move "Later" items out, never the checks
 - [x] **M8-3** Deposit link for phone bookings, "sent" through the console message sender.
 - [x] **M8-4** Scheduled messages through the console sender: confirmation, reminder 24 hours before (with the free-cancellation note) and 3 hours before, stored in the messages table with a status. Due messages are processed by a `/api/jobs/run` endpoint protected by a secret, called every 10 minutes by a free external scheduler (Vercel Hobby cron only runs daily; see `docs/TECH_STACK.md`). A `/dev/messages` page lists what would have been sent.
 - [x] **M8-5** Delay message for requested-stylist bookings: offers a later time with the same stylist or the original time with another stylist; the customer's reply or link choice updates the booking.
-- [ ] **M8-6** Review the payment flow and money card against the business rules in `docs/PRD.md`.
+- [x] **M8-6** Review the payment flow and money card against the business rules in `docs/PRD.md`.
 
 **Supervisor checkpoint:** a full test-mode booking with deposit, a logged reminder and a cancellation refund.
 

@@ -962,8 +962,38 @@ and writes a handoff note before every session ends.
 > moved the time and kept the stylist; a second booking confirmed choosing "same time,
 > other stylist" kept the time and swapped the stylist to the one actually offered; the
 > done page correctly reflected whichever choice was made.
-> **Next task:** M8-6 (review the payment flow and money card against `docs/PRD.md`'s
-> business rules) — the last M8 task.
+> **M8-6 done** — review of the payment flow and money card against `docs/PRD.md`'s
+> Business rules, the last M8 task. Found and fixed two real gaps:
+> 1. **`markNoShow` never actually kept the deposit.** It only changed `status` to
+> `NO_SHOW`, leaving `depositStatus` as `PAID` forever — the PRD rule ("kept for...
+> no-shows") was only ever true in `prisma/seed.ts`'s sample data, which sets `KEPT`
+> directly, not in the real action reception taps live. Fixed: `markNoShow` now also
+> flips a `PAID` deposit to `KEPT` (leaving `PENDING`/`NONE` alone — nothing to keep from a
+> deposit that was never actually paid). 2 new unit tests. This also means the manager
+> money card's "kept from no-shows" line and the owner overview's no-show figures were
+> silently always right only because of seed data, not live behaviour — now genuinely
+> correct either way.
+> 2. **Paystack's `/transaction/initialize` call didn't pass `channels`,** relying on
+> whatever's enabled on the dashboard by default. `docs/PRD.md`/`docs/TECH_STACK.md` are
+> explicit that deposits are "card or bank transfer" — now passes `channels: ["card",
+> "bank_transfer"]` explicitly so both are always offered regardless of dashboard
+> configuration. Confirmed live against the real Paystack test API that it accepts this.
+> Everything else checked out already correct: deposit = 20%, walk-ins pay none, phone
+> bookings get the SMS link (M8-3), the 10-minute hold, the 24-hour refund rule (M8-2),
+> reminders at 24h/3h with the free-cancellation note only on the 24h one, 10-minute
+> arrive-early wording sourced from the adjustable Settings row rather than hardcoded, and
+> "expected at the till" correctly excluding no-shows and cancellations while including
+> walk-ins at full price.
+> Verified both fixes live: a real call to Paystack's test API confirmed it accepts the
+> explicit channels list; a real no-show on a paid booking now correctly lands on `KEPT`,
+> while a walk-in's never-charged `NONE` deposit is correctly left untouched.
+> **M8 milestone is now fully done** — M8-1 through M8-6 complete. Ready for the supervisor
+> checkpoint in `docs/ROADMAP.md`: a full test-mode booking with deposit, a logged reminder
+> and a cancellation refund (all individually verified live above across M8-1/M8-2/M8-4;
+> happy to run through the single combined walkthrough on request).
+> **Next task:** none — waiting on the M8 checkpoint before M9 (Testing and deployment)
+> starts, per `CLAUDE.md` rule 6.
+> **Blockers or questions:** none open.
 
 ## Milestones
 
@@ -977,7 +1007,7 @@ and writes a handoff note before every session ends.
 | M5 Reception | Ready for review | |
 | M6 Stylist | Ready for review | |
 | M7 Manager and owner | Ready for review | |
-| M8 Payments and messages | In progress | |
+| M8 Payments and messages | Ready for review | |
 | M9 Testing, launch and training | Not started | |
 
 Statuses: Not started · In progress · Ready for review · Approved.
@@ -988,6 +1018,7 @@ Newest first. One line per finished task.
 
 | Date | Task | What changed | Tests |
 |---|---|---|---|
+| 2026-11-12 | M8-6 | `markNoShow` (bookings.ts) now keeps a paid deposit, `paystack.ts`'s initialize now passes explicit channels | `npm run check` (294 tests total), live-verified both fixes against real test bookings and the real Paystack API |
 | 2026-11-12 | M8-5 | `src/server/delayOffer.ts`, `src/lib/delayMessage.ts`, `src/server/delayOfferForBooking.ts`, `src/server/delayMessageSender.ts`, `/book/delay`, `rescheduleBooking`/`RESCHEDULE` action, reception's Send delay message button wired up | `npm run check` (293 tests total), live-verified offer computation, message content, the live choice page, and both choice outcomes against real test bookings |
 | 2026-11-12 | M8-4 | New `Message` model/migration, `src/server/bookingMessages.ts`, `src/lib/reminderMessage.ts`, `/api/jobs/run`, `src/server/messageJob.ts`, `/dev/messages`, `depositConfirmation.ts` and `bookingCancellation.ts` updated | `npm run check` (283 tests total), live-verified scheduling/sending/cancelling/skipping-reminders against the real job endpoint and dev DB |
 | 2026-11-12 | M8-3 | `src/lib/phoneDepositMessage.ts`, reception's `createBookingAction` now sends it for PHONE bookings with a deposit due | `npm run check` (277 tests total), live-verified: real phone booking created, correct message built and sent, real `/book/pay` page confirmed working for it |

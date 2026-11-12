@@ -217,6 +217,8 @@ interface CreateBookingOverrides {
   status?: "BOOKED" | "CHECKED_IN" | "IN_SERVICE" | "DONE" | "NO_SHOW" | "CANCELLED";
   checkedInAt?: Date;
   startedAt?: Date;
+  depositStatus?: "NONE" | "PENDING" | "PAID" | "REFUNDED" | "KEPT";
+  depositAmountKobo?: number;
 }
 
 function createBooking(overrides: CreateBookingOverrides = {}) {
@@ -317,13 +319,23 @@ describe("reception actions", () => {
     expect(updated.checkedInAt).toBeNull();
   });
 
-  it("marks a booked appointment as a no-show", async () => {
+  it("marks a booked appointment as a no-show and keeps the paid deposit", async () => {
     const booking = await createBooking(slot(6));
     const result = await markNoShow(db, booking.id);
     expect(result).toEqual({ ok: true });
 
     const updated = await db.booking.findUniqueOrThrow({ where: { id: booking.id } });
     expect(updated.status).toBe("NO_SHOW");
+    expect(updated.depositStatus).toBe("KEPT");
+  });
+
+  it("leaves a never-paid deposit alone when marking a no-show", async () => {
+    const booking = await createBooking({ ...slot(11), depositStatus: "PENDING", depositAmountKobo: 0 });
+    const result = await markNoShow(db, booking.id);
+    expect(result).toEqual({ ok: true });
+
+    const updated = await db.booking.findUniqueOrThrow({ where: { id: booking.id } });
+    expect(updated.depositStatus).toBe("PENDING");
   });
 
   it("refuses to mark an already-checked-in booking as a no-show", async () => {

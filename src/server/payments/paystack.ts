@@ -19,6 +19,10 @@ export class PaystackPaymentProvider implements PaymentProvider {
         amount: input.amountKobo,
         reference: input.reference,
         callback_url: input.callbackUrl,
+        // docs/PRD.md's deposit rule is explicitly "card or bank transfer" —
+        // pass both rather than relying on whatever's enabled by default on
+        // the Paystack dashboard, which a fresh test account may not match.
+        channels: ["card", "bank_transfer"],
       }),
     });
 
