@@ -1,12 +1,18 @@
 "use server";
 
+import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { db } from "@/lib/db";
+import { formatBookingReference } from "@/lib/bookingReference";
+import { formatLagosClockTime, formatLagosDateLabel } from "@/lib/lagosTime";
+import { formatNaira } from "@/lib/money";
 import { normalizeNigerianPhone } from "@/lib/phone";
+import { formatPhoneDepositMessage } from "@/lib/phoneDepositMessage";
 import { getCurrentStaff } from "@/server/auth/currentStaff";
 import { createReceptionBooking } from "@/server/bookings";
 import { calculateDepositKobo } from "@/server/money";
+import { messageSender } from "@/server/messages";
 
 export interface CustomerLookupResult {
   found: boolean;
@@ -104,6 +110,25 @@ export async function createBookingAction(
 
   if (!result.ok) {
     return { error: "That stylist was just booked for that time. Please pick another." };
+  }
+
+  // Phone bookings aren't paid for yet (unlike a walk-in, whose deposit is
+  // always zero) — send the deposit link the same way a confirmation would
+  // be sent, so the customer can pay from wherever they are (M8-3).
+  if (source === "PHONE" && depositAmountKobo > 0) {
+    const origin = (await headers()).get("origin") ?? "";
+    await messageSender.send({
+      to: phone,
+      body: formatPhoneDepositMessage({
+        customerFirstName: name.split(" ")[0] ?? name,
+        serviceName: service.name,
+        branchName: branch.name,
+        whenLabel: `${formatLagosDateLabel(startsAtDate)}, ${formatLagosClockTime(startsAtDate)}`,
+        depositLabel: formatNaira(depositAmountKobo),
+        bookingReference: formatBookingReference(result.bookingId),
+        payUrl: `${origin}/book/pay?bookingId=${result.bookingId}`,
+      }),
+    });
   }
 
   redirect(`/staff/reception?bookingId=${result.bookingId}`);

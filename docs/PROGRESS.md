@@ -889,8 +889,24 @@ and writes a handoff note before every session ends.
 > with "transaction not found" — tested that exact response separately against the real
 > Paystack API to confirm the refund call itself genuinely reaches and parses their API).
 > `managerToday.ts`'s money-card comment updated — refunds are no longer always ₦0.
-> **Next task:** M8-3 (deposit link for phone bookings, "sent" through the console message
-> sender).
+> **M8-3 done:** phone bookings now get a deposit-link message. New `src/lib/
+> phoneDepositMessage.ts`'s `formatPhoneDepositMessage` (1 new unit test) — no "arrive by"
+> or rush wording like the online confirmation message, since a phone booking has no
+> 10-minute hold to race against (already true since M5-4/the `createReceptionBooking`
+> doc comment). Reception's `createBookingAction` (M5-4) now sends it via the existing
+> console `messageSender` right after a successful `PHONE`-source booking with a non-zero
+> deposit (a walk-in's deposit is always zero, so there's nothing to ask for) — same
+> `/book/pay?bookingId=…` page online customers use, no new page needed.
+> Verified live against the real dev server (lighter-weight than a full browser pass, since
+> this session's system was flagged low on memory right after M8-2): created a real phone
+> booking through the actual `createReceptionBooking` function, confirmed it starts
+> `BOOKED`/`PENDING`/no hold timer, built and sent the exact message `actions.ts` now sends,
+> and confirmed the real `/book/pay` page (hit over HTTP against the running dev server)
+> loads correctly for that booking with the right deposit amount and a working Pay button.
+> **Next task:** M8-4 (scheduled messages through the console sender: confirmation, 24-hour
+> and 3-hour reminders, a `messages` table, `/api/jobs/run`, and a `/dev/messages` page).
+> This is the biggest remaining M8 task — a new DB table/migration and a cron-style endpoint,
+> worth flagging before starting in case the scope or approach needs a look first.
 
 ## Milestones
 
@@ -915,6 +931,7 @@ Newest first. One line per finished task.
 
 | Date | Task | What changed | Tests |
 |---|---|---|---|
+| 2026-11-12 | M8-3 | `src/lib/phoneDepositMessage.ts`, reception's `createBookingAction` now sends it for PHONE bookings with a deposit due | `npm run check` (277 tests total), live-verified: real phone booking created, correct message built and sent, real `/book/pay` page confirmed working for it |
 | 2026-11-11 | M8-2 | `src/server/cancellation.ts` (`decideCancellationOutcome`), `refund` added to `PaymentProvider`, `src/server/bookingCancellation.ts` (`cancelBookingAndSettleDeposit`), reception's Cancel action now uses it | `npm run check` (276 tests total), live-verified 4 scenarios (refund/keep/unpaid/double-cancel) plus a real Paystack refund API call |
 | 2026-11-11 | M8-1 | `PaymentProvider` redesigned to a redirect-based interface, `src/server/payments/paystack.ts`, `/api/paystack/webhook`, `src/server/paystackWebhook.ts`, `src/server/depositConfirmation.ts`, `/book/pay/confirming`, `/api/bookings/[bookingId]/status`, `/dev/fake-pay` | `npm run check` (270 tests total), verified against the real Paystack test API: genuine checkout URL, a forged-but-validly-signed webhook correctly rejected via Paystack's own verify, bad signature rejected (401), success path (`confirmDepositAndNotify`) correct and idempotent |
 | 2026-11-07 | M7-4 | `/staff/owner/settings` (`OwnerSettingsView.tsx`, `settingsActions.ts`), `src/server/ownerSettings.ts` (`countOfferedBranches`, `formatOfferedAtLabel`, `formatPrepTimeLabel`, `formatArriveEarlyLabel`) | `npm run check` (259 tests total), deterministic live check: a controlled booking's blocking slot appeared/disappeared/reappeared exactly as the prep-time setting changed |
