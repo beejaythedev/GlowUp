@@ -935,7 +935,35 @@ and writes a handoff note before every session ends.
 > confirmation as SENT; a booking confirmed only 1 hour before its appointment correctly
 > got no reminders at all, only the confirmation. `/dev/messages` confirmed showing real
 > rows (customer, type, status, scheduled/sent time, full body) against live data.
-> **Next task:** M8-5 (delay message for requested-stylist bookings running over).
+> **M8-5 done:** the delay message, wiring up M5-7's disabled placeholder button. New
+> `src/server/delayOffer.ts`'s `computeDelayOffer` (5 new unit tests) is the pure decision —
+> reuses the same availability engine (M2-1/M2-2) customers see when booking, rather than a
+> separate check, so an offer that wouldn't actually be bookable is never sent: the
+> requested stylist's soonest slot after the original time, and whichever other active
+> stylist (if any) is genuinely free at the exact original time. New `src/lib/
+> delayMessage.ts` (4 new tests) only mentions the options that are actually available —
+> both, one, or (rare) neither, in which case it just asks the customer to call.
+> `src/server/delayOfferForBooking.ts`'s `getDelayContext` gathers the DB data once and is
+> shared by both the "send" path and the customer's own choice page, so they can never
+> compute different answers for the same booking. New `rescheduleBooking` in `bookings.ts`
+> (a `RESCHEDULE` action added to `status.ts`'s allowed-transitions table, same guard as
+> `MOVE`) moves a booking to a new time with the same stylist, protected by the same
+> no-double-booking exclusion constraint.
+> Reception's "Send delay message" button (`BookingPanel.tsx`, disabled since M5-7) now
+> really sends it through the existing console `messageSender`, linking to a new public
+> `/book/delay?bookingId=…` page — no sign-in needed, same as the rest of the customer
+> booking flow. That page re-checks the offer live rather than trusting the link's embedded
+> times (things may have changed since it was sent), shows whichever choices are still
+> valid, and calls either `rescheduleBooking` or the existing `moveBooking` (M5-2) depending
+> on which the customer picks, landing on a plain "you're all set" confirmation.
+> Verified live end to end: the offer correctly proposed both a later same-stylist time and
+> a genuinely-free other stylist at the original time; the message included both, with a
+> working link; the live choice page showed both buttons; choosing "later, same stylist"
+> moved the time and kept the stylist; a second booking confirmed choosing "same time,
+> other stylist" kept the time and swapped the stylist to the one actually offered; the
+> done page correctly reflected whichever choice was made.
+> **Next task:** M8-6 (review the payment flow and money card against `docs/PRD.md`'s
+> business rules) — the last M8 task.
 
 ## Milestones
 
@@ -960,6 +988,7 @@ Newest first. One line per finished task.
 
 | Date | Task | What changed | Tests |
 |---|---|---|---|
+| 2026-11-12 | M8-5 | `src/server/delayOffer.ts`, `src/lib/delayMessage.ts`, `src/server/delayOfferForBooking.ts`, `src/server/delayMessageSender.ts`, `/book/delay`, `rescheduleBooking`/`RESCHEDULE` action, reception's Send delay message button wired up | `npm run check` (293 tests total), live-verified offer computation, message content, the live choice page, and both choice outcomes against real test bookings |
 | 2026-11-12 | M8-4 | New `Message` model/migration, `src/server/bookingMessages.ts`, `src/lib/reminderMessage.ts`, `/api/jobs/run`, `src/server/messageJob.ts`, `/dev/messages`, `depositConfirmation.ts` and `bookingCancellation.ts` updated | `npm run check` (283 tests total), live-verified scheduling/sending/cancelling/skipping-reminders against the real job endpoint and dev DB |
 | 2026-11-12 | M8-3 | `src/lib/phoneDepositMessage.ts`, reception's `createBookingAction` now sends it for PHONE bookings with a deposit due | `npm run check` (277 tests total), live-verified: real phone booking created, correct message built and sent, real `/book/pay` page confirmed working for it |
 | 2026-11-11 | M8-2 | `src/server/cancellation.ts` (`decideCancellationOutcome`), `refund` added to `PaymentProvider`, `src/server/bookingCancellation.ts` (`cancelBookingAndSettleDeposit`), reception's Cancel action now uses it | `npm run check` (276 tests total), live-verified 4 scenarios (refund/keep/unpaid/double-cancel) plus a real Paystack refund API call |

@@ -191,6 +191,28 @@ export async function moveBooking(
   }
 }
 
+export type RescheduleBookingResult = BookingActionResult | { ok: false; reason: "SLOT_TAKEN" };
+
+/**
+ * Moves a booking to a new time, same stylist — the "later with the same
+ * stylist" half of a delay offer (M8-5). Same no-double-booking protection
+ * as `moveBooking`: if the stylist already has something else in that new
+ * window (someone else took the slot first), the update fails and this
+ * reports SLOT_TAKEN instead of throwing.
+ */
+export async function rescheduleBooking(
+  db: BookingDb,
+  bookingId: string,
+  newTimes: { startsAt: Date; endsAt: Date; blockedUntil: Date },
+): Promise<RescheduleBookingResult> {
+  try {
+    return await applyBookingAction(db, bookingId, "RESCHEDULE", newTimes);
+  } catch (error) {
+    if (isSlotConflict(error)) return { ok: false, reason: "SLOT_TAKEN" };
+    throw error;
+  }
+}
+
 const SLOT_STEP_MINUTES = 10;
 
 /**
