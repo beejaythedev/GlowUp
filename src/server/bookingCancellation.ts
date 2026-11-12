@@ -12,7 +12,7 @@ import { paymentProvider } from "@/server/payments";
  * finished paying) has nothing to refund or keep, so it's left alone.
  */
 export async function cancelBookingAndSettleDeposit(
-  db: Pick<PrismaClient, "booking" | "settings">,
+  db: Pick<PrismaClient, "booking" | "settings" | "message">,
   bookingId: string,
   now: Date = new Date(),
 ): Promise<BookingActionResult> {
@@ -21,6 +21,13 @@ export async function cancelBookingAndSettleDeposit(
 
   const cancelResult = await cancelBooking(db, bookingId, now);
   if (!cancelResult.ok) return cancelResult;
+
+  // No reminder should go out for an appointment that's no longer happening
+  // (M8-4) — only PENDING ones matter, since a SENT one already went out.
+  await db.message.updateMany({
+    where: { bookingId, status: "PENDING" },
+    data: { status: "CANCELLED" },
+  });
 
   if (booking.depositStatus === "PAID") {
     const settings = await db.settings.findFirst();

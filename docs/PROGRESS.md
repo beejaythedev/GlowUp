@@ -903,10 +903,39 @@ and writes a handoff note before every session ends.
 > `BOOKED`/`PENDING`/no hold timer, built and sent the exact message `actions.ts` now sends,
 > and confirmed the real `/book/pay` page (hit over HTTP against the running dev server)
 > loads correctly for that booking with the right deposit amount and a working Pay button.
-> **Next task:** M8-4 (scheduled messages through the console sender: confirmation, 24-hour
-> and 3-hour reminders, a `messages` table, `/api/jobs/run`, and a `/dev/messages` page).
-> This is the biggest remaining M8 task — a new DB table/migration and a cron-style endpoint,
-> worth flagging before starting in case the scope or approach needs a look first.
+> **M8-4 done:** scheduled messages. New `Message` model/migration (`type`:
+> CONFIRMATION/REMINDER_24H/REMINDER_3H, `status`: PENDING/SENT/CANCELLED, `scheduledFor`,
+> `sentAt`) — each message's full body is composed once, at scheduling time, so
+> `/dev/messages` shows exactly what will be sent before it is, and the job never needs to
+> re-derive anything from the booking.
+> `src/server/bookingMessages.ts`'s `planBookingMessages` (4 new unit tests) is the pure
+> scheduling decision: confirmation always goes out (scheduled for "now," picked up by the
+> next job run); a reminder is skipped entirely — not scheduled for a moment in the past —
+> if its 24-or-3-hour mark has already passed by confirmation time. New `src/lib/
+> reminderMessage.ts` (2 new tests): the 24-hour reminder is the only one that mentions the
+> free-cancellation refund, matching `docs/PRD.md`'s "(last free-cancellation chance)" note;
+> the 3-hour one doesn't, since that window's already closed.
+> `depositConfirmation.ts` (M8-1) now schedules these 2-3 `Message` rows instead of sending
+> one message immediately — the actual send is `src/server/messageJob.ts`'s
+> `processDueMessages`, called by the new `/api/jobs/run` (GET/POST, protected by a
+> `x-jobs-secret` header checked against a new `JOBS_SECRET` env var — generated and added
+> to `.env`/`.env.example` the same way `AUTH_SECRET` was). Each due message is claimed
+> atomically (`updateMany` only succeeds while still `PENDING`) before sending, so two
+> overlapping scheduler calls can't double-send.
+> `bookingCancellation.ts` (M8-2) now also cancels (not deletes) any still-`PENDING` message
+> for a booking that gets cancelled — no reminder goes out for an appointment that's no
+> longer happening; an already-`SENT` one is untouched. Skipped the architecture doc's
+> mention of a "daily tidy-up" job for expired holds — those are already handled at
+> read-time (ignored by the availability engine, M2-3) and at write-time (`holdSlot` deletes
+> stale ones on insert), so there's nothing left to tidy.
+> Verified live end to end: confirming a deposit 10 days out scheduled all 3 messages
+> PENDING; calling `/api/jobs/run` sent only the due confirmation and left both future
+> reminders PENDING; a wrong secret was rejected (401); cancelling that booking correctly
+> flipped both still-pending reminders to CANCELLED while leaving the already-sent
+> confirmation as SENT; a booking confirmed only 1 hour before its appointment correctly
+> got no reminders at all, only the confirmation. `/dev/messages` confirmed showing real
+> rows (customer, type, status, scheduled/sent time, full body) against live data.
+> **Next task:** M8-5 (delay message for requested-stylist bookings running over).
 
 ## Milestones
 
@@ -931,6 +960,7 @@ Newest first. One line per finished task.
 
 | Date | Task | What changed | Tests |
 |---|---|---|---|
+| 2026-11-12 | M8-4 | New `Message` model/migration, `src/server/bookingMessages.ts`, `src/lib/reminderMessage.ts`, `/api/jobs/run`, `src/server/messageJob.ts`, `/dev/messages`, `depositConfirmation.ts` and `bookingCancellation.ts` updated | `npm run check` (283 tests total), live-verified scheduling/sending/cancelling/skipping-reminders against the real job endpoint and dev DB |
 | 2026-11-12 | M8-3 | `src/lib/phoneDepositMessage.ts`, reception's `createBookingAction` now sends it for PHONE bookings with a deposit due | `npm run check` (277 tests total), live-verified: real phone booking created, correct message built and sent, real `/book/pay` page confirmed working for it |
 | 2026-11-11 | M8-2 | `src/server/cancellation.ts` (`decideCancellationOutcome`), `refund` added to `PaymentProvider`, `src/server/bookingCancellation.ts` (`cancelBookingAndSettleDeposit`), reception's Cancel action now uses it | `npm run check` (276 tests total), live-verified 4 scenarios (refund/keep/unpaid/double-cancel) plus a real Paystack refund API call |
 | 2026-11-11 | M8-1 | `PaymentProvider` redesigned to a redirect-based interface, `src/server/payments/paystack.ts`, `/api/paystack/webhook`, `src/server/paystackWebhook.ts`, `src/server/depositConfirmation.ts`, `/book/pay/confirming`, `/api/bookings/[bookingId]/status`, `/dev/fake-pay` | `npm run check` (270 tests total), verified against the real Paystack test API: genuine checkout URL, a forged-but-validly-signed webhook correctly rejected via Paystack's own verify, bad signature rejected (401), success path (`confirmDepositAndNotify`) correct and idempotent |

@@ -191,6 +191,8 @@ model Booking {
   /// background job needed to release them.
   holdExpiresAt DateTime?
 
+  messages Message[]
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   // No-double-booking is enforced by a PostgreSQL exclusion constraint on
@@ -218,4 +220,42 @@ model Settings {
   arriveEarlyMinutes        Int      @default(10)
   checkInPromptAfterMinutes Int      @default(15)
   updatedAt                 DateTime @updatedAt
+}
+
+// ---------------------------------------------------------------------------
+// Messages
+// ---------------------------------------------------------------------------
+
+enum MessageType {
+  CONFIRMATION
+  REMINDER_24H
+  REMINDER_3H
+}
+
+enum MessageStatus {
+  PENDING
+  SENT
+  /// A booking was cancelled before this message's scheduled time (M8-2) —
+  /// never sent, kept for the record rather than deleted.
+  CANCELLED
+}
+
+/// Scheduled, not sent immediately (M8-4) — a free external scheduler calls
+/// `/api/jobs/run` every 10 minutes, which sends whatever is due. The body
+/// is composed once, at scheduling time, so `/dev/messages` shows exactly
+/// what would be sent even before it is.
+model Message {
+  id           String        @id @default(cuid())
+  booking      Booking       @relation(fields: [bookingId], references: [id])
+  bookingId    String
+  type         MessageType
+  to           String
+  body         String
+  scheduledFor DateTime
+  status       MessageStatus @default(PENDING)
+  sentAt       DateTime?
+  createdAt    DateTime      @default(now())
+
+  @@index([status, scheduledFor])
+  @@index([bookingId])
 }
