@@ -141,7 +141,7 @@ The schedule is tight. If a week slips, move "Later" items out, never the checks
 - [x] **M7-1** Manager today: summary tiles, bookings table, money card (deposits, kept, refunded, expected at till), CSV day report. Matches `ManagerToday.dc.html`.
 - [x] **M7-2** Owner overview: four-branch comparison, bookings-by-branch bars, "needs your attention" list. Matches `OwnerOverview.dc.html`.
 - [x] **M7-3** Staff and access: add staff, change role or branch, reset password, remove and restore access, invite status. Matches `OwnerStaff.dc.html`.
-- [ ] **M7-4** Settings: prep time per service, deposit %, free-cancellation hours, arrive-early minutes, prompt timing. Changes apply to new bookings only. Matches `OwnerSettings.dc.html`.
+- [x] **M7-4** Settings: prep time per service, deposit %, free-cancellation hours, arrive-early minutes, prompt timing. Changes apply to new bookings only. Matches `OwnerSettings.dc.html`.
 
 **Supervisor checkpoint:** change a prep time and confirm the customer site's available times change.
 
@@ -151,12 +151,12 @@ The schedule is tight. If a week slips, move "Later" items out, never the checks
 
 **Goal:** working deposits with Paystack in test mode, and messages scheduled and logged (no real SMS in this practice project).
 
-- [ ] **M8-1** Connect Paystack in test mode (card and pay with transfer): create payment, verify webhook signature, confirm the transaction with Paystack's API, mark deposit paid. Never trust the browser's word that payment succeeded.
-- [ ] **M8-2** Refund rule: cancelling 24+ hours before refunds the deposit; later cancellations and no-shows keep it. Deposit deducted from the bill.
-- [ ] **M8-3** Deposit link for phone bookings, "sent" through the console message sender.
-- [ ] **M8-4** Scheduled messages through the console sender: confirmation, reminder 24 hours before (with the free-cancellation note) and 3 hours before, stored in the messages table with a status. Due messages are processed by a `/api/jobs/run` endpoint protected by a secret, called every 10 minutes by a free external scheduler (Vercel Hobby cron only runs daily; see `docs/TECH_STACK.md`). A `/dev/messages` page lists what would have been sent.
-- [ ] **M8-5** Delay message for requested-stylist bookings: offers a later time with the same stylist or the original time with another stylist; the customer's reply or link choice updates the booking.
-- [ ] **M8-6** Review the payment flow and money card against the business rules in `docs/PRD.md`.
+- [x] **M8-1** Connect Paystack in test mode (card and pay with transfer): create payment, verify webhook signature, confirm the transaction with Paystack's API, mark deposit paid. Never trust the browser's word that payment succeeded.
+- [x] **M8-2** Refund rule: cancelling 24+ hours before refunds the deposit; later cancellations and no-shows keep it. Deposit deducted from the bill.
+- [x] **M8-3** Deposit link for phone bookings, "sent" through the console message sender.
+- [x] **M8-4** Scheduled messages through the console sender: confirmation, reminder 24 hours before (with the free-cancellation note) and 3 hours before, stored in the messages table with a status. Due messages are processed by a `/api/jobs/run` endpoint protected by a secret, called every 10 minutes by a free external scheduler (Vercel Hobby cron only runs daily; see `docs/TECH_STACK.md`). A `/dev/messages` page lists what would have been sent.
+- [x] **M8-5** Delay message for requested-stylist bookings: offers a later time with the same stylist or the original time with another stylist; the customer's reply or link choice updates the booking.
+- [x] **M8-6** Review the payment flow and money card against the business rules in `docs/PRD.md`.
 
 **Supervisor checkpoint:** a full test-mode booking with deposit, a logged reminder and a cancellation refund.
 

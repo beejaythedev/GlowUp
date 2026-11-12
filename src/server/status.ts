@@ -41,7 +41,8 @@ export type BookingAction =
   | "UNDO_CHECK_IN"
   | "NO_SHOW"
   | "CANCEL"
-  | "MOVE";
+  | "MOVE"
+  | "RESCHEDULE";
 
 /**
  * Which stored `BookingStatus` values an action may start from. The single
@@ -57,6 +58,7 @@ const ALLOWED_FROM: Record<BookingAction, BookingStatus[]> = {
   NO_SHOW: ["BOOKED"],
   CANCEL: ["BOOKED", "CHECKED_IN"],
   MOVE: ["BOOKED", "CHECKED_IN"],
+  RESCHEDULE: ["BOOKED", "CHECKED_IN"],
 };
 
 export function allowedFromStatuses(action: BookingAction): BookingStatus[] {

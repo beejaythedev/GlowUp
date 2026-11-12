@@ -98,14 +98,18 @@ export function BookingPanel({ booking }: { booking: SelectedBooking }) {
             start late.
           </span>
           {booking.stylistRequested ? (
-            <button
-              type="button"
-              disabled
-              title="Sends an SMS offering a later time with the same stylist or this time with another — arrives in M8"
-              className="flex min-h-9 w-fit items-center rounded-full border border-warning-border bg-surface px-3 text-xs font-bold text-warning-text opacity-60"
-            >
-              Send delay message
-            </button>
+            <form action={formAction}>
+              <input type="hidden" name="bookingId" value={booking.bookingId} />
+              <input type="hidden" name="action" value="SEND_DELAY_MESSAGE" />
+              <button
+                type="submit"
+                disabled={pending}
+                title="Sends an SMS offering a later time with the same stylist, or this time with another"
+                className="flex min-h-9 w-fit items-center rounded-full border border-warning-border bg-surface px-3 text-xs font-bold text-warning-text disabled:opacity-50"
+              >
+                {pending ? "Sending…" : "Send delay message"}
+              </button>
+            </form>
           ) : (
             <span className="text-xs">This was &quot;any available&quot; — move it to a free stylist below.</span>
           )}

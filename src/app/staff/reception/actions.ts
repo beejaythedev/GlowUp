@@ -1,11 +1,11 @@
 "use server";
 
+import { headers } from "next/headers";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { db } from "@/lib/db";
 import { getCurrentStaff } from "@/server/auth/currentStaff";
 import {
-  cancelBooking,
   checkIn,
   finishService,
   markNoShow,
@@ -15,11 +15,13 @@ import {
   type BookingActionResult,
   type MoveBookingResult,
 } from "@/server/bookings";
+import { cancelBookingAndSettleDeposit } from "@/server/bookingCancellation";
+import { sendDelayMessage } from "@/server/delayMessageSender";
 import { canViewBooking } from "@/server/permissions";
 
 const bookingActionSchema = z.object({
   bookingId: z.string().min(1),
-  action: z.enum(["CHECK_IN", "START", "FINISH", "UNDO_CHECK_IN", "NO_SHOW", "CANCEL", "MOVE"]),
+  action: z.enum(["CHECK_IN", "START", "FINISH", "UNDO_CHECK_IN", "NO_SHOW", "CANCEL", "MOVE", "SEND_DELAY_MESSAGE"]),
   newStylistId: z.string().optional(),
   // "Did they arrive earlier?" correction on check-in (docs/ROADMAP.md, M5-3):
   // backdates checkedInAt so a late tap doesn't inflate the customer's wait.
@@ -67,12 +69,17 @@ export async function performBookingAction(
       result = await markNoShow(db, bookingId);
       break;
     case "CANCEL":
-      result = await cancelBooking(db, bookingId);
+      result = await cancelBookingAndSettleDeposit(db, bookingId);
       break;
     case "MOVE":
       if (!newStylistId) return { error: "Choose a stylist to move this booking to." };
       result = await moveBooking(db, bookingId, newStylistId);
       break;
+    case "SEND_DELAY_MESSAGE": {
+      const origin = (await headers()).get("origin") ?? "";
+      result = await sendDelayMessage(db, bookingId, `${origin}/book/delay?bookingId=${bookingId}`);
+      break;
+    }
   }
 
   if (!result.ok) {

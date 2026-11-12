@@ -160,9 +160,22 @@ export function undoCheckIn(db: BookingDb, bookingId: string) {
   return applyBookingAction(db, bookingId, "UNDO_CHECK_IN", { status: "BOOKED", checkedInAt: null });
 }
 
-/** Marks a booking that never arrived (docs/PRD.md rule 5's safety-net outcome). */
-export function markNoShow(db: BookingDb, bookingId: string) {
-  return applyBookingAction(db, bookingId, "NO_SHOW", { status: "NO_SHOW" });
+/**
+ * Marks a booking that never arrived (docs/PRD.md rule 5's safety-net
+ * outcome). A deposit that was actually paid is kept, never refunded
+ * (docs/PRD.md, Business rules — "kept for... no-shows"); one that was
+ * never paid (still `PENDING`, e.g. an unpaid phone booking) has nothing to
+ * keep, so it's left alone rather than falsely marked `KEPT`.
+ */
+export async function markNoShow(db: BookingDb, bookingId: string): Promise<BookingActionResult> {
+  const result = await applyBookingAction(db, bookingId, "NO_SHOW", { status: "NO_SHOW" });
+  if (!result.ok) return result;
+
+  await db.booking.updateMany({
+    where: { id: bookingId, depositStatus: "PAID" },
+    data: { depositStatus: "KEPT" },
+  });
+  return result;
 }
 
 /** Cancels before service starts (docs/PRD.md, Business rules — refund handling is M8-2). */
@@ -185,6 +198,28 @@ export async function moveBooking(
 ): Promise<MoveBookingResult> {
   try {
     return await applyBookingAction(db, bookingId, "MOVE", { stylistId: newStylistId });
+  } catch (error) {
+    if (isSlotConflict(error)) return { ok: false, reason: "SLOT_TAKEN" };
+    throw error;
+  }
+}
+
+export type RescheduleBookingResult = BookingActionResult | { ok: false; reason: "SLOT_TAKEN" };
+
+/**
+ * Moves a booking to a new time, same stylist — the "later with the same
+ * stylist" half of a delay offer (M8-5). Same no-double-booking protection
+ * as `moveBooking`: if the stylist already has something else in that new
+ * window (someone else took the slot first), the update fails and this
+ * reports SLOT_TAKEN instead of throwing.
+ */
+export async function rescheduleBooking(
+  db: BookingDb,
+  bookingId: string,
+  newTimes: { startsAt: Date; endsAt: Date; blockedUntil: Date },
+): Promise<RescheduleBookingResult> {
+  try {
+    return await applyBookingAction(db, bookingId, "RESCHEDULE", newTimes);
   } catch (error) {
     if (isSlotConflict(error)) return { ok: false, reason: "SLOT_TAKEN" };
     throw error;

@@ -110,13 +110,19 @@ describe("isActionAllowed", () => {
     expect(isActionAllowed("CHECKED_IN", "MOVE")).toBe(true);
     expect(isActionAllowed("IN_SERVICE", "MOVE")).toBe(false);
   });
+
+  it("reschedules only before service starts", () => {
+    expect(isActionAllowed("BOOKED", "RESCHEDULE")).toBe(true);
+    expect(isActionAllowed("CHECKED_IN", "RESCHEDULE")).toBe(true);
+    expect(isActionAllowed("IN_SERVICE", "RESCHEDULE")).toBe(false);
+  });
 });
 
 describe("allowedFromStatuses", () => {
   it("matches isActionAllowed for every status", () => {
     const allStatuses = ["BOOKED", "CHECKED_IN", "IN_SERVICE", "DONE", "NO_SHOW", "CANCELLED"] as const;
     const allActions = [
-      "CHECK_IN", "START", "FINISH", "UNDO_CHECK_IN", "NO_SHOW", "CANCEL", "MOVE",
+      "CHECK_IN", "START", "FINISH", "UNDO_CHECK_IN", "NO_SHOW", "CANCEL", "MOVE", "RESCHEDULE",
     ] as const;
     for (const action of allActions) {
       for (const status of allStatuses) {

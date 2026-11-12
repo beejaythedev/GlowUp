@@ -771,9 +771,229 @@ and writes a handoff note before every session ends.
 > Surulere order, since `Promise.all`-based branch creation in `prisma/seed.ts` doesn't
 > guarantee `createdAt` ordering — harmless here (every branch still appears, just not
 > necessarily in that exact order), not worth fixing for a filter row.
-> **Next task:** M7-4 (Settings, matching `OwnerSettings.dc.html`) — the last M7 task; its
-> supervisor checkpoint is "change a prep time and confirm the customer site's available
-> times change."
+> **M7-4 done:** "Services and booking rules" at `/staff/owner/settings`, matching
+> `OwnerSettings.dc.html` — the last M7 task. One page, one "Save changes" button: a
+> services table (duration, price, live-computed deposit, a prep-time select per service,
+> and how many branches actually offer it) plus a "Booking rules" sidebar (deposit %,
+> free-cancellation hours, arrive-early minutes, check-in prompt timing) backed by the
+> single global `Settings` row from M1-1.
+> Pure logic in `src/server/ownerSettings.ts` (9 new unit tests): `countOfferedBranches`/
+> `formatOfferedAtLabel` (reuses the same `nailsOnly && !offersNails` rule the customer
+> booking flow and reception's new-booking form already enforce, so Pedicure/Manicure
+> correctly show "2 branches" against the other services' "All branches"), plus the label
+> helpers for the prep-time and arrive-early selects. Reused `formatDurationLabel` from
+> `src/lib/duration.ts` (M1) for the ranged-duration column ("4–5 hrs") and
+> `calculateDepositKobo` from `src/server/money.ts` (M1-3) for the live deposit column, which
+> recalculates immediately in the browser as the Deposit % select changes, before saving.
+> `saveOwnerSettings` validates every value against the same fixed option lists the `<select>`
+> elements offer (no arbitrary numbers), then updates the `Settings` row and every service's
+> `prepMinutes` in one transaction. "Changes apply to new bookings only" needs no extra code:
+> `Booking.blockedUntil` is already a stored snapshot computed once at creation (M1-1), never
+> recalculated from the service's current `prepMinutes`, so existing bookings are naturally
+> unaffected — confirmed live.
+> Verified the actual supervisor checkpoint live and deterministically: inserted a controlled
+> "Wash and set" booking for Zainab at 2–3pm on a day with no other bookings, confirmed the
+> 12:50pm slot was available with the seeded 10-minute prep (12:50 + 60 + 10 = exactly 2:00,
+> no overlap), changed the prep time to 20 minutes via Settings, confirmed 12:50pm correctly
+> disappeared (12:50 + 60 + 20 = 2:10, now overlapping), reverted to 10 minutes, confirmed it
+> reappeared, and cleaned up the test booking. Two earlier live-check attempts against
+> wide-open stylist afternoons found no visible difference — not a bug, just the wrong test
+> scenario: prep time only ever excludes a slot when a new booking's prep window would
+> overlap an *upcoming* booking, which an open afternoon doesn't have.
+> **M7 milestone is now fully done** — M7-1 through M7-4 complete. Ready for the supervisor
+> checkpoint in `docs/ROADMAP.md`: change a prep time and confirm the customer site's
+> available times change (already verified above).
+> **Next task:** none — waiting on the M7 checkpoint before M8 (Payments and messages)
+> starts, per `CLAUDE.md` rule 6.
+> **Blockers or questions:** none open.
+>
+> **M8 Payments and messages started (new `m8` branch off `m7`)** — supervisor said carry
+> on, standing in for the M7 checkpoint. Supervisor also provided real Paystack test-mode
+> API keys (`sk_test_…`/`pk_test_…`, added to `.env`; `.env.example` updated with
+> placeholders and where to get them — CLAUDE.md rule 8).
+> **M8-1 done:** real Paystack test-mode payments. `PaymentProvider` (M3/M8) is now a
+> three-method redirect-based interface matching `docs/ARCHITECTURE.md`'s already-documented
+> flow — `initializeTransaction`, `verifyWebhookSignature`, `verifyTransaction` — replacing
+> the old synchronous `charge()` shape, since Paystack's real flow is "ask for a payment
+> page, customer pays there, webhook confirms," not an instant in-page result.
+> `src/server/payments/paystack.ts`: real HTTP calls to `/transaction/initialize` and
+> `/transaction/verify/:reference`, and HMAC-SHA512 webhook signature verification
+> (`node:crypto`, timing-safe compare), 5 new unit tests. `paymentProvider` (index.ts) now
+> picks Paystack automatically when `PAYSTACK_SECRET_KEY` is set, falling back to
+> `FakePaymentProvider` otherwise (local dev/CI without secrets) — `FakePaymentProvider`
+> rewritten to match the new interface, backed by a new `/dev/fake-pay` page that stands in
+> for Paystack's hosted checkout and posts a correctly fake-signed webhook, exercising the
+> exact same webhook→confirm pipeline a real payment would.
+> New `/api/paystack/webhook` (`src/server/paystackWebhook.ts`'s `decideWebhookAction` is the
+> pure, tested routing logic — 4 tests): rejects a bad signature outright (401), otherwise
+> only acts on `charge.success`, then independently calls Paystack's own verify API and
+> checks the paid amount against the booking's `depositAmountKobo` before trusting it —
+> CLAUDE.md rule 10's "verify the signature AND the transaction" as two real, separate
+> checks, not one. `src/server/depositConfirmation.ts`'s `confirmDepositAndNotify` wraps the
+> existing `confirmDeposit` (M2-3) with the confirmation-message send, moved here from
+> `pay/actions.ts` since the webhook — not the browser — is what actually confirms a payment
+> now; reuses `confirmDeposit`'s existing idempotency (a second confirmation call is a safe
+> no-op) to protect against a duplicate webhook delivery.
+> `pay/actions.ts` now just validates the hold, calls `initializeTransaction`, and redirects
+> to Paystack's real hosted page. New `/book/pay/confirming` page is where Paystack's
+> callback sends the customer back — it never marks anything paid itself (rule 10); it only
+> polls a small read-only `/api/bookings/[bookingId]/status` route reflecting what the
+> webhook has already confirmed, redirecting to `/book/confirmed` once it has, with a
+> 20-second timeout and a manual-refresh fallback for a slow webhook. Removed `PayForm`'s
+> old "simulate a failed payment" link — Paystack's own test cards cover that now.
+> One real decision flagged in `docs/DECISIONS.md`: Paystack requires an email for its
+> receipt, but the booking flow only ever collects a phone number, so a placeholder
+> (`{phone}@customer.glowupsalons.ng`) is synthesized — not verified or emailed to, just used
+> for Paystack's own receipt.
+> Verified against the real Paystack test API directly (not just the fake provider):
+> `initializeTransaction` returned a genuine `https://checkout.paystack.com/…` URL;
+> `verifyTransaction` on an unpaid reference correctly reported `abandoned`; most
+> importantly, a `charge.success` webhook forged with a *valid* signature (signed with the
+> real secret key) was still correctly rejected, because the webhook's own call to
+> Paystack's verify API reported the transaction as unpaid — proving the "verify the
+> transaction, not just the signature" rule actually holds, not just the easier
+> signature-only check. A bad signature was rejected with 401. Separately verified the full
+> success path by calling `confirmDepositAndNotify` directly against a real test booking:
+> correctly marked `PAID`, logged the confirmation message, and a repeated call safely
+> no-opped (`NOT_FOUND`) rather than double-confirming.
+> Could not complete one specific check live: clicking the real "Pay deposit" button in an
+> actual browser and watching it land on Paystack's hosted page. This dev session's
+> Turbopack/HMR connection was independently unstable — reproduced the same reload/reconnect
+> churn on a completely unrelated, idle page with no interaction at all — so it's an
+> environment issue, not evidence of a bug in this code. Confirmed instead via the rendered
+> HTML that the form is wired correctly (one button, correct label, old simulate-failure UI
+> gone) and via the direct-call tests above that every piece the button would trigger
+> already works. Worth a quick manual click-through once this dev session is less flaky.
+> **M8-2 done:** the 24-hour free-cancellation refund rule. `src/server/cancellation.ts`'s
+> `decideCancellationOutcome` (5 new unit tests) is the pure REFUND-vs-KEEP decision, using
+> the owner-adjustable `freeCancellationHours` from Settings (M7-4) rather than a hardcoded
+> 24 — a no-show never reaches this at all, since it's never cancelled, so it always keeps
+> the deposit by simply never being refunded.
+> Added `refund` to the `PaymentProvider` interface (M8-1) — a real `POST /refund` call in
+> `paystack.ts`, and an always-succeeds version in the fake provider that logs to the
+> console like the other fake providers. New `src/server/bookingCancellation.ts`'s
+> `cancelBookingAndSettleDeposit` wraps the existing `cancelBooking` (M5-2): only touches
+> `depositStatus` if it was actually `PAID` (a booking cancelled before ever finishing
+> payment has nothing to refund or keep, so it's left as `PENDING`); on `REFUND`, calls
+> Paystack and only marks `REFUNDED` if that call actually succeeds — a failed refund call
+> leaves the deposit `PAID` on a cancelled booking rather than lying about a refund that
+> didn't happen; there's no retry queue for that failure case in this practice project, so
+> it would need a human to notice. Reception's existing Cancel action (`BookingPanel`, M5-2)
+> now calls this instead of the bare `cancelBooking` — same button, same permission checks,
+> now with the real consequence attached.
+> Verified live: four scenarios run against real test bookings (far-ahead PAID cancellation
+> → `REFUNDED`; near-term PAID cancellation → `KEPT`; cancelling a never-paid `PENDING`
+> booking → left alone; cancelling an already-cancelled booking → correctly rejected) using
+> the fake provider for the orchestration/decision logic (these were synthetic bookings,
+> never real Paystack transactions, so a real refund call against them would correctly fail
+> with "transaction not found" — tested that exact response separately against the real
+> Paystack API to confirm the refund call itself genuinely reaches and parses their API).
+> `managerToday.ts`'s money-card comment updated — refunds are no longer always ₦0.
+> **M8-3 done:** phone bookings now get a deposit-link message. New `src/lib/
+> phoneDepositMessage.ts`'s `formatPhoneDepositMessage` (1 new unit test) — no "arrive by"
+> or rush wording like the online confirmation message, since a phone booking has no
+> 10-minute hold to race against (already true since M5-4/the `createReceptionBooking`
+> doc comment). Reception's `createBookingAction` (M5-4) now sends it via the existing
+> console `messageSender` right after a successful `PHONE`-source booking with a non-zero
+> deposit (a walk-in's deposit is always zero, so there's nothing to ask for) — same
+> `/book/pay?bookingId=…` page online customers use, no new page needed.
+> Verified live against the real dev server (lighter-weight than a full browser pass, since
+> this session's system was flagged low on memory right after M8-2): created a real phone
+> booking through the actual `createReceptionBooking` function, confirmed it starts
+> `BOOKED`/`PENDING`/no hold timer, built and sent the exact message `actions.ts` now sends,
+> and confirmed the real `/book/pay` page (hit over HTTP against the running dev server)
+> loads correctly for that booking with the right deposit amount and a working Pay button.
+> **M8-4 done:** scheduled messages. New `Message` model/migration (`type`:
+> CONFIRMATION/REMINDER_24H/REMINDER_3H, `status`: PENDING/SENT/CANCELLED, `scheduledFor`,
+> `sentAt`) — each message's full body is composed once, at scheduling time, so
+> `/dev/messages` shows exactly what will be sent before it is, and the job never needs to
+> re-derive anything from the booking.
+> `src/server/bookingMessages.ts`'s `planBookingMessages` (4 new unit tests) is the pure
+> scheduling decision: confirmation always goes out (scheduled for "now," picked up by the
+> next job run); a reminder is skipped entirely — not scheduled for a moment in the past —
+> if its 24-or-3-hour mark has already passed by confirmation time. New `src/lib/
+> reminderMessage.ts` (2 new tests): the 24-hour reminder is the only one that mentions the
+> free-cancellation refund, matching `docs/PRD.md`'s "(last free-cancellation chance)" note;
+> the 3-hour one doesn't, since that window's already closed.
+> `depositConfirmation.ts` (M8-1) now schedules these 2-3 `Message` rows instead of sending
+> one message immediately — the actual send is `src/server/messageJob.ts`'s
+> `processDueMessages`, called by the new `/api/jobs/run` (GET/POST, protected by a
+> `x-jobs-secret` header checked against a new `JOBS_SECRET` env var — generated and added
+> to `.env`/`.env.example` the same way `AUTH_SECRET` was). Each due message is claimed
+> atomically (`updateMany` only succeeds while still `PENDING`) before sending, so two
+> overlapping scheduler calls can't double-send.
+> `bookingCancellation.ts` (M8-2) now also cancels (not deletes) any still-`PENDING` message
+> for a booking that gets cancelled — no reminder goes out for an appointment that's no
+> longer happening; an already-`SENT` one is untouched. Skipped the architecture doc's
+> mention of a "daily tidy-up" job for expired holds — those are already handled at
+> read-time (ignored by the availability engine, M2-3) and at write-time (`holdSlot` deletes
+> stale ones on insert), so there's nothing left to tidy.
+> Verified live end to end: confirming a deposit 10 days out scheduled all 3 messages
+> PENDING; calling `/api/jobs/run` sent only the due confirmation and left both future
+> reminders PENDING; a wrong secret was rejected (401); cancelling that booking correctly
+> flipped both still-pending reminders to CANCELLED while leaving the already-sent
+> confirmation as SENT; a booking confirmed only 1 hour before its appointment correctly
+> got no reminders at all, only the confirmation. `/dev/messages` confirmed showing real
+> rows (customer, type, status, scheduled/sent time, full body) against live data.
+> **M8-5 done:** the delay message, wiring up M5-7's disabled placeholder button. New
+> `src/server/delayOffer.ts`'s `computeDelayOffer` (5 new unit tests) is the pure decision —
+> reuses the same availability engine (M2-1/M2-2) customers see when booking, rather than a
+> separate check, so an offer that wouldn't actually be bookable is never sent: the
+> requested stylist's soonest slot after the original time, and whichever other active
+> stylist (if any) is genuinely free at the exact original time. New `src/lib/
+> delayMessage.ts` (4 new tests) only mentions the options that are actually available —
+> both, one, or (rare) neither, in which case it just asks the customer to call.
+> `src/server/delayOfferForBooking.ts`'s `getDelayContext` gathers the DB data once and is
+> shared by both the "send" path and the customer's own choice page, so they can never
+> compute different answers for the same booking. New `rescheduleBooking` in `bookings.ts`
+> (a `RESCHEDULE` action added to `status.ts`'s allowed-transitions table, same guard as
+> `MOVE`) moves a booking to a new time with the same stylist, protected by the same
+> no-double-booking exclusion constraint.
+> Reception's "Send delay message" button (`BookingPanel.tsx`, disabled since M5-7) now
+> really sends it through the existing console `messageSender`, linking to a new public
+> `/book/delay?bookingId=…` page — no sign-in needed, same as the rest of the customer
+> booking flow. That page re-checks the offer live rather than trusting the link's embedded
+> times (things may have changed since it was sent), shows whichever choices are still
+> valid, and calls either `rescheduleBooking` or the existing `moveBooking` (M5-2) depending
+> on which the customer picks, landing on a plain "you're all set" confirmation.
+> Verified live end to end: the offer correctly proposed both a later same-stylist time and
+> a genuinely-free other stylist at the original time; the message included both, with a
+> working link; the live choice page showed both buttons; choosing "later, same stylist"
+> moved the time and kept the stylist; a second booking confirmed choosing "same time,
+> other stylist" kept the time and swapped the stylist to the one actually offered; the
+> done page correctly reflected whichever choice was made.
+> **M8-6 done** — review of the payment flow and money card against `docs/PRD.md`'s
+> Business rules, the last M8 task. Found and fixed two real gaps:
+> 1. **`markNoShow` never actually kept the deposit.** It only changed `status` to
+> `NO_SHOW`, leaving `depositStatus` as `PAID` forever — the PRD rule ("kept for...
+> no-shows") was only ever true in `prisma/seed.ts`'s sample data, which sets `KEPT`
+> directly, not in the real action reception taps live. Fixed: `markNoShow` now also
+> flips a `PAID` deposit to `KEPT` (leaving `PENDING`/`NONE` alone — nothing to keep from a
+> deposit that was never actually paid). 2 new unit tests. This also means the manager
+> money card's "kept from no-shows" line and the owner overview's no-show figures were
+> silently always right only because of seed data, not live behaviour — now genuinely
+> correct either way.
+> 2. **Paystack's `/transaction/initialize` call didn't pass `channels`,** relying on
+> whatever's enabled on the dashboard by default. `docs/PRD.md`/`docs/TECH_STACK.md` are
+> explicit that deposits are "card or bank transfer" — now passes `channels: ["card",
+> "bank_transfer"]` explicitly so both are always offered regardless of dashboard
+> configuration. Confirmed live against the real Paystack test API that it accepts this.
+> Everything else checked out already correct: deposit = 20%, walk-ins pay none, phone
+> bookings get the SMS link (M8-3), the 10-minute hold, the 24-hour refund rule (M8-2),
+> reminders at 24h/3h with the free-cancellation note only on the 24h one, 10-minute
+> arrive-early wording sourced from the adjustable Settings row rather than hardcoded, and
+> "expected at the till" correctly excluding no-shows and cancellations while including
+> walk-ins at full price.
+> Verified both fixes live: a real call to Paystack's test API confirmed it accepts the
+> explicit channels list; a real no-show on a paid booking now correctly lands on `KEPT`,
+> while a walk-in's never-charged `NONE` deposit is correctly left untouched.
+> **M8 milestone is now fully done** — M8-1 through M8-6 complete. Ready for the supervisor
+> checkpoint in `docs/ROADMAP.md`: a full test-mode booking with deposit, a logged reminder
+> and a cancellation refund (all individually verified live above across M8-1/M8-2/M8-4;
+> happy to run through the single combined walkthrough on request).
+> **Next task:** none — waiting on the M8 checkpoint before M9 (Testing and deployment)
+> starts, per `CLAUDE.md` rule 6.
+> **Blockers or questions:** none open.
 
 ## Milestones
 
@@ -786,8 +1006,8 @@ and writes a handoff note before every session ends.
 | M4 Staff sign-in and roles | Approved | 2026-11-02 |
 | M5 Reception | Ready for review | |
 | M6 Stylist | Ready for review | |
-| M7 Manager and owner | Not started | |
-| M8 Payments and messages | Not started | |
+| M7 Manager and owner | Ready for review | |
+| M8 Payments and messages | Ready for review | |
 | M9 Testing, launch and training | Not started | |
 
 Statuses: Not started · In progress · Ready for review · Approved.
@@ -798,6 +1018,16 @@ Newest first. One line per finished task.
 
 | Date | Task | What changed | Tests |
 |---|---|---|---|
+| 2026-11-12 | M8-6 | `markNoShow` (bookings.ts) now keeps a paid deposit, `paystack.ts`'s initialize now passes explicit channels | `npm run check` (294 tests total), live-verified both fixes against real test bookings and the real Paystack API |
+| 2026-11-12 | M8-5 | `src/server/delayOffer.ts`, `src/lib/delayMessage.ts`, `src/server/delayOfferForBooking.ts`, `src/server/delayMessageSender.ts`, `/book/delay`, `rescheduleBooking`/`RESCHEDULE` action, reception's Send delay message button wired up | `npm run check` (293 tests total), live-verified offer computation, message content, the live choice page, and both choice outcomes against real test bookings |
+| 2026-11-12 | M8-4 | New `Message` model/migration, `src/server/bookingMessages.ts`, `src/lib/reminderMessage.ts`, `/api/jobs/run`, `src/server/messageJob.ts`, `/dev/messages`, `depositConfirmation.ts` and `bookingCancellation.ts` updated | `npm run check` (283 tests total), live-verified scheduling/sending/cancelling/skipping-reminders against the real job endpoint and dev DB |
+| 2026-11-12 | M8-3 | `src/lib/phoneDepositMessage.ts`, reception's `createBookingAction` now sends it for PHONE bookings with a deposit due | `npm run check` (277 tests total), live-verified: real phone booking created, correct message built and sent, real `/book/pay` page confirmed working for it |
+| 2026-11-11 | M8-2 | `src/server/cancellation.ts` (`decideCancellationOutcome`), `refund` added to `PaymentProvider`, `src/server/bookingCancellation.ts` (`cancelBookingAndSettleDeposit`), reception's Cancel action now uses it | `npm run check` (276 tests total), live-verified 4 scenarios (refund/keep/unpaid/double-cancel) plus a real Paystack refund API call |
+| 2026-11-11 | M8-1 | `PaymentProvider` redesigned to a redirect-based interface, `src/server/payments/paystack.ts`, `/api/paystack/webhook`, `src/server/paystackWebhook.ts`, `src/server/depositConfirmation.ts`, `/book/pay/confirming`, `/api/bookings/[bookingId]/status`, `/dev/fake-pay` | `npm run check` (270 tests total), verified against the real Paystack test API: genuine checkout URL, a forged-but-validly-signed webhook correctly rejected via Paystack's own verify, bad signature rejected (401), success path (`confirmDepositAndNotify`) correct and idempotent |
+| 2026-11-07 | M7-4 | `/staff/owner/settings` (`OwnerSettingsView.tsx`, `settingsActions.ts`), `src/server/ownerSettings.ts` (`countOfferedBranches`, `formatOfferedAtLabel`, `formatPrepTimeLabel`, `formatArriveEarlyLabel`) | `npm run check` (259 tests total), deterministic live check: a controlled booking's blocking slot appeared/disappeared/reappeared exactly as the prep-time setting changed |
+| 2026-11-07 | M7-3 | `/staff/owner/staff` (`StaffAccessView.tsx`, `staffActions.ts`), `src/server/staffAccess.ts`, `src/server/auth/tempPassword.ts`, M4 sign-in action now flips `INVITED`→`ACTIVE` | `npm run check` (250 tests total), live end-to-end add/filter/edit/resend-invite/remove/restore, including a direct DB check |
+| 2026-11-07 | M7-2 | `/staff/owner` (`OwnerOverviewView.tsx`, `ownerData.ts`), `src/server/ownerOverview.ts`, `lagosWeekRange` in `src/lib/lagosTime.ts` | `npm run check` (242 tests total), live-verified against real data across all 4 branches as Tolu |
+| 2026-11-07 | M7-1 | `/staff/manager` (`ManagerTodayView.tsx`, `managerData.ts`), `/staff/manager/day-report` CSV route, `src/server/managerToday.ts` | `npm run check` (226 tests total), live-verified tiles/table/money math/CSV export against seeded Lekki data as Grace |
 | 2026-11-06 | M6-3 | No code change — verification that Start/Finish already update everywhere, by reuse of M5-2's `startService`/`finishService` | Cross-view Playwright trace: Zainab (stylist) tapped Start then Finish, Ada (reception) reloaded and saw the schedule/panel update each time with no action on her side |
 | 2026-11-06 | M6-2 | `/staff/stylist/tomorrow` (`StylistTomorrowView.tsx`), `src/server/stylistTomorrow.ts` (`summarizeTomorrow`, `getTomorrowHeadline`, `formatDurationLabel`) | `npm run check` (217 tests total), screenshot-verified Today↔Tomorrow navigation and the empty-day state |
 | 2026-11-06 | M6-1 | `/staff/stylist` real Today view (`StylistTodayView.tsx`, `actions.ts`, `stylistData.ts`), `src/server/stylistToday.ts` (`selectCurrentCard`, `getEarlierBookings`, `getPrepWindow`, `getHeadline`, `getNowChipLabel`, `getFooterNote`) | `npm run check` (207 tests total), screenshot-verified the empty-day fallback and a full Start→Finish flow against seeded Lekki data |
